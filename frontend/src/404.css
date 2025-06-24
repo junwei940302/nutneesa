@@ -1,0 +1,34 @@
+.content{
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 75px);
+    top: 75px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+}
+
+.content div{
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    display: grid;
+}
+
+.content h1{
+    font-family: 'ToronoGlitchMinchoH1', sans-serif;
+    background-image: url('../assets/images/White-noise.gif');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 5rem;
+    margin: 0;
+}
+
+.content h2{
+    font-family: 'ToronoGlitchMinchoH1', sans-serif;
+    color: #645038;
+    font-size: 3rem;
+}
