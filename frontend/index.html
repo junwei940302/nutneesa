@@ -7,21 +7,61 @@
     <link rel="stylesheet" href="./src/global.css">
     <script src="./src/index.js" defer></script>
     <script src="./src/global.js" defer></script>
+    <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
     <title>電機系系學會EESA｜國立臺南大學NUTN</title>
 </head>
 <body>
+    <div class="toTop" hidden>
+        <button class="getToTop" title="getToTop">
+            <i class="fa-solid fa-chevron-up"></i>
+        </button>
+    </div>
     <div class="navBar">
-        <div class="navTitle">
+        <a class="navTitle" href="index.html">
             <h3>國立臺南大學電機系系學會</h3>
             <p>National University of Tainan Department of Electrical Engineering Student Association</p>
+        </a>
+        <div class="navIcon" hidden>  
+            <i class="fa-solid fa-bars"></i>
         </div>
         <div class="navItems">
             <ul>
-                <li>最新消息</li>
-                <li>系會服務</li>
-                <li>接洽管道</li>
-                <li>關於系學會</li>
+                <li><a href="index.html">最新消息</a></li>
+                <li><a href="">系會服務</a></li>
+                <li><a href="">接洽管道</a></li>
+                <li><a href="">關於系會</a></li>
             </ul>
+        </div>
+        <div class="mobileMenu" style="display: none;">
+            <ul>
+                <li><a href="index.html">最新消息</a></li>
+                <li><a href="">系會服務</a></li>
+                <li><a href="">接洽管道</a></li>
+                <li><a href="">關於系會</a></li>
+                <li>
+                    <a href="https://www.instagram.com/nutn_ee_116/?utm_source=ig_web_button_share_sheet">
+                        <img src="./assets/images/Instagram_icon.png">
+                    </a>
+                    <a href="https://www.instagram.com/nutn_ee_116/?utm_source=ig_web_button_share_sheet">
+                        <img src="./assets/images/images.png">
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="content">
+        <div class="nextActivity">
+            <div class="countdown">
+                <h1>00天00時00分00秒</h1>
+            </div>
+            <div class="cardTitle">
+                <h1>SOON...</h1>
+                <h2>117級迎新活動</h2>
+                <p>2025/09/18（四）18:00｜文薈樓J303</p>
+            </div>
+        </div>
+        <div class="infoCard">
+            <h1></h1>
         </div>
     </div>
 </body>

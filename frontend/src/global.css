@@ -13,11 +13,41 @@ body{
     font-style: normal;
 }
 
+.toTop{
+    position: fixed;
+    width: 100%;
+    height: 100vh;
+}
+
+.toTop button{
+    position: fixed;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    background:rgba(255,255,255,0.8);
+    border:2px solid transparent;
+    box-shadow:0 0 0 2px rgba(255,255,255,.6),0 16px 32px rgba(0,0,0,.12);
+    -webkit-backdrop-filter:url(#frosted);
+    backdrop-filter:url(#frosted);
+    outline:0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    left: calc(100% - 100px);
+    top: calc(100vh - 100px);
+    cursor: pointer;
+    z-index: 9997;
+}
+
+.toTop i{
+    color: #645038;
+}
+
 .navBar{
     width: calc(100% - 10vw);
-    height: fit-content;
+    height: 40px;
     position: fixed;
-    background:rgba(255,255,255,.08);
+    background:rgba(255,255,255,0.8);
     border:2px solid transparent;
     box-shadow:0 0 0 2px rgba(255,255,255,.6),0 16px 32px rgba(0,0,0,.12);
     -webkit-backdrop-filter:url(#frosted);
@@ -25,22 +55,9 @@ body{
     outline:0;
     display: flex;
     justify-content: space-between;
-    align-items: center;
     padding: 2vh 5vw 2vh 5vw;
-}
-
-.glass::before,
-.glass::after{
-    content:"";
-    position:absolute;
-    width:40%;
-    height:10px;
-    background:#fff;
-    border-radius:10px;
-}
-
-.glass::after{
-    transform:rotate(90deg)
+    z-index: 9999;
+    top: 0;
 }
 
 .navTitle h3{
@@ -57,6 +74,7 @@ body{
 .navTitle{
     color: #645038;
     cursor: pointer;
+    text-decoration: none;
 }
 
 .navItems ul{
@@ -66,16 +84,78 @@ body{
     gap: 2vw;
 }
 
-.navItems li{
+.mobileMenu ul{
+    list-style: none;
+    display: grid;
+    justify-content: space-around;
+    gap: 10vw;
+    padding: 0;
+}
+
+.navItems li, .mobileMenu li{
     font-family: 'ToronoGlitchMinchoH1', sans-serif;
     cursor: pointer;
     transition: all 0.1s ease-in-out;
     font-size: 1rem;
+    display: flex;
+    text-decoration: none;
+    justify-content: center;
 }
 
-.navItems li:hover{
+.mobileMenu a, .navItems a{
+    font-family: 'ToronoGlitchMinchoH1', sans-serif;
+    text-decoration: none;
     color: #645038;
+}
+
+.navItems a:hover, .mobileMenu a:hover{
+    background-image: url('../assets/images/3LE_1_.gif');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     transition: all 0.1s ease-in-out;
+}
+
+.navIcon{
+    width: 100%;
+    position: fixed;
+    color: #645038;
+    font-size: 16px;
+    z-index: 9998;
+    text-align: end;
+    padding-right: 50px;
+    cursor: pointer;
+}
+
+.navIcon i{
+    cursor: pointer;
+}
+
+.mobileMenu{
+    position: fixed;
+    width: 100%;
+    height: 100vh;
+    align-items: center;
+    display: grid;
+    justify-content: center;
+}
+
+.mobileMenu a{
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.mobileMenu img{
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+}
+
+.mobileMenu li:last-child{
+    display: flex;
+    justify-content: space-around;
 }
 
 @media (max-width: 960px) {
@@ -112,4 +192,40 @@ body{
     .navItems {
         display: none;
     }
+
+    .navIcon{
+        display: block;
+    }
+
+    .toTop{
+        display: block;
+    }
+}
+
+@media (max-width: 400px) {
+
+    .navTitle h3{
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    .navTitle p{
+        font-size: 0.3rem;
+        text-align: center;
+    }
+
+}
+
+@media (max-width: 300px) {
+
+    .navTitle h3{
+        font-size: 0.7rem;
+        text-align: center;
+    }
+
+    .navTitle p{
+        font-size: 0.2rem;
+        text-align: center;
+    }
+
 }
