@@ -7,13 +7,13 @@ menuBtn.addEventListener('click', function() {
         document.querySelector('.navBar').style.height = '100vh';
         document.querySelector('.navBar').style.alignItems = 'start';
         document.querySelector('.mobileMenu').style.display = 'grid';
-        document.querySelector('.getToTop').style.display = 'none';
+        document.querySelector('.toTop').style.display = 'none';
         isFoldMenu = false;
     } else if(!isFoldMenu){
         document.querySelector('.navIcon i').className = "fa-solid fa-bars";
         document.querySelector('.navBar').style.height = '40px';
         document.querySelector('.mobileMenu').style.display = 'none';
-        document.querySelector('.getToTop').style.display = 'block';
+        document.querySelector('.toTop').style.display = 'block';
         isFoldMenu = true;
     }
 });

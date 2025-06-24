@@ -3,14 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./src/404.css">
+    <link rel="stylesheet" href="./src/admin.css">
     <link rel="stylesheet" href="./src/global.css">
-    <script src="./src/404.js" defer></script>
+    <script src="./src/admin.js" defer></script>
     <script src="./src/global.js" defer></script>
     <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
-    <title>電機系系學會EESA｜國立臺南大學NUTN</title>
+    <title>Admin Center｜NUTNEESA</title>
 </head>
 <body>
+    <div class="toTop" hidden>
+        <button class="getToTop" title="getToTop">
+            <i class="fa-solid fa-chevron-up"></i>
+        </button>
+    </div>
     <div class="navBar">
         <a class="navTitle" href="index.html">
             <h3>國立臺南大學電機系系學會</h3>
@@ -45,9 +50,181 @@
         </div>
     </div>
     <div class="content">
-        <div>
-          <h1>404</h1>
-          <h2>Page Not Found.</h2>
+        <div class="topController">
+            <select class="funcPicker" title="funcPicker">
+                <option>控制中心｜Dashboard</option>
+                <option>歷史紀錄｜History</option>
+                <option>會員管理｜Members</option>
+                <option>金流管理｜Flow</option>
+                <option>偏好設定｜Settings</option>
+            </select>
+            <button class="logoutBtn" title="logoutBtn" style="color: red;">登出管理系統｜LogOut</button>
+        </div>
+        <div class="panel" data-dashboard>
+            <p>控制中心｜Dashboard</p>
+            <ul>
+                <li>
+                    <p>最新消息控制項</p>
+                    <div>
+                        <div>
+                            <button class="addNews" title="addNews">新增消息</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>可見</th>
+                                    <th>序號</th>
+                                    <th>消息類型</th>
+                                    <th>消息內容</th>
+                                    <th>發布日期</th>
+                                    <th>經手人</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="panel" data-history>
+            <p>歷史紀錄｜History</p>
+            <ul>
+                <li>
+                    <p>未發現異狀</p>
+                    <div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>錯誤及告警</th>
+                                    <th>時間</th>
+                                    <th>發出端</th>
+                                    <th>內容</th>
+                                    <th>確認</th>
+                                    <th>經手人</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="panel" data-members>
+            <p>會員管理｜Members</p>
+            <ul>
+                <li>
+                    <p>會員列表</p>
+                    <div>
+                        <div>
+                            <button class="addNews" title="addNews">手動新增會員</button>
+                            <input type="text" placeholder="搜尋會員">
+                            <button class="advancedSearch" title="advancedSearch">進階搜尋選項</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>序號</th>
+                                    <th>會員編號</th>
+                                    <th>身份類別</th>
+                                    <th>會員名稱</th>
+                                    <th>學號</th>
+                                    <th>系級</th>
+                                    <th>註冊日期</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="panel" data-flow>
+            <p>金流管理｜Flow</p>
+            <ul>
+                <li>
+                    <p>帳目控制</p>
+                    <div>
+                        <div>
+                            <p>手動新增</p>
+                            <select title="incomeAndOutcome">
+                                <option>收入｜Income</option>
+                                <option>支出｜Outcome</option>
+                                <option>轉帳｜Transfer</option>
+                            </select>
+                            <select title="incomeType">
+                                <option>系學會費收入</option>
+                                <option>廠商贊助</option>
+                            </select>
+                            <select title="outcomeType" hidden>
+                                <option>一般常備用品</option>
+                                <option>交通支出</option>
+                                <option>設備維護</option>
+                            </select>
+                            <div title="transferType" hidden>
+                                From
+                                <select title="transferFrom">
+                                    <option>郵局</option>
+                                    <option>社辦保險箱</option>
+                                </select>
+                                To
+                                <select title="transferTo">
+                                    <option>郵局</option>
+                                    <option>社辦保險箱</option>
+                                </select>
+                            </div>
+                            <input type="number" title="flowValue" placeholder="金額不需附帶+/-" min="0" step="1">
+                            <input type="text" placeholder="備註">
+                            <input type="submit" value="送出">
+                        </div>
+                        <div>
+                            <p>由CSV匯入</p>
+                            <input type="file" title="uploadCSV">
+                        </div>
+                    </div>
+                </li>
+                <li>
+                    <p>金流列表</p>
+                    <div>
+                        <div>
+                            <input type="text" placeholder="搜尋金流">
+                            <button class="advancedSearch" title="advancedSearch">進階搜尋選項</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>序號</th>
+                                    <th>收支</th>
+                                    <th>類別</th>
+                                    <th>名稱</th>
+                                    <th>金額</th>
+                                    <th>時間</th>
+                                    <th>經手人</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="panel" data-settings>
+            <p>偏好設定｜Settings</p>
+            <ul>
+                <li>
+                    <p>安全性控制項</p>
+                    <div>
+                        <div>
+                            <p>新增SSO憑證（單一無密碼登入驗證）</p>
+                            <input type="button" value="新增PassKey">
+                        </div>
+                    </div>
+                </li>
+                <li>
+                    <p>系統</p>
+                    <div>
+                        <div>
+                            <p>版本控制</p>
+                            <p>bda250fedd78823cf53754264394ce23fd951a0a</p>
+                        </div>
+                    </div>
+                </li>
+            </ul>
         </div>
     </div>
 </body>

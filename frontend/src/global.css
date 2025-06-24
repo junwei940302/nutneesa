@@ -33,8 +33,8 @@ body{
     display: flex;
     justify-content: center;
     align-items: center;
-    left: calc(100% - 100px);
-    top: calc(100vh - 100px);
+    left: calc(100% - 75px);
+    top: calc(100vh - 75px);
     cursor: pointer;
     z-index: 9997;
 }

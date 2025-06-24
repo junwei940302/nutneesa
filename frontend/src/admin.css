@@ -1,0 +1,39 @@
+.content{
+    position: relative;
+    width: 100%;
+    top: 75px;
+    height: fit-content;
+    justify-content: center;
+    display: grid;
+}
+
+.topController{
+    width: 100%;
+    height: fit-content;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    padding: 20px 0 20px 0;
+    gap: 20px;
+}
+
+.topController select, .topController button{
+    border: 1px solid #645038;
+    border-radius: 5px;
+    background-color: transparent;
+    height: 20px;
+    width: 150px;
+    cursor: pointer;
+}
+
+.panel{
+    width: 100%;
+    height: fit-content;
+    display: grid;
+    gap: 20px;
+    box-shadow: rgba(255, 255, 255, 0.8);
+}
+
+.panel ul{
+    list-style: none;
+}
