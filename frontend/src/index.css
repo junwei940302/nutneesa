@@ -59,3 +59,53 @@
     }
 
 }
+
+.infoCard{
+    width: 100%;
+    height: fit-content;
+}
+
+.infoCardContainer{
+    width: 100%;
+    height: fit-content;
+    box-shadow: inset rgba(255, 255, 255, 0.8);
+}
+
+.news-item{
+    width: 100%;
+    height: fit-content;
+    display: flex;
+    align-items: center;
+}
+
+.important, .information, .activity, .member{
+    display: flex;
+    align-items: center;
+    border-radius: 10px;
+    padding: 5px 10px 5px 10px;;
+}
+
+.important p, .information p, .activity p, .member p{
+    margin: 0;
+}
+
+.important{
+    color: red;
+    border: 1px solid red;
+}
+
+.information{
+    color: blue;
+    border: 1px solid blue;
+}
+
+.activity{
+    color: orange;
+    border: 1px solid orange;
+}
+
+.member{
+    color: red;
+    background-color: orange;
+    border: 1px solid red;
+}
