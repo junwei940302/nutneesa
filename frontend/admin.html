@@ -61,12 +61,21 @@
             <button class="logoutBtn" title="logoutBtn" style="color: red;">登出管理系統｜LogOut</button>
         </div>
         <div class="panel" data-dashboard>
-            <p>控制中心｜Dashboard</p>
             <ul>
                 <li>
-                    <p>最新消息控制項</p>
+                    <h3>最新消息控制項</h3>
                     <div>
                         <div>
+                            <select class="newsType" title="消息類型">
+                                <option>重要資訊</option>
+                                <option>系會資訊</option>
+                                <option>活動快訊</option>
+                                <option>會員專屬</option>
+                            </select>
+                            <input type="text" placeholder="消息內容" required>
+                            <input type="checkbox" class="publishNowCheckbox" title="立即發布" checked>
+                            立即發布消息
+                            <input type="datetime-local" class="arrangePublish" title="排程發布" disabled>
                             <button class="addNews" title="addNews">新增消息</button>
                         </div>
                         <table>
@@ -86,10 +95,9 @@
             </ul>
         </div>
         <div class="panel" data-history>
-            <p>歷史紀錄｜History</p>
             <ul>
                 <li>
-                    <p>未發現異狀</p>
+                    <h3>安全性告警</h3>
                     <div>
                         <table>
                             <thead>
@@ -108,10 +116,9 @@
             </ul>
         </div>
         <div class="panel" data-members>
-            <p>會員管理｜Members</p>
             <ul>
                 <li>
-                    <p>會員列表</p>
+                    <h3>會員列表</h3>
                     <div>
                         <div>
                             <button class="addNews" title="addNews">手動新增會員</button>
@@ -136,35 +143,34 @@
             </ul>
         </div>
         <div class="panel" data-flow>
-            <p>金流管理｜Flow</p>
             <ul>
                 <li>
-                    <p>帳目控制</p>
+                    <h3>帳目控制</h3>
                     <div>
                         <div>
                             <p>手動新增</p>
-                            <select title="incomeAndOutcome">
+                            <select class="incomeAndOutcome" title="incomeAndOutcome">
                                 <option>收入｜Income</option>
                                 <option>支出｜Outcome</option>
                                 <option>轉帳｜Transfer</option>
                             </select>
-                            <select title="incomeType">
+                            <select class="incomeType" title="incomeType">
                                 <option>系學會費收入</option>
                                 <option>廠商贊助</option>
                             </select>
-                            <select title="outcomeType" hidden>
+                            <select class="outcomeType" title="outcomeType" hidden>
                                 <option>一般常備用品</option>
                                 <option>交通支出</option>
                                 <option>設備維護</option>
                             </select>
-                            <div title="transferType" hidden>
+                            <div class="transferType" title="transferType" hidden>
                                 From
-                                <select title="transferFrom">
+                                <select class="transferFrom" title="transferFrom">
                                     <option>郵局</option>
                                     <option>社辦保險箱</option>
                                 </select>
                                 To
-                                <select title="transferTo">
+                                <select class="transferTo" title="transferTo">
                                     <option>郵局</option>
                                     <option>社辦保險箱</option>
                                 </select>
@@ -180,7 +186,7 @@
                     </div>
                 </li>
                 <li>
-                    <p>金流列表</p>
+                    <h3>金流列表</h3>
                     <div>
                         <div>
                             <input type="text" placeholder="搜尋金流">
@@ -204,10 +210,9 @@
             </ul>
         </div>
         <div class="panel" data-settings>
-            <p>偏好設定｜Settings</p>
             <ul>
                 <li>
-                    <p>安全性控制項</p>
+                    <h3>安全性控制項</h3>
                     <div>
                         <div>
                             <p>新增SSO憑證（單一無密碼登入驗證）</p>
@@ -216,11 +221,15 @@
                     </div>
                 </li>
                 <li>
-                    <p>系統</p>
+                    <h3>系統</h3>
                     <div>
                         <div>
                             <p>版本控制</p>
                             <p>bda250fedd78823cf53754264394ce23fd951a0a</p>
+                        </div>
+                        <div>
+                            <p>上次更新</p>
+                            <p>202506251350</p>
                         </div>
                     </div>
                 </li>

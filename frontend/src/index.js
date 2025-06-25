@@ -20,3 +20,46 @@ document.addEventListener('DOMContentLoaded', function() {
     updateCountdown();
     setInterval(updateCountdown, 1000);
 });
+
+function getTypeClass(type) {
+    switch(type) {
+        case '重要通知':
+            return 'important';
+        case '活動快訊':
+            return 'activity';
+        case '會員專屬':
+            return 'member';
+        default:
+            return 'information';
+    }
+}
+
+function getTypeIcon(type) {
+    switch(type) {
+        case '重要通知':
+            return '<i class="fa-solid fa-circle-exclamation"></i>';
+        case '活動快訊':
+            return '<i class="fa-solid fa-gamepad"></i>';
+        case '會員專屬':
+            return '<i class="fa-solid fa-web-awesome"></i>';
+        default:
+            return '<i class="fa-solid fa-circle-info"></i>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const infoCard = document.querySelector('.infoCard');
+    try {
+        const res = await fetch(`${API_URL}/api/news`);
+        const newsList = await res.json();
+        infoCard.innerHTML = newsList.map(news => `
+            <div class="news-item">
+                <h3 class="${getTypeClass(news.type)}">${getTypeIcon(news.type)} ${news.type}</h3>
+                <p>${news.content}</p>
+                <div>發布日期: ${new Date(news.publishDate).toLocaleDateString()}</div>
+            </div>
+        `).join('');
+    } catch (err) {
+        infoCard.innerHTML = '<p>無法載入最新消息。</p>';
+    }
+});
