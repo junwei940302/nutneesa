@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./src/admin.css">
     <link rel="stylesheet" href="./src/global.css">
+    <script src="./src/env.js" defer></script>
     <script src="./src/admin.js" defer></script>
     <script src="./src/global.js" defer></script>
     <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
     <title>Admin Center｜NUTNEESA</title>
 </head>
 <body>
-    <div class="toTop" hidden>
+    <div class="toTop">
         <button class="getToTop" title="getToTop">
             <i class="fa-solid fa-chevron-up"></i>
         </button>
@@ -67,12 +68,12 @@
                     <div>
                         <div>
                             <select class="newsType" title="消息類型">
-                                <option>重要資訊</option>
+                                <option>重要通知</option>
                                 <option>系會資訊</option>
                                 <option>活動快訊</option>
                                 <option>會員專屬</option>
                             </select>
-                            <input type="text" placeholder="消息內容" required>
+                            <input type="text" placeholder="消息內容" id="newsContent" required>
                             <input type="checkbox" class="publishNowCheckbox" title="立即發布" checked>
                             立即發布消息
                             <input type="datetime-local" class="arrangePublish" title="排程發布" disabled>
@@ -85,10 +86,13 @@
                                     <th>序號</th>
                                     <th>消息類型</th>
                                     <th>消息內容</th>
+                                    <th>創建日期</th>
                                     <th>發布日期</th>
                                     <th>經手人</th>
+                                    <th>刪除</th>
                                 </tr>
                             </thead>
+                            <tbody class="news-table-body"></tbody>
                         </table>
                     </div>
                 </li>

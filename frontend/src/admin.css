@@ -36,15 +36,38 @@
     height: fit-content;
     display: flex;
     gap: 20px;
-    border: 1px solid #645038;
-    
 }
 
 .panel ul{
     list-style: none;
     display: grid;
+    width: 100%;
+    padding: 0;
 }
 
 .panel ul h3{
     font-weight: bolder;
+}
+
+@media (max-width: 550px){
+    .panel ul li div div{
+        display: grid;
+    }
+}
+
+table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+table th,
+table td {
+    border: 1px solid #645038;
+    padding: 8px;
+    text-align: left;
+}
+
+table th {
+    background-color: #f2f2f2;
 }

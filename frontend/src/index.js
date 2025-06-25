@@ -25,12 +25,14 @@ function getTypeClass(type) {
     switch(type) {
         case '重要通知':
             return 'important';
+        case '系會資訊':
+            return 'information';
         case '活動快訊':
             return 'activity';
         case '會員專屬':
             return 'member';
         default:
-            return 'information';
+            return type;
     }
 }
 
@@ -38,12 +40,14 @@ function getTypeIcon(type) {
     switch(type) {
         case '重要通知':
             return '<i class="fa-solid fa-circle-exclamation"></i>';
+        case '系會資訊':
+            return '<i class="fa-solid fa-circle-info"></i>';
         case '活動快訊':
             return '<i class="fa-solid fa-gamepad"></i>';
         case '會員專屬':
             return '<i class="fa-solid fa-web-awesome"></i>';
         default:
-            return '<i class="fa-solid fa-circle-info"></i>';
+            return type;
     }
 }
 
