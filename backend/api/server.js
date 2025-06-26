@@ -6,12 +6,29 @@ const News = require('./models/news');
 const History = require('./models/history');
 const Members = require('./models/members');
 const Flows = require('./models/flows');
+const crypto = require('crypto');
+const members = require('./models/members');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const MONGODB_URI = process.env.MONGODB_URI; // Placeholder for future MongoDB connection
 
-app.use(cors());
+// 解析環境變數成陣列
+const allowedOrigins = process.env.FRONTEND_URLS
+  ? process.env.FRONTEND_URLS.split(',').map(url => url.trim())
+  : [];
+
+app.use(cors({
+    origin: function(origin, callback){
+      // 允許本地測試時 origin 為 undefined
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
+    credentials: true
+}));
 app.use(express.json());
 
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -157,6 +174,71 @@ app.delete('/api/admin/members/:id', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: 'Failed to delete member' });
     }
+});
+
+function sha256(password) {
+    return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+// 註冊 API
+app.post('/api/register', async (req, res) => {
+    const { email, password, memberName, studentId, gender, departmentYear, phone } = req.body;
+    if (!email || !password) {
+        return res.json({ success: false, message: '請填寫所有欄位 / Please fill all fields.' });
+    }
+    try {
+        const exist = await Members.findOne({ email });
+        if (exist) {
+            return res.json({ success: false, message: 'Email 已註冊 / Email already registered.' });
+        }
+        let targetRole = departmentYear && departmentYear.includes('電機') ? '本系會員' : '非本系會員';
+        const hashed = sha256(password);
+        const member = new Members({
+            role: targetRole,
+            name: memberName,
+            status: '待驗證',
+            studentId,
+            gender,
+            email,
+            phone,
+            departmentYear,
+            registerDate: new Date(),
+            lastOnline: new Date(),
+            cumulativeConsumption: 0,
+            verification: false,
+            password: hashed
+        });
+        await member.save();
+        res.json({ success: true, message: '註冊成功 / Register success!' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: '伺服器錯誤 / Server error.' });
+    }
+});
+
+// 登入 API
+app.post('/api/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.json({ success: false, message: '請輸入帳號密碼 / Please enter email and password.' });
+    }
+    try {
+        const hashed = sha256(password);
+        const member = await Members.findOne({ email, password: hashed });
+        if (!member) {
+            return res.json({ success: false, message: '帳號或密碼錯誤 / Invalid email or password.' });
+        }
+        member.lastOnline = new Date();
+        await member.save();
+        res.json({ success: true, message: '登入成功 / Login success!', role: member.role });
+    } catch (err) {
+        res.status(500).json({ success: false, message: '伺服器錯誤 / Server error.' });
+    }
+});
+
+// 登出 API
+app.post('/api/logout', (req, res) => {
+    res.clearCookie('token');
+    res.json({ success: true, message: '已登出 / Logged out' });
 });
 
 app.listen(PORT, () => {

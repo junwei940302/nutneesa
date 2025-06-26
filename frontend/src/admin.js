@@ -1,3 +1,8 @@
+// 登入檢查，未登入則導回 login.html
+if (localStorage.getItem('isAdminLogin') !== 'true') {
+    window.location.href = 'login.html';
+}
+
 //介面控制
 const funcPicker = document.querySelector('.funcPicker');
 const panels = {
@@ -375,4 +380,10 @@ showFlowOption(incomeAndOutcome.value);
 // 監聽選擇變更
 incomeAndOutcome.addEventListener('change', function() {
     showFlowOption(this.value);
+});
+
+const logoutBtn = document.querySelector('.logoutBtn');
+logoutBtn.addEventListener('click', function() {
+    localStorage.removeItem('isAdminLogin');
+    window.location.href = 'login.html';
 });

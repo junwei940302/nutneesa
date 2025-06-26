@@ -15,7 +15,7 @@
 .nextActivity{
     position: relative;
     width: 100%;
-    height: calc(95vh - 75px);
+    height: calc(100vh - 75px);
     display: grid;
     justify-content: center;
     align-items: center;

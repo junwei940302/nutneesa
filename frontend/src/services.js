@@ -26,3 +26,12 @@ showInfoCard(serviceSelector.value);
 serviceSelector.addEventListener('change', function() {
     showInfoCard(this.value);
 });
+
+// 登出功能
+const logoutBtn = document.querySelector('.logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+        await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+        window.location.reload();
+    });
+}

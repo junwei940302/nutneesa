@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./src/index.css">
+    <link rel="stylesheet" href="./src/login.css">
     <link rel="stylesheet" href="./src/global.css">
     <script src="./src/env.js" defer></script>
-    <script src="./src/index.js" defer></script>
+    <script src="./src/login.js" defer></script>
     <script src="./src/global.js" defer></script>
     <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
     <title>電機系系學會EESA｜國立臺南大學NUTN</title>
@@ -51,20 +51,45 @@
         </div>
     </div>
     <div class="content">
-        <div class="nextActivity">
-            <video class="bg-video" autoplay muted loop playsinline>
-                <source src="./assets/media/[無料映像素材]　星空・流れ星・夜空　 Starry sky03　[フリー動画素材].mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-            <div class="countdown">
-                <h1>00天00時00分00秒</h1>
+        <div class="login-register-panel">
+            <div class="tab-buttons">
+                <button id="loginTab" class="active">登入 Login</button>
+                <button id="registerTab">註冊 Register</button>
             </div>
-            <div class="cardTitle">
-                <h2>117級迎新活動</h2>
-                <p>2025/09/18（四）18:00｜文薈樓J303</p>
-            </div>
+            <form id="loginForm" class="form-panel">
+                <label for="loginEmail">電子郵件</label>
+                <input type="email" id="loginEmail" required>
+                <label for="loginPassword">密碼</label>
+                <input type="password" id="loginPassword" required>
+                <button type="submit">登入 Login</button>
+                <div class="form-message" id="loginMessage"></div>
+            </form>
+            <form id="registerForm" class="form-panel" style="display:none;">
+                <label for="registerEmail">電子郵件</label>
+                <input type="email" id="registerEmail" required>
+                <label for="registerPassword">密碼</label>
+                <input type="password" id="registerPassword" required>
+                <label for="registerConfirm">確認密碼</label>
+                <input type="password" id="registerConfirm" required>
+                <label for="name">姓名</label>
+                <input type="text" id="name" required>
+                <label for="studentId">學號</label>
+                <input type="text" id="studentId" required>
+                <label for="gender">生理性別</label>
+                <select id="gender">
+                    <option>生理男</option>
+                    <option>生理女</option>
+                    <option>不方便透露</option>
+                    <option>其他</option>
+                </select>
+                <label for="departmentYear">系級（例如：電機三）</label>
+                <input type="text" id="departmentYear" required>
+                <label for="phone">電話（非必填）</label>
+                <input type="tel" id="phone">
+                <button type="submit">註冊 Register</button>
+                <div class="form-message" id="registerMessage"></div>
+            </form>
         </div>
-        <div class="infoCard"></div>
     </div>
 </body>
 </html>

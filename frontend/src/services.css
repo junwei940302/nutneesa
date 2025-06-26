@@ -3,4 +3,50 @@
     width: 100%;
     top: 75px;
     height: fit-content;
+    display: grid;
+    justify-content: center;
+}
+
+.serviceSelector{
+    margin: 20px auto;
+    display: block;
+    width: 30vw;
+    min-width: 200px;
+    height: 50px;
+    padding: 0 1.5em 0 1em;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 12px;
+    background: #fff;
+    color: #222;
+    font-size: 1.1rem;
+    font-family: inherit;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    appearance: none;
+    outline: none;
+    transition: border 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    /* Custom arrow (optional, for modern look) */
+    background-image: url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 20 20' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7.293 7.293a1 1 0 011.414 0L10 8.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 1em center;
+    background-size: 1.2em;
+}
+
+.serviceSelector:focus, .serviceSelector:hover {
+    border: 1.5px solid #bdbdbd;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+@media (max-width: 600px) {
+    .serviceSelector {
+        font-size: 1rem;
+    }
+}
+
+.infoCard[data-freshman] div img{
+    width: 100%;
+}
+
+.infoCard div{
+    width: 80vw;
 }

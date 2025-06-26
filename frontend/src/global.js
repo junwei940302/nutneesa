@@ -17,3 +17,23 @@ menuBtn.addEventListener('click', function() {
         isFoldMenu = true;
     }
 });
+
+// Go to Top 功能
+const toTopDiv = document.querySelector('.toTop');
+const getToTopBtn = document.querySelector('.getToTop');
+
+// 顯示/隱藏 .toTop 按鈕
+window.addEventListener('scroll', function() {
+    if (window.scrollY > 200) {
+        toTopDiv.classList.remove('hidden');
+    } else {
+        toTopDiv.classList.add('hidden');
+    }
+});
+
+// 點擊按鈕回到頂部
+getToTopBtn.addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// 請確保 .toTop 元素在 HTML 初始有 'hidden' class，例如：<div class="toTop hidden">...</div>
