@@ -66,8 +66,15 @@ table td {
     border: 1px solid #645038;
     padding: 8px;
     text-align: left;
+    min-width: 80px;
 }
 
 table th {
     background-color: #f2f2f2;
+}
+
+.table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    max-width: 100vw;
 }

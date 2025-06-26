@@ -106,6 +106,59 @@ app.delete('/api/admin/news/:id', async (req, res) => {
     }
 });
 
+// 新增會員列表 API
+app.get('/api/admin/members', async (req, res) => {
+    try {
+        const membersList = await Members.find({});
+        res.json(membersList);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch members' });
+    }
+});
+
+// 新增會員 API
+app.post('/api/admin/members', async (req, res) => {
+    try {
+        const { role, name, status, studentId, departmentYear, email, phone, gender, verification } = req.body;
+        if (!name) {
+            return res.status(400).json({ error: 'Name is required' });
+        }
+        const newMember = new Members({
+            role: role || '本系會員',
+            name,
+            status: status || '待驗證',
+            studentId: studentId || '',
+            departmentYear: departmentYear || '',
+            email: email || '',
+            phone: phone || '',
+            gender: gender || '其他',
+            verification: verification !== undefined ? verification : false,
+            registerDate: new Date(),
+            lastOnline: new Date(),
+            cumulativeConsumption: 0,
+        });
+        await newMember.save();
+        res.status(201).json(newMember);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to add member' });
+    }
+});
+
+// 註銷 API
+app.delete('/api/admin/members/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedMember = await Members.findByIdAndDelete(id);
+        if (!deletedMember) {
+            return res.status(404).json({ error: 'Member not found' });
+        }
+
+        res.status(204).send();
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete member' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     console.log(`MongoDB URI: ${MONGODB_URI ? 'Loaded' : 'Not set'}`);

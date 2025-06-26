@@ -1,10 +1,12 @@
 const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const membersSchema = new mongoose.Schema({
-    _id: ObjectId,
+const membersSchema = new Schema({
+    memberId: { type: Schema.Types.ObjectId },
     role: String,
     name: String,
-    studentID: String,
+    status: String,
+    studentId: String,
     gender: String,
     email: String,
     phone: String,

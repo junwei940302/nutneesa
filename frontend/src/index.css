@@ -1,3 +1,10 @@
+@font-face {
+    font-family: 'SoukouMincho';
+    src: url('../assets/fonts/SoukouMincho.ttf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 .content{
     position: relative;
     width: 100%;
@@ -8,61 +15,93 @@
 .nextActivity{
     position: relative;
     width: 100%;
-    height: calc(100vh - 75px);
+    height: calc(95vh - 75px);
     display: grid;
     justify-content: center;
     align-items: center;
-    background-image: url('../assets/images/White-noise.gif');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    gap: 0;
+}
+
+.bg-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.nextActivity > *:not(.bg-video) {
+    position: relative;
+    z-index: 1;
 }
 
 .countdown h1{
-    font-family: 'ToronoGlitchMinchoH1', sans-serif;
-    color: white;
-    font-size: 5rem;
-    margin: 0;
-}
-
-.cardTitle h1{
-    font-family: 'ToronoGlitchMinchoH1', sans-serif;
+    font-family: 'SoukouMincho', sans-serif;
     color: white;
     font-size: 5rem;
     margin: 0;
 }
 
 .cardTitle h2{
-    font-family: 'ToronoGlitchMinchoH1', sans-serif;
+    font-family: 'SoukouMincho', sans-serif;
     color: white;
     font-size: 3rem;
 }
 
 .cardTitle p{
-    font-family: 'ToronoGlitchMinchoH1', sans-serif;
+    font-family: 'SoukouMincho', sans-serif;
     color: white;
     font-size: 1rem;
 }
 
 @media (max-width: 740px) {
 
-    .countdown h1{
+    .countdown h1, .cardTitle h1{
         font-size: 4rem;
     }
 
+    .cardTitle h2{
+        font-size: 2rem;
+    }
 }
 
 @media (max-width: 600px) {
 
-    .countdown h1{
+    .countdown h1, .cardTitle h1{
         font-size: 3rem;
     }
+}
 
+@media (max-width: 500px) {
+
+    .countdown h1, .cardTitle h1{
+        font-size: 2rem;
+    }
+
+    .cardTitle h2{
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 300px) {
+
+    .countdown h1, .cardTitle h1{
+        font-size: 1rem;
+    }
+
+    .cardTitle p{
+        font-size: 0.5rem;
+    }
 }
 
 .infoCard{
     width: 100%;
     height: fit-content;
+    display: grid;
+    justify-content: center;
 }
 
 .infoCardContainer{
@@ -78,15 +117,21 @@
     align-items: center;
 }
 
+.news-item p{
+    margin: 0 10px 0 10px;
+}
+
 .important, .information, .activity, .member{
     display: flex;
     align-items: center;
     border-radius: 10px;
     padding: 5px 10px 5px 10px;;
+    min-width: 80px;
+    justify-content: center;
 }
 
 .important p, .information p, .activity p, .member p{
-    margin: 0;
+    margin: 10px 0 10px 0;
 }
 
 .important{

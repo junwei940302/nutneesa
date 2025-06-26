@@ -43,34 +43,6 @@ publishNowCheckbox.addEventListener('change', function() {
     arrangePublish.disabled = this.checked;
 });
 
-
-//金流管理Flow
-
-const incomeAndOutcome = document.querySelector('.incomeAndOutcome');
-const flowOption = {
-    '收入｜Income': document.querySelector('.incomeType'),
-    '支出｜Outcome': document.querySelector('.outcomeType'),
-    '轉帳｜Transfer': document.querySelector('.transferType'),
-};
-
-function showFlowOption(selected) {
-    Object.keys(flowOption).forEach(key => {
-        if (key === selected) {
-            flowOption[key].style.display = 'block';
-        } else {
-            flowOption[key].style.display = 'none';
-        }
-    });
-}
-
-// 初始化顯示
-showFlowOption(incomeAndOutcome.value);
-
-// 監聽選擇變更
-incomeAndOutcome.addEventListener('change', function() {
-    showFlowOption(this.value);
-});
-
 async function fetchNews() {
     try {
         const response = await fetch(`${API_URL}/api/admin/news`);
@@ -210,4 +182,197 @@ addNewsButton.addEventListener('click', async () => {
         console.error('Error adding news:', error);
         alert('新增消息失敗');
     }
+});
+
+//會員管理Members
+
+async function fetchMembers() {
+    try {
+        const response = await fetch(`${API_URL}/api/admin/members`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const members = await response.json();
+        populateMembersTable(members);
+    } catch (error) {
+        console.error('Failed to fetch members:', error);
+    }
+}
+
+function populateMembersTable(members) {
+    const tableBody = document.querySelector('.panel[data-members] .members-table-body');
+    if (!tableBody) {
+        console.error('Members table body not found');
+        return;
+    }
+
+    tableBody.innerHTML = ''; // Clear existing rows
+
+    members.forEach((item, index) => {
+        const row = document.createElement('tr');
+        const registerDate = new Date(item.registerDate).toLocaleString('zh-TW');
+        const lastOnline = new Date(item.lastOnline).toLocaleString('zh-TW');
+
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${item._id}</td>
+            <td>${item.role}</td>
+            <td>${item.name}</td>
+            <td>${item.status}</td>
+            <td>${item.studentId}</td>
+            <td>${item.gender}</td>
+            <td>${item.email}</td>
+            <td>${item.phone}</td>
+            <td>${item.departmentYear}</td>
+            <td>${registerDate}</td>
+            <td>${lastOnline}</td>
+            <td>${item.cumulativeConsumption}</td>
+            <td>${item.verification}</td>
+            <td>
+                <button class="edit-member-btn" data-id="${item._id}">編輯</button>
+                <button class="revoke-member-btn" data-id="${item._id}">註銷</button>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+
+    // Add event listeners for revoke buttons
+    document.querySelectorAll('.revoke-member-btn').forEach(button => {
+        button.addEventListener('click', async (event) => {
+            const memberId = event.target.dataset.id;
+            if (confirm('確定要註銷該會員資格嗎？')) {
+                try {
+                    const response = await fetch(`${API_URL}/api/admin/members/${memberId}`, {
+                        method: 'DELETE',
+                    });
+                    if (!response.ok) throw new Error('Failed to revoke member');
+                    alert('會員已註銷');
+                    fetchMembers();
+                } catch (err) {
+                    alert('註銷失敗');
+                }
+            }
+        });
+    });
+
+    // Add event listeners for edit buttons
+    document.querySelectorAll('.edit-member-btn').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const memberId = event.target.dataset.id;
+            const member = members.find(m => m._id === memberId);
+            if (!member) return;
+            // 彈窗編輯表單
+            const newName = prompt('修改姓名', member.name);
+            if (newName === null) return;
+            const newEmail = prompt('修改Email', member.email);
+            if (newEmail === null) return;
+            const newPhone = prompt('修改電話', member.phone);
+            if (newPhone === null) return;
+            // 可擴充更多欄位
+            fetch(`${API_URL}/api/admin/members/${memberId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName, email: newEmail, phone: newPhone })
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to update member');
+                alert('會員資料已更新');
+                fetchMembers();
+            })
+            .catch(() => alert('更新失敗'));
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchMembers();
+});
+
+// 新增會員功能
+const addMemberButton = document.querySelector('.panel[data-members] .addNews');
+addMemberButton.addEventListener('click', async () => {
+    const role = document.querySelector('.memberRole').value;
+    const name = document.querySelector('.memberName').value;
+    const status = document.querySelector('.memberStatus').value;
+    const studentId = document.querySelector('.memberStudentId').value.toUpperCase();
+    const departmentYear = document.querySelector('.memberDepartmentYear').value;
+    const email = document.querySelector('.memberEmail').value.toLowerCase();
+    const phone = document.querySelector('.memberPhone').value;
+    const gender = document.querySelector('.memberGender').value;
+    const verification = document.querySelector('.memberVerification').checked;
+
+    if (!name) {
+        alert('姓名為必填！');
+        return;
+    }
+
+    const body = {
+        role,
+        name,
+        status,
+        studentId,
+        departmentYear,
+        email,
+        phone,
+        gender,
+        verification,
+    };
+
+    try {
+        const response = await fetch(`${API_URL}/api/admin/members`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to add member');
+        }
+        alert("新增會員成功：<"+departmentYear+" "+name+">");
+
+        // 清空表單
+        document.querySelector('.memberRole').value = '本系會員';
+        document.querySelector('.memberName').value = '';
+        document.querySelector('.memberStatus').value = '待驗證';
+        document.querySelector('.memberStudentId').value = '';
+        document.querySelector('.memberDepartmentYear').value = '';
+        document.querySelector('.memberEmail').value = '';
+        document.querySelector('.memberPhone').value = '';
+        document.querySelector('.memberGender').value = '生理男';
+        document.querySelector('.memberVerification').checked = true;
+
+        fetchMembers();
+    } catch (error) {
+        console.error('Error adding member:', error);
+        alert('新增會員失敗');
+    }
+});
+
+//金流管理Flow
+
+const incomeAndOutcome = document.querySelector('.incomeAndOutcome');
+const flowOption = {
+    '收入｜Income': document.querySelector('.incomeType'),
+    '支出｜Outcome': document.querySelector('.outcomeType'),
+    '轉帳｜Transfer': document.querySelector('.transferType'),
+};
+
+function showFlowOption(selected) {
+    Object.keys(flowOption).forEach(key => {
+        if (key === selected) {
+            flowOption[key].style.display = 'block';
+        } else {
+            flowOption[key].style.display = 'none';
+        }
+    });
+}
+
+// 初始化顯示
+showFlowOption(incomeAndOutcome.value);
+
+// 監聽選擇變更
+incomeAndOutcome.addEventListener('change', function() {
+    showFlowOption(this.value);
 });
