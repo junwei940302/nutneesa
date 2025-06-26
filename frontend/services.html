@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./src/services.css">
+    <link rel="stylesheet" href="./src/global.css">
+    <script src="./src/env.js" defer></script>
+    <script src="./src/services.js" defer></script>
+    <script src="./src/global.js" defer></script>
+    <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
+    <title>電機系系學會EESA｜國立臺南大學NUTN</title>
+</head>
+<body>
+    <div class="toTop" hidden>
+        <button class="getToTop" title="getToTop">
+            <i class="fa-solid fa-chevron-up"></i>
+        </button>
+    </div>
+    <div class="navBar">
+        <a class="navTitle" href="index.html">
+            <h3>國立臺南大學電機系系學會</h3>
+            <p>National University of Tainan Department of Electrical Engineering Student Association</p>
+        </a>
+        <div class="navIcon" hidden>  
+            <i class="fa-solid fa-bars"></i>
+        </div>
+        <div class="navItems">
+            <ul>
+                <li><a href="index.html">最新消息</a></li>
+                <li><a href="services.html">系會服務</a></li>
+                <li><a href="contact.html">接洽管道</a></li>
+                <li><a href="about.html">關於系會</a></li>
+            </ul>
+        </div>
+        <div class="mobileMenu" style="display: none;">
+            <ul>
+                <li><a href="index.html">最新消息</a></li>
+                <li><a href="services.html">系會服務</a></li>
+                <li><a href="contact.html">接洽管道</a></li>
+                <li><a href="about.html">關於系會</a></li>
+                <li>
+                    <a href="https://www.instagram.com/nutn_ee_116/?utm_source=ig_web_button_share_sheet">
+                        <img src="./assets/images/Instagram_icon.png">
+                    </a>
+                    <a href="https://www.instagram.com/nutn_ee_116/?utm_source=ig_web_button_share_sheet">
+                        <img src="./assets/images/images.png">
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="content">
+        <select class="serviceSelector" title="選擇服務">
+            <option>新生專區</option>
+            <option>會員相關服務</option>
+            <option>活動報名</option>
+            <option>活動相簿</option>
+            <option>大府城美食地圖</option>
+            <option>系會收支紀錄</option>
+            <option>系會會議紀錄</option>
+        </select>
+        <div class="infoCard" data-freshman>
+            <div>
+                <h2>以防你在學校走失</h2>
+            </div>
+            <div>
+                <h2>以防你在學校網站走失</h2>
+            </div>
+            <div>
+                <h2>對人生開個外掛</h2>
+            </div>
+            <div>
+                <h2>接下來四年</h2>
+            </div>
+            <div>
+                <h2>常見Q&A</h2>
+            </div>
+        </div>
+        <div class="infoCard" data-memberServices>
+            <div class="personalInfo">
+                <h2>個人資料</h2>
+                <img src="#" title="個人QRCode">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>會員編號</td>
+                            <td>N/A</td>
+                        </tr>
+                        <tr>
+                            <td>名稱</td>
+                            <td>N/A</td>
+                        </tr>
+                        <tr>
+                            <td>學號</td>
+                            <td>N/A</td>
+                        </tr>
+                        <tr>
+                            <td>性別</td>
+                            <td>N/A</td>
+                        </tr>
+                        <tr>
+                            <td>系級</td>
+                            <td>N/A</td>
+                        </tr>
+                        <tr>
+                            <td>電子郵件</td>
+                            <td>N/A</td>
+                        </tr>
+                        <tr>
+                            <td>電話</td>
+                            <td>N/A</td>
+                        </tr>
+                        <tr>
+                            <td>會員狀態</td>
+                            <td>N/A</td>
+                        </tr>
+                        <tr>
+                            <td>驗證狀態</td>
+                            <td>N/A</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="revokeMember" title="申請注銷帳號">申請注銷帳號</button>
+            </div>
+        </div>
+        <div class="infoCard" data-enroll>
+            <div class="activitySearcher">
+                <select class="activityStatus" title="活動狀態">
+                    <option selected>全部</option>
+                    <option>尚未開始</option>
+                    <option>開放報名</option>
+                    <option>活動進行中</option>
+                    <option>已結束</option>
+                </select>
+                <select class="activityType" title="活動類別">
+                    <option selected>全部</option>
+                    <option>#實習</option>
+                    <option>#賽事</option>
+                    <option>#聯合</option>
+                </select>
+                <input type="checkbox" title="免費活動">
+                免費活動
+            </div>
+            <div class="activityPanels"></div>
+        </div>
+        <div class="infoCard" data-photo>
+            
+        </div>
+        <div class="infoCard" data-map>
+
+        </div>
+        <div class="infoCard" data-flowHistory>
+            <div class="flowDashboard">
+                <div>
+                    <h3>本期總支出</h3>
+                    <p></p>
+                </div>
+                <div>
+                    <h3>本期總收入</h3>
+                    <p></p>
+                </div>
+                <div>
+                    <h3>累計總支出</h3>
+                    <p></p>
+                </div>
+                <div>
+                    <h3>累計總收入</h3>
+                    <p></p>
+                </div>
+                <div>
+                    <h3>郵局帳戶餘額</h3>
+                    <p></p>
+                </div>
+                <div>
+                    <h3>保險箱餘額</h3>
+                    <p></p>
+                </div>
+            </div>
+            <div class="flowList">
+                
+            </div>
+        </div>
+        <div class="infoCard" data-conferenceHistory>
+            
+        </div>
+    </div>
+</body>
+</html>

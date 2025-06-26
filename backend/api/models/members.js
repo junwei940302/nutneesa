@@ -14,7 +14,8 @@ const membersSchema = new Schema({
     registerDate: Date,
     lastOnline: Date,
     cumulativeConsumption: Number,
-    verification: Boolean
+    verification: Boolean,
+    password: String
 }, { collection: 'members' });
 
 module.exports = mongoose.model('Members', membersSchema);
