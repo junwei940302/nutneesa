@@ -39,6 +39,22 @@ app.get('/', (req, res) => {
     res.json({ message: 'API is running!' });
 });
 
+// Helper function for logging
+async function logHistory(req, operation) {
+    try {
+        await History.create({
+            alertDate: new Date(),
+            alertPath: req.originalUrl,
+            content: operation,
+            executer: req.cookies && req.cookies.token ? req.cookies.token : 'Unknown',
+            confirm: false,
+            securityChecker: 'N/A'
+        });
+    } catch (err) {
+        console.error('Failed to log history:', err);
+    }
+}
+
 // 新增 API 路由
 app.get('/api/news', async (req, res) => {
     try {
@@ -76,7 +92,7 @@ app.patch('/api/admin/news/:id', async (req, res) => {
         if (!updatedNews) {
             return res.status(404).json({ error: 'News not found' });
         }
-
+        await logHistory(req, `Update news visibility: ${id} to ${visibility}`);
         res.json(updatedNews);
     } catch (err) {
         res.status(500).json({ error: 'Failed to update news visibility' });
@@ -101,6 +117,7 @@ app.post('/api/admin/news', async (req, res) => {
         });
 
         await newNews.save();
+        await logHistory(req, `Create news: ${type} - ${content}`);
         res.status(201).json(newNews);
     } catch (err) {
         console.error(err);
@@ -116,7 +133,7 @@ app.delete('/api/admin/news/:id', async (req, res) => {
         if (!deletedNews) {
             return res.status(404).json({ error: 'News not found' });
         }
-
+        await logHistory(req, `Delete news: ${id}`);
         res.status(204).send();
     } catch (err) {
         res.status(500).json({ error: 'Failed to delete news' });
@@ -155,6 +172,7 @@ app.post('/api/admin/members', async (req, res) => {
             cumulativeConsumption: 0,
         });
         await newMember.save();
+        await logHistory(req, `Create member: ${name} (${email})`);
         res.status(201).json(newMember);
     } catch (err) {
         res.status(500).json({ error: 'Failed to add member' });
@@ -169,7 +187,7 @@ app.delete('/api/admin/members/:id', async (req, res) => {
         if (!deletedMember) {
             return res.status(404).json({ error: 'Member not found' });
         }
-
+        await logHistory(req, `Delete member: ${id}`);
         res.status(204).send();
     } catch (err) {
         res.status(500).json({ error: 'Failed to delete member' });
@@ -227,8 +245,26 @@ app.post('/api/login', async (req, res) => {
         if (!member) {
             return res.json({ success: false, message: '帳號或密碼錯誤 / Invalid email or password.' });
         }
+        const memberId = member._id;
         member.lastOnline = new Date();
         await member.save();
+        //正式部署
+        res.cookie('token', memberId, {
+            httpOnly: true,
+            sameSite: 'none',
+            secure: true,
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            path: '/'
+        });
+        //開發環境
+        /*
+        res.cookie('token', memberId, {
+            httpOnly: true,
+            sameSite: 'lax',
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            path: '/'
+        });
+        */
         res.json({ success: true, message: '登入成功 / Login success!', role: member.role });
     } catch (err) {
         res.status(500).json({ success: false, message: '伺服器錯誤 / Server error.' });
@@ -236,7 +272,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 // 登出 API
-app.post('/api/logout', (req, res) => {
+app.post('/api/logout', async (req, res) => {
     res.clearCookie('token');
     res.json({ success: true, message: '已登出 / Logged out' });
 });

@@ -19,6 +19,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     updateCountdown();
     setInterval(updateCountdown, 1000);
+
+    var video = document.querySelector('.bg-video');
+    function playVideoOnUserInteraction() {
+        if (video.paused) {
+            video.play();
+        }
+        // 只需要触发一次
+        document.removeEventListener('touchstart', playVideoOnUserInteraction);
+        document.removeEventListener('click', playVideoOnUserInteraction);
+    }
+    document.addEventListener('touchstart', playVideoOnUserInteraction);
+    document.addEventListener('click', playVideoOnUserInteraction);
 });
 
 function getTypeClass(type) {

@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const historySchema = new mongoose.Schema({
-    type: String,
     alertDate: Date,
-    alertOrigin: String,
+    alertPath: String,
     content: String,
+    executer: String,
     confirm: Boolean,
     securityChecker: String
 }, { collection: 'history' });

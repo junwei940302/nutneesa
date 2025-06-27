@@ -24,6 +24,11 @@ showInfoCard(serviceSelector.value);
 
 // 監聽選擇變更
 serviceSelector.addEventListener('change', function() {
+    if (this.value === '會員相關服務' && !hasLoginCookie()) {
+        alert('本服務需先登入');
+        window.location.href = 'login.html';
+        return;
+    }
     showInfoCard(this.value);
 });
 
@@ -34,4 +39,8 @@ if (logoutBtn) {
         await fetch('/api/logout', { method: 'POST', credentials: 'include' });
         window.location.reload();
     });
+}
+
+function hasLoginCookie() {
+    return document.cookie.split(';').some(c => c.trim().startsWith('loginToken='));
 }
