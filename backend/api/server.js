@@ -248,23 +248,15 @@ app.post('/api/login', async (req, res) => {
         const memberId = member._id;
         member.lastOnline = new Date();
         await member.save();
-        //正式部署
+        
+        const isProduction = process.env.NODE_ENV === 'production';
         res.cookie('token', memberId, {
-            httpOnly: true,
-            sameSite: 'none',
-            secure: true,
-            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-            path: '/'
+        httpOnly: true,
+        sameSite: isProduction ? 'none' : 'lax',
+        secure: isProduction,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        path: '/'
         });
-        //開發環境
-        /*
-        res.cookie('token', memberId, {
-            httpOnly: true,
-            sameSite: 'lax',
-            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-            path: '/'
-        });
-        */
         res.json({ success: true, message: '登入成功 / Login success!', role: member.role });
     } catch (err) {
         res.status(500).json({ success: false, message: '伺服器錯誤 / Server error.' });
