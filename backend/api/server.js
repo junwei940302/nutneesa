@@ -245,17 +245,17 @@ app.post('/api/login', async (req, res) => {
         if (!member) {
             return res.json({ success: false, message: '帳號或密碼錯誤 / Invalid email or password.' });
         }
-        const memberId = member._id;
+        const memberId = member._id.toString();
         member.lastOnline = new Date();
         await member.save();
         
         const isProduction = process.env.NODE_ENV === 'production';
         res.cookie('token', memberId, {
-        httpOnly: true,
-        sameSite: isProduction ? 'none' : 'lax',
-        secure: isProduction,
-        expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        path: '/'
+            httpOnly: true,
+            sameSite: isProduction ? 'none' : 'lax',
+            secure: isProduction,
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            path: '/'
         });
         res.json({ success: true, message: '登入成功 / Login success!', role: member.role });
     } catch (err) {
