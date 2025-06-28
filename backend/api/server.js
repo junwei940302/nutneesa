@@ -8,6 +8,7 @@ const Members = require('./models/members');
 const Flows = require('./models/flows');
 const crypto = require('crypto');
 const members = require('./models/members');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -30,6 +31,7 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+app.use(cookieParser());
 
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('MongoDB connected!'))
@@ -267,6 +269,27 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/logout', async (req, res) => {
     res.clearCookie('token');
     res.json({ success: true, message: '已登出 / Logged out' });
+});
+
+// 新增 /api/me API，回傳登入狀態
+app.get('/api/me', async (req, res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    const token = req.cookies.token;
+    if (!token) return res.json({ loggedIn: false });
+    try {
+        const member = await Members.findById(token);
+        if (!member) return res.json({ loggedIn: false });
+        res.json({
+            loggedIn: true,
+            user: {
+                name: member.name,
+                email: member.email,
+                role: member.role
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ loggedIn: false, error: 'Server error' });
+    }
 });
 
 app.listen(PORT, () => {

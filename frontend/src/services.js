@@ -22,9 +22,19 @@ function showInfoCard(selected) {
 // 初始化顯示
 showInfoCard(serviceSelector.value);
 
+async function checkLogin() {
+    try {
+        const res = await fetch(`${API_URL}/api/me`, { credentials: 'include' });
+        const data = await res.json();
+        return data.loggedIn;
+    } catch {
+        return false;
+    }
+}
+
 // 監聽選擇變更
-serviceSelector.addEventListener('change', function() {
-    if (this.value === '會員相關服務' && !hasLoginCookie()) {
+serviceSelector.addEventListener('change', async function() {
+    if (this.value === '會員相關服務' && !(await checkLogin())) {
         alert('本服務需先登入');
         window.location.href = 'login.html';
         return;
@@ -39,8 +49,4 @@ if (logoutBtn) {
         await fetch('/api/logout', { method: 'POST', credentials: 'include' });
         window.location.reload();
     });
-}
-
-function hasLoginCookie() {
-    return document.cookie.split(';').some(c => c.trim().startsWith('token='));
 }
