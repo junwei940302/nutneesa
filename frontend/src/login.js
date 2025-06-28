@@ -42,7 +42,7 @@ loginForm.addEventListener('submit', async function(e) {
             message.textContent = '登入成功 / Login success!';
             if (data.role === '管理員' || data.role === '系學會人員') {
                 localStorage.setItem('isAdminLogin', 'true');
-                //window.location.href = 'admin.html';
+                window.location.href = 'admin.html';
             } else {
                 localStorage.removeItem('isAdminLogin');
                 window.location.href = 'services.html';

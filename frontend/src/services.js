@@ -42,5 +42,5 @@ if (logoutBtn) {
 }
 
 function hasLoginCookie() {
-    return document.cookie.split(';').some(c => c.trim().startsWith('loginToken='));
+    return document.cookie.split(';').some(c => c.trim().startsWith('token='));
 }
