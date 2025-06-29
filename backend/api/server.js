@@ -252,9 +252,9 @@ app.post('/api/login', async (req, res) => {
         await member.save();
         
         const isProduction = process.env.NODE_ENV === 'production';
-        const domain = isProduction ? process.env.FRONTEND_URLS :'localhost';
+        //const domain = isProduction ? process.env.FRONTEND_URLS :'localhost';
         res.cookie('token', memberId, {
-            domain: domain,
+            //domain: domain,
             httpOnly: true,
             sameSite: isProduction ? 'lax' : 'none',
             secure: isProduction,
