@@ -256,7 +256,7 @@ app.post('/api/login', async (req, res) => {
         res.cookie('token', memberId, {
             //domain: domain,
             httpOnly: true,
-            sameSite: isProduction ? 'lax' : 'none',
+            sameSite: isProduction ? 'none' : 'lax',
             secure: isProduction,
             expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
             path: '/'
