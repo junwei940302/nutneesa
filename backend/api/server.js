@@ -254,7 +254,7 @@ app.post('/api/login', async (req, res) => {
         const isProduction = process.env.NODE_ENV === 'production';
         res.cookie('token', memberId, {
             httpOnly: true,
-            sameSite: isProduction ? 'none' : 'strict',
+            sameSite: isProduction ? 'strict' : 'none',
             secure: isProduction,
             expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
             path: '/'
