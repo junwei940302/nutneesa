@@ -7,7 +7,7 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-require('dotenv').config();
+// require('dotenv').config();
 console.log('DEBUG MONGODB_URI:', process.env.MONGODB_URI);
 
 const {onRequest} = require("firebase-functions/v2/https");
