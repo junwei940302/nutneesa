@@ -1,7 +1,17 @@
 // 登入檢查，未登入則導回 login.html
-if (localStorage.getItem('isAdminLogin') !== 'true') {
-    window.location.href = 'login.html';
-}
+fetch(`${API_URL}/api/me`, { credentials: 'include' })
+  .then(res => res.json())
+  .then(data => {
+    if (!data.loggedIn) {
+      window.location.href = 'login.html';
+      return;
+    }
+    // data.user 裡有 name, email, role
+    const identityPanel = document.querySelector('.identityPanel');
+    identityPanel.innerHTML = `<p>當前登入身份：${data.user.role} ${data.user.name}</p>`;
+    identityPanel.classList.remove('unauthorize');
+    identityPanel.classList.add('authorized');
+  });
 
 //介面控制
 const funcPicker = document.querySelector('.funcPicker');
@@ -385,5 +395,22 @@ incomeAndOutcome.addEventListener('change', function() {
 const logoutBtn = document.querySelector('.logoutBtn');
 logoutBtn.addEventListener('click', function() {
     localStorage.removeItem('isAdminLogin');
+    fetch(`${API_URL}/api/logout`, {
+        method: 'POST',
+        credentials: 'include'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('已登出 / Logged out');
+        } else {
+            console.error('登出失敗 / Logout failed:', data.message);
+            alert('登出失敗 / Logout failed');
+        }
+    })
+    .catch(error => {
+        console.error('登出時發生錯誤 / Error during logout:', error);
+        alert('登出時發生錯誤 / Error during logout');
+    });
     window.location.href = 'login.html';
 });

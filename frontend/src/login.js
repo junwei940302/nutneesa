@@ -1,3 +1,13 @@
+// 登入檢查，未登入則導回 login.html
+fetch(`${API_URL}/api/me`, { credentials: 'include' })
+  .then(res => res.json())
+  .then(data => {
+    if (data.loggedIn) {
+      window.location.href = 'services.html';
+      return;
+    }
+});
+
 // 切換登入/註冊面板
 const loginTab = document.getElementById('loginTab');
 const registerTab = document.getElementById('registerTab');

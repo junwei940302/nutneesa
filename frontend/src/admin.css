@@ -6,6 +6,20 @@
     display: grid;
 }
 
+.identityPanel{
+    display: flex;
+    margin-top: 30px;
+    justify-content: center;
+}
+
+.identityPanel.unauthorize{
+    color: red;
+}
+
+.identityPanel.authorized{
+    color: blue;
+}
+
 .topController{
     width: 100%;
     height: fit-content;

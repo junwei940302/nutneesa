@@ -254,7 +254,7 @@ app.post('/api/login', async (req, res) => {
         const isProduction = process.env.NODE_ENV === 'production';
         res.cookie('token', memberId, {
             httpOnly: true,
-            sameSite: isProduction ? 'none' : 'lax',
+            sameSite: isProduction ? 'none' : 'strict',
             secure: isProduction,
             expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
             path: '/'
@@ -282,8 +282,15 @@ app.get('/api/me', async (req, res) => {
         res.json({
             loggedIn: true,
             user: {
+                memberId: member._id,
                 name: member.name,
+                studentId: member.studentId,
+                gender: member.gender,
+                departmentYear: member.departmentYear,
                 email: member.email,
+                phone: member.phone,
+                status: member.status,
+                verification: member.verification,
                 role: member.role
             }
         });
@@ -294,5 +301,7 @@ app.get('/api/me', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-    console.log(`MongoDB URI: ${MONGODB_URI ? 'Loaded' : 'Not set'}`);
-}); 
+    console.log(`MongoDB URI: ${MONGODB_URI ? 'Loading' : 'Not set'}`);
+});
+
+module.exports = app; 
