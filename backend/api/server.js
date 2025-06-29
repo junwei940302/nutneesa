@@ -1,14 +1,14 @@
 // require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 const News = require('./models/news');
 const History = require('./models/history');
 const Members = require('./models/members');
 const Flows = require('./models/flows');
-const crypto = require('crypto');
 const members = require('./models/members');
-const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -252,9 +252,11 @@ app.post('/api/login', async (req, res) => {
         await member.save();
         
         const isProduction = process.env.NODE_ENV === 'production';
+        const domain = isProduction ? process.env.FRONTEND_URLS :'localhost';
         res.cookie('token', memberId, {
+            domain: domain,
             httpOnly: true,
-            sameSite: isProduction ? 'strict' : 'none',
+            sameSite: isProduction ? 'lax' : 'none',
             secure: isProduction,
             expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
             path: '/'
