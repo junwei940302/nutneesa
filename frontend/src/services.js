@@ -73,6 +73,10 @@ serviceSelector.addEventListener('change', async function() {
                 if (qrImg && user.memberId) {
                     qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(user.memberId)}`;
                 }
+                const verifyBtn = document.querySelector('.verifyEmail');
+                if(user.verification === false){
+                    verifyBtn.style.display = '';
+                }
             }
         }
     }

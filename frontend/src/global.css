@@ -8,7 +8,14 @@ body{
 
 @font-face {
     font-family: 'ToronoGlitchMinchoH1';
-    src: url('../assets/fonts/ToronoGlitch/瀞ノグリッチ明朝/瀞ノグリッチ明朝H4.otf') format('opentype');
+    src: url('../assets/fonts/GlitchSerifH4.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SoukouMincho';
+    src: url('../assets/fonts/SoukouMincho.ttf') format('opentype');
     font-weight: normal;
     font-style: normal;
 }
