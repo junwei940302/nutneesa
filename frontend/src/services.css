@@ -58,6 +58,13 @@
     list-style: none;
 }
 
+.infoCard[data-freshman] > div > div > ul {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0;
+}
+
 .infoCard div{
     width: 80vw;
 }
@@ -77,6 +84,56 @@
 
 .matlabKey.authorized{
     color: blue;
+}
+
+.infoCard[data-freshman] table {
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+}
+
+.infoCard[data-freshman] th,
+.infoCard[data-freshman] td {
+    border: 1px solid black;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.infoCard[data-freshman] caption {
+    caption-side: top;
+    font-weight: bold;
+    padding-bottom: 0.5rem;
+}
+
+.parkingTableContainer {
+    overflow-x: auto;
+    margin-top: 1rem;
+}
+
+.parking-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.parking-table th,
+.parking-table td {
+    white-space: nowrap;
+    padding: 8px;
+    text-align: center;
+    border: 1px solid black;
+}
+
+.parking-table th {
+    background-color: #f2f2f2;
+}
+
+.parking-table caption {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.parking-table i.fa-circle-check {
+    color: green;
 }
 
 .infoCard[data-memberServices] {
@@ -131,7 +188,7 @@
 .personalInfo td {
     padding: 0.5em 0.8em;
     font-size: 1em;
-    color: #645038;
+    color: black;
 }
 .personalInfo tr:nth-child(even) td {
     background: #F2F2F0;

@@ -39,7 +39,7 @@ showInfoCard(serviceSelector.value);
 
 async function checkLogin() {
     try {
-        const res = await fetch(`${API_URL}/api/me`, { credentials: 'include' });
+        const res = await fetch(`${API_URL}/api/me`, { credentials: 'include' ,});
         const data = await res.json();
         return data.loggedIn;
     } catch {
