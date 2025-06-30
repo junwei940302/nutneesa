@@ -44,7 +44,18 @@
 }
 
 .infoCard[data-freshman] div img{
-    width: 100%;
+    width: 50%;
+    min-width: 250px;
+}
+
+.infoCard[data-freshman] div div{
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+}
+
+.infoCard[data-freshman] div div ul{
+    list-style: none;
 }
 
 .infoCard div{
@@ -58,6 +69,14 @@
     border-left: 5px solid #645038;
     padding-left: 0.5em;
     font-family: 'SoukouMincho', serif;
+}
+
+.matlabKey.unauthorize{
+    color: red;
+}
+
+.matlabKey.authorized{
+    color: blue;
 }
 
 .infoCard[data-memberServices] {

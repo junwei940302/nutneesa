@@ -29,6 +29,11 @@ showInfoCard(serviceSelector.value);
         // 觸發 change 事件以載入會員資料與顯示卡片
         const event = new Event('change', { bubbles: true });
         serviceSelector.dispatchEvent(event);
+
+        const matlabKey = document.querySelector('.matlabKey');
+        matlabKey.innerHTML = '13550-01396-46365-69095-09126';
+        matlabKey.classList.remove('unauthorize');
+        matlabKey.classList.add('authorized');
     }
 })();
 
@@ -87,7 +92,7 @@ serviceSelector.addEventListener('change', async function() {
 const logoutBtn = document.querySelector('.logoutBtn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
-        await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+        await fetch(`${API_URL}/api/logout`, { method: 'POST', credentials: 'include' });
         window.location.reload();
     });
 }
