@@ -317,9 +317,7 @@ app.post('/api/login', async (req, res) => {
         await member.save();
         
         const isProduction = process.env.NODE_ENV === 'production';
-        //const domain = isProduction ? process.env.FRONTEND_URLS :'localhost';
         res.cookie('token', memberId, {
-            //domain: domain,
             httpOnly: true,
             sameSite: isProduction ? 'none' : 'lax',
             secure: isProduction,
@@ -334,7 +332,13 @@ app.post('/api/login', async (req, res) => {
 
 // 登出 API
 app.post('/api/logout', async (req, res) => {
-    res.clearCookie('token');
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.clearCookie('token', {
+        httpOnly: true,
+        sameSite: isProduction ? 'none' : 'lax',
+        secure: isProduction,
+        path: '/'
+    });
     res.json({ success: true, message: '已登出 / Logged out' });
 });
 

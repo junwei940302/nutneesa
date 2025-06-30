@@ -1,5 +1,5 @@
 // 登入檢查，未登入則導回 login.html
-fetch(`${API_URL}/api/me`, { credentials: 'include' })
+fetch(`${API_URL}/api/me`, { credentials: 'include', })
   .then(res => res.json())
   .then(data => {
     if (!data.loggedIn) {
