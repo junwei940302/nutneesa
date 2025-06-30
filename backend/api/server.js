@@ -1,4 +1,4 @@
-// require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -43,14 +43,16 @@ app.get('/', (req, res) => {
 
 // Helper function for logging
 async function logHistory(req, operation) {
+    const executer = await Members.findById(req.cookies.token);
+    
     try {
         await History.create({
             alertDate: new Date(),
             alertPath: req.originalUrl,
             content: operation,
-            executer: req.cookies && req.cookies.token ? req.cookies.token : 'Unknown',
+            executer: executer ? executer.name : 'Unknown',
             confirm: false,
-            securityChecker: 'N/A'
+            securityChecker: 'Uncheck'
         });
     } catch (err) {
         console.error('Failed to log history:', err);
@@ -109,10 +111,23 @@ app.post('/api/admin/news', async (req, res) => {
             return res.status(400).json({ error: 'Type and content are required' });
         }
 
+        let publisherName = 'N/A';
+        const token = req.cookies.token;
+        if (token) {
+            try {
+                const member = await Members.findById(token);
+                if (member) {
+                    publisherName = member.name;
+                }
+            } catch (err) {
+                console.error('Could not find publisher from token, using default. Error:', err.message);
+            }
+        }
+
         const newNews = new News({
             type,
             content,
-            publisher: 'Admin', // Placeholder for publisher
+            publisher: publisherName,
             createDate: new Date(),
             publishDate: publishDate ? new Date(publishDate) : new Date(),
             visibility: visibility !== undefined ? visibility : true,
@@ -193,6 +208,56 @@ app.delete('/api/admin/members/:id', async (req, res) => {
         res.status(204).send();
     } catch (err) {
         res.status(500).json({ error: 'Failed to delete member' });
+    }
+});
+
+// 新增歷史紀錄 API
+app.get('/api/admin/history', async (req, res) => {
+    try {
+        const historyList = await History.find({}).sort({ alertDate: -1 });
+        res.json(historyList);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch history' });
+    }
+});
+
+app.patch('/api/admin/history/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { confirm } = req.body;
+
+        if (typeof confirm !== 'boolean') {
+            return res.status(400).json({ error: 'Invalid confirm value' });
+        }
+
+        let securityCheckerName = 'Unknown';
+        const token = req.cookies.token;
+        if (token) {
+            try {
+                const member = await Members.findById(token);
+                if (member) {
+                    securityCheckerName = member.name;
+                }
+            } catch(err) {
+                console.error('Could not find member from token for security checker, using default. Error:', err.message);
+            }
+        }
+        
+        const updatedHistory = await History.findByIdAndUpdate(
+            id,
+            { 
+                confirm,
+                securityChecker: confirm ? securityCheckerName : 'Uncheck'
+            },
+            { new: true }
+        );
+
+        if (!updatedHistory) {
+            return res.status(404).json({ error: 'History record not found' });
+        }
+        res.json(updatedHistory);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update history' });
     }
 });
 
