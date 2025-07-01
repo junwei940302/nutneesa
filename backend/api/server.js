@@ -9,6 +9,7 @@ const History = require('./models/history');
 const Members = require('./models/members');
 const Flows = require('./models/flows');
 const members = require('./models/members');
+const session = require('express-session');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -32,6 +33,17 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(session({
+    secret: process.env.SESSION_SECRET || '9Q2X7M4LZ1T8B6J0R5K3V',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000
+    }
+}));
 
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('MongoDB connected!'))
@@ -43,7 +55,7 @@ app.get('/', (req, res) => {
 
 // Helper function for logging
 async function logHistory(req, operation) {
-    const executer = await Members.findById(req.cookies.token);
+    const executer = await Members.findById(req.session.userId);
     
     try {
         await History.create({
@@ -112,15 +124,15 @@ app.post('/api/admin/news', async (req, res) => {
         }
 
         let publisherName = 'N/A';
-        const token = req.cookies.token;
-        if (token) {
+        const userId = req.session.userId;
+        if (userId) {
             try {
-                const member = await Members.findById(token);
+                const member = await Members.findById(userId);
                 if (member) {
                     publisherName = member.name;
                 }
             } catch (err) {
-                console.error('Could not find publisher from token, using default. Error:', err.message);
+                console.error('Could not find publisher from session, using default. Error:', err.message);
             }
         }
 
@@ -231,15 +243,15 @@ app.patch('/api/admin/history/:id', async (req, res) => {
         }
 
         let securityCheckerName = 'Unknown';
-        const token = req.cookies.token;
-        if (token) {
+        const userId = req.session.userId;
+        if (userId) {
             try {
-                const member = await Members.findById(token);
+                const member = await Members.findById(userId);
                 if (member) {
                     securityCheckerName = member.name;
                 }
             } catch(err) {
-                console.error('Could not find member from token for security checker, using default. Error:', err.message);
+                console.error('Could not find member from session for security checker, using default. Error:', err.message);
             }
         }
         
@@ -315,15 +327,7 @@ app.post('/api/login', async (req, res) => {
         const memberId = member._id.toString();
         member.lastOnline = new Date();
         await member.save();
-        
-        const isProduction = process.env.NODE_ENV === 'production';
-        res.cookie('token', memberId, {
-            httpOnly: true,
-            sameSite: isProduction ? 'none' : 'lax',
-            secure: isProduction,
-            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-            path: '/'
-        });
+        req.session.userId = memberId;
         res.json({ success: true, message: '登入成功 / Login success!', role: member.role });
     } catch (err) {
         res.status(500).json({ success: false, message: '伺服器錯誤 / Server error.' });
@@ -332,23 +336,22 @@ app.post('/api/login', async (req, res) => {
 
 // 登出 API
 app.post('/api/logout', async (req, res) => {
-    const isProduction = process.env.NODE_ENV === 'production';
-    res.clearCookie('token', {
-        httpOnly: true,
-        sameSite: isProduction ? 'none' : 'lax',
-        secure: isProduction,
-        path: '/'
+    req.session.destroy(err => {
+        if (err) {
+            return res.status(500).json({ success: false, message: '登出失敗 / Logout failed' });
+        }
+        res.clearCookie('connect.sid');
+        res.json({ success: true, message: '已登出 / Logged out' });
     });
-    res.json({ success: true, message: '已登出 / Logged out' });
 });
 
 // 新增 /api/me API，回傳登入狀態
 app.get('/api/me', async (req, res) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    const token = req.cookies.token;
-    if (!token) return res.json({ loggedIn: false });
+    const userId = req.session.userId;
+    if (!userId) return res.json({ loggedIn: false });
     try {
-        const member = await Members.findById(token);
+        const member = await Members.findById(userId);
         if (!member) return res.json({ loggedIn: false });
         res.json({
             loggedIn: true,
