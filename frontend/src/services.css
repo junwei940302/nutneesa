@@ -69,7 +69,7 @@
     width: 80vw;
 }
 
-.infoCard div h2{
+.infoCard[data-freshman] div h2, .infoCard[data-memberServices] div h2{
     font-size: 1.6em;
     margin-bottom: 0.5em;
     color: #645038;
@@ -251,4 +251,217 @@
         font-size: 0.95em;
         padding: 0.5em 1em;
     }
+}
+
+.activitySearcher{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 32px;
+    gap: 10px;
+}
+
+.activityPanels {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    width: 100%;
+    justify-items: center;
+}
+
+.activityItem {
+    width: 100%;
+    background: #fff;
+    border: 1.5px solid #645038;
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(100, 80, 56, 0.10);
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+    max-height: 240px;
+    position: relative;
+}
+
+.activityItem:hover {
+    box-shadow: 0 8px 32px rgba(100, 80, 56, 0.18);
+    transform: translateY(-4px) scale(1.02);
+}
+
+.activityItem img {
+    height: 100%;
+    width: 40vw;
+    max-width: 320px;
+    object-fit: cover;
+    aspect-ratio: 4/3;
+    position: relative;
+    border-radius: 20px 0 0 20px;
+    transition: filter 0.3s;
+    filter: brightness(0.7);
+    /* 淡出遮罩 */
+    mask-image: linear-gradient(to right, black 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
+}
+
+.activityItem:hover img {
+    filter: brightness(1.05) saturate(1.1);
+}
+
+.textZone {
+    position: relative;
+    left: -40px;
+    margin-left: 20px;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 1.2em 1em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.textZone > h2,
+.textZone > .activityHashtag,
+.textZone > .activityContent {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.textZone h2 {
+    color: #645038;
+    font-family: 'SoukouMincho', serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.activityContent{
+    width: 100%;
+}
+
+.activityHashtag .hashtag {
+    display: inline-block;
+    background: #645038;
+    color: #fff;
+    border-radius: 8px;
+    padding: 0.1em 0.8em;
+    font-size: 0.95em;
+    margin-bottom: 0.1em;
+}
+
+.activityContent p {
+    height: 40px;
+    overflow-y: auto;
+}
+
+.activityPrice h3{
+    width: 100%;
+}
+
+.activityBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 1em;
+    min-width: 140px;
+    background: #fff;
+    border-left: 1.5px solid #645038;
+}
+
+.activityPrice h3 {
+    color: #645038;
+    font-size: 1.1em;
+    margin-bottom: 0.8em;
+}
+
+.enrollBtn {
+    background: #645038;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6em 1.5em;
+    border: 1px solid #645038;
+    font-size: 1em;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(100, 80, 56, 0.08);
+    cursor: pointer;
+}
+
+.enrollBtn:hover {
+    background: #fff;
+    color: #645038;
+    border: 1px solid #645038;
+}
+
+.readMore {
+    background: #fff;
+    color: #645038;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6em 1.5em;
+    border: 1px solid #645038;
+    font-size: 1em;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(100, 80, 56, 0.08);
+    cursor: pointer;
+}
+
+@media (max-width: 800px) {
+    .activityPanels {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    .activityItem {
+        max-width: 98vw;
+    }
+}
+
+@media (max-width: 500px) {
+
+    .textZone{
+        margin: 0;
+        left: 0;
+    }
+
+    .textZone h2{
+        margin: 0;
+    }
+
+    .activityItem img {
+        display: none;
+    }
+    
+    .activityContent{
+        display: block;
+        align-items: center;
+        justify-content: center;
+        
+    }
+
+    .activityContent p{
+        max-width: 100%;
+        height: 50px;
+    }
+
+    .activityPrice{
+        display: flex;
+        justify-content: center;
+        max-width: 100%;
+    }
+
+    .activityPrice h3{
+        width: calc(100% - 1.2em);
+        text-align: center;
+        margin-top: 0;
+    }    
+
+    .btnZone{
+        max-width: 100%;
+        display: flex;
+        justify-content: end;
+        gap: 10px;
+    } 
 }
