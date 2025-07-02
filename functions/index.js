@@ -112,7 +112,7 @@ async function logHistory(req, operation) {
  * 包含新聞相關的 API 路由。
  */
 // 新增 API 路由
-app.get("/api/news", async (req, res) => {
+app.get("/news", async (req, res) => {
   try {
     const newsList = await News.find({visibility: true}).sort({publishDate: -1});
     res.json(newsList);
@@ -121,7 +121,7 @@ app.get("/api/news", async (req, res) => {
   }
 });
 
-app.get("/api/admin/news", async (req, res) => {
+app.get("/admin/news", async (req, res) => {
   try {
     const newsList = await News.find({}).sort({publishDate: -1});
     res.json(newsList);
@@ -130,7 +130,7 @@ app.get("/api/admin/news", async (req, res) => {
   }
 });
 
-app.patch("/api/admin/news/:id", async (req, res) => {
+app.patch("/admin/news/:id", async (req, res) => {
   try {
     const {id} = req.params;
     const {visibility} = req.body;
@@ -155,7 +155,7 @@ app.patch("/api/admin/news/:id", async (req, res) => {
   }
 });
 
-app.post("/api/admin/news", async (req, res) => {
+app.post("/admin/news", async (req, res) => {
   try {
     const {type, content, publishDate, visibility} = req.body;
 
@@ -194,7 +194,7 @@ app.post("/api/admin/news", async (req, res) => {
   }
 });
 
-app.delete("/api/admin/news/:id", async (req, res) => {
+app.delete("/admin/news/:id", async (req, res) => {
   try {
     const {id} = req.params;
     const deletedNews = await News.findByIdAndDelete(id);
@@ -210,7 +210,7 @@ app.delete("/api/admin/news/:id", async (req, res) => {
 });
 
 // 新增會員列表 API
-app.get("/api/admin/members", async (req, res) => {
+app.get("/admin/members", async (req, res) => {
   try {
     const membersList = await Members.find({});
     res.json(membersList);
@@ -220,7 +220,7 @@ app.get("/api/admin/members", async (req, res) => {
 });
 
 // 新增會員 API
-app.post("/api/admin/members", async (req, res) => {
+app.post("/admin/members", async (req, res) => {
   try {
     const {role, name, status, studentId, departmentYear, email, phone, gender, verification} = req.body;
     if (!name) {
@@ -249,7 +249,7 @@ app.post("/api/admin/members", async (req, res) => {
 });
 
 // 註銷 API
-app.delete("/api/admin/members/:id", async (req, res) => {
+app.delete("/admin/members/:id", async (req, res) => {
   try {
     const {id} = req.params;
     const deletedMember = await Members.findByIdAndDelete(id);
@@ -264,7 +264,7 @@ app.delete("/api/admin/members/:id", async (req, res) => {
 });
 
 // 新增歷史紀錄 API
-app.get("/api/admin/history", async (req, res) => {
+app.get("/admin/history", async (req, res) => {
   try {
     const historyList = await History.find({}).sort({alertDate: -1});
     res.json(historyList);
@@ -273,7 +273,7 @@ app.get("/api/admin/history", async (req, res) => {
   }
 });
 
-app.patch("/api/admin/history/:id", async (req, res) => {
+app.patch("/admin/history/:id", async (req, res) => {
   try {
     const {id} = req.params;
     const {confirm} = req.body;
@@ -322,7 +322,7 @@ function sha256(password) {
  * 包含活動相關的 API 路由。
  */
 // 註冊 API
-app.post("/api/register", async (req, res) => {
+app.post("/register", async (req, res) => {
   const {email, password, memberName, studentId, gender, departmentYear, phone} = req.body;
   if (!email || !password) {
     return res.json({success: false, message: "請填寫所有欄位 / Please fill all fields."});
@@ -357,7 +357,7 @@ app.post("/api/register", async (req, res) => {
 });
 
 // 登入 API
-app.post("/api/login", async (req, res) => {
+app.post("/login", async (req, res) => {
   const {email, password} = req.body;
   if (!email || !password) {
     return res.json({success: false, message: "請輸入帳號密碼 / Please enter email and password."});
@@ -379,7 +379,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 // 登出 API
-app.post("/api/logout", async (req, res) => {
+app.post("/logout", async (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       return res.status(500).json({success: false, message: "登出失敗 / Logout failed"});
@@ -390,7 +390,7 @@ app.post("/api/logout", async (req, res) => {
 });
 
 // 新增 /api/me API，回傳登入狀態
-app.get("/api/me", async (req, res) => {
+app.get("/me", async (req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   const userId = req.session.userId;
   if (!userId) return res.json({loggedIn: false});
@@ -421,7 +421,7 @@ app.get("/api/me", async (req, res) => {
  * API route handler: Events APIs
  */
 // 新增活動 API
-app.post("/api/admin/events", async (req, res) => {
+app.post("/admin/events", async (req, res) => {
   try {
     const {
       imgUrl,
@@ -481,7 +481,7 @@ app.post("/api/admin/events", async (req, res) => {
 });
 
 // 刪除活動 API
-app.delete("/api/admin/events/:id", async (req, res) => {
+app.delete("/admin/events/:id", async (req, res) => {
   try {
     const {id} = req.params;
     const deletedEvent = await Events.findByIdAndDelete(id);
@@ -496,7 +496,7 @@ app.delete("/api/admin/events/:id", async (req, res) => {
 });
 
 // 取得活動列表 API
-app.get("/api/admin/events", async (req, res) => {
+app.get("/admin/events", async (req, res) => {
   try {
     const eventsList = await Events.find({}).sort({createDate: -1});
     res.json(eventsList);
@@ -506,7 +506,7 @@ app.get("/api/admin/events", async (req, res) => {
 });
 
 // 新增 PATCH API for event visibility
-app.patch("/api/admin/events/:id", async (req, res) => {
+app.patch("/admin/events/:id", async (req, res) => {
   try {
     const {id} = req.params;
     const {visibility} = req.body;
@@ -532,7 +532,7 @@ app.patch("/api/admin/events/:id", async (req, res) => {
 });
 
 // 前台取得可見活動 API
-app.get("/api/events", async (req, res) => {
+app.get("/events", async (req, res) => {
   try {
     const eventsList = await Events.find({visibility: true}).sort({createDate: -1});
     res.json(eventsList);
