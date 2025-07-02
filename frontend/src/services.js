@@ -47,11 +47,29 @@ async function checkLogin() {
     }
 }
 
-// 動態載入活動報名卡片
+// 取得活動搜尋器控件
+const activitySearcher = document.querySelector('.activitySearcher');
+let activityStatusSelect, activityTypeSelect, freeOnlyCheckbox;
+if (activitySearcher) {
+    activityStatusSelect = activitySearcher.querySelector('.activityStatus');
+    activityTypeSelect = activitySearcher.querySelector('.activityType');
+    freeOnlyCheckbox = activitySearcher.querySelector('input[type="checkbox"]');
+}
+
+// 監聽搜尋器變化
+if (activitySearcher) {
+    [activityStatusSelect, activityTypeSelect, freeOnlyCheckbox].forEach(el => {
+        el.addEventListener('change', () => {
+            fetchAndRenderEvents();
+        });
+    });
+}
+
+// 動態載入活動報名卡片（加上篩選功能）
 async function fetchAndRenderEvents() {
     try {
         const res = await fetch(`${API_URL}/api/events`);
-        const events = await res.json();
+        let events = await res.json();
         // 取得會員狀態
         let memberStatus = null;
         try {
@@ -64,17 +82,42 @@ async function fetchAndRenderEvents() {
         const activityPanels = document.querySelector('.activityPanels');
         if (!activityPanels) return;
         activityPanels.innerHTML = '';
-        events.filter(e => e.visibility).forEach(event => {
+
+        // 取得篩選條件
+        let statusFilter = activityStatusSelect ? activityStatusSelect.value : '全部';
+        let typeFilter = activityTypeSelect ? activityTypeSelect.value : '全部';
+        let freeOnly = freeOnlyCheckbox ? freeOnlyCheckbox.checked : false;
+
+        // 篩選活動
+        events = events.filter(e => e.visibility);
+        if (statusFilter && statusFilter !== '全部') {
+            // 假設 event.status 有對應狀態，否則請調整這裡
+            events = events.filter(e => e.status === statusFilter);
+        }
+        if (typeFilter && typeFilter !== '全部') {
+            // 假設 event.hashtag 直接等於 #實習 這種格式
+            events = events.filter(e => e.hashtag === typeFilter);
+        }
+        if (freeOnly) {
+            // 會員或非會員價格皆為 0 視為免費
+            events = events.filter(e => (Number(e.memberPrice) || 0) === 0 && (Number(e.nonMemberPrice) || 0) === 0);
+        }
+
+        events.forEach(event => {
             // 限制條件
-            let hashtags = `<p class="hashtag event">${event.hashtag || ''}</p>`;
-            if (event.restrictDepartment) hashtags += `<p class="hashtag event">系別限制</p>`;
-            if (event.restrictYear) hashtags += `<p class="hashtag event">年級限制</p>`;
-            if (event.restrictMember) hashtags += `<p class="hashtag event">會員專屬</p>`;
+            let hashtags = '';
+            hashtags += `<p class="hashtag event">${event.hashtag || ''}</p>`;
+            if (event.status) {
+                hashtags += `<p class="hashtag status">${event.status}</p>`;
+            }
             if (event.restrictQuantity === 0) {
                 hashtags += `<p class="hashtag event">人數無上限</p>`;
             } else if (event.restrictQuantity > 0) {
                 hashtags += `<p class="hashtag event">${event.enrollQuantity || 0}/${event.restrictQuantity}</p>`;
             }
+            if (event.restrictDepartment) hashtags += `<p class="hashtag event">系別限制</p>`;
+            if (event.restrictYear) hashtags += `<p class="hashtag event">年級限制</p>`;
+            if (event.restrictMember) hashtags += `<p class="hashtag event">會員專屬</p>`;
             // 價格顯示邏輯
             let priceText = '';
             const nonMemberPrice = Number(event.nonMemberPrice) || 0;
@@ -109,7 +152,7 @@ async function fetchAndRenderEvents() {
                         </div>
                         <div class="btnZone">
                             <button class="readMore" title="了解詳情">了解詳情</button>
-                            <button class="enrollBtn" title="報名">報名</button>
+                            ${event.status === '開放報名' ? '<button class="enrollBtn" title="報名">報名</button>' : ''}
                         </div>
                     </div>
                 </div>

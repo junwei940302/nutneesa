@@ -11,7 +11,7 @@ fetch(`${API_URL}/api/me`, { credentials: 'include', })
     identityPanel.innerHTML = `<p>當前登入身份：${data.user.role} ${data.user.name}</p>`;
     identityPanel.classList.remove('unauthorize');
     identityPanel.classList.add('authorized');
-  });
+});
 
 //介面控制
 const funcPicker = document.querySelector('.funcPicker');

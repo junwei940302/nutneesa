@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const session = require('express-session');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const News = require('./models/news');
@@ -9,7 +10,6 @@ const History = require('./models/history');
 const Members = require('./models/members');
 const Flows = require('./models/flows');
 const members = require('./models/members');
-const session = require('express-session');
 const Events = require('./models/events');
 
 const app = express();
