@@ -19,7 +19,9 @@ const panels = {
     '控制中心｜Dashboard': document.querySelector('.panel[data-dashboard]'),
     '歷史紀錄｜History': document.querySelector('.panel[data-history]'),
     '會員管理｜Members': document.querySelector('.panel[data-members]'),
+    '活動管理｜Events': document.querySelector('.panel[data-events]'),
     '金流管理｜Flow': document.querySelector('.panel[data-flow]'),
+    '資源申請｜Apply': document.querySelector('.panel[data-apply]'),
     '偏好設定｜Settings': document.querySelector('.panel[data-settings]'),
 };
 
@@ -162,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchNews();
     fetchMembers();
     fetchHistory();
+    fetchEvents();
 });
 
 const addNewsButton = document.querySelector('.addNews');
@@ -496,3 +499,170 @@ logoutBtn.addEventListener('click', function() {
     });
     window.location.href = 'login.html';
 });
+
+// 活動管理Events
+const addEventButton = document.querySelector('.addEvent');
+addEventButton.addEventListener('click', async () => {
+    const imgUrl = document.querySelector('.eventImgUrl').value;
+    const title = document.querySelector('.eventTitle').value;
+    const hashtag = document.querySelector('.eventHashtag').value;
+    const status = document.querySelector('.eventStatus').value;
+    const content = document.querySelector('.eventContent').value;
+    const nonMemberPrice = Number(document.querySelector('.eventNonMemberPrice').value) || 0;
+    const memberPrice = Number(document.querySelector('.eventMemberPrice').value) || 0;
+    const eventDate = document.querySelector('.eventDate').value;
+    const restrictDepartment = document.querySelector('.restrictDepartment').value;
+    const restrictYear = document.querySelector('.restrictYear').value;
+    const restrictMember = document.querySelector('.restrictMember').checked;
+    const restrictQuantity = Number(document.querySelector('.restrictQuantity').value) || 0;
+
+    if (!title || !content || !eventDate) {
+        alert('活動標題、內文、日期為必填！');
+        return;
+    }
+
+    const body = {
+        imgUrl,
+        title,
+        hashtag,
+        status,
+        content,
+        nonMemberPrice,
+        memberPrice,
+        eventDate,
+        restrictDepartment,
+        restrictYear,
+        restrictMember,
+        restrictQuantity
+    };
+
+    try {
+        const response = await fetch(`${API_URL}/api/admin/events`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to add event');
+        }
+        alert('新增活動成功！');
+        // 清空表單
+        document.querySelector('.eventImgUrl').value = '';
+        document.querySelector('.eventTitle').value = '';
+        document.querySelector('.eventHashtag').value = '#聯合';
+        document.querySelector('.eventStatus').value = '開放報名';
+        document.querySelector('.eventContent').value = '';
+        document.querySelector('.eventNonMemberPrice').value = 0;
+        document.querySelector('.eventMemberPrice').value = 0;
+        document.querySelector('.eventDate').value = '';
+        document.querySelector('.restrictDepartment').value = '';
+        document.querySelector('.restrictYear').value = '';
+        document.querySelector('.restrictMember').checked = false;
+        document.querySelector('.restrictQuantity').value = 0;
+        // TODO: fetchEvents(); // 若有活動列表可刷新
+    } catch (error) {
+        console.error('Error adding event:', error);
+        alert('新增活動失敗');
+    }
+});
+
+// 取得活動列表並渲染
+async function fetchEvents() {
+    try {
+        const response = await fetch(`${API_URL}/api/admin/events`, {
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const events = await response.json();
+        populateEventsTable(events);
+    } catch (error) {
+        console.error('Failed to fetch events:', error);
+    }
+}
+
+function populateEventsTable(events) {
+    const tableBody = document.querySelector('.panel[data-events] .events-table-body');
+    if (!tableBody) {
+        console.error('Events table body not found');
+        return;
+    }
+    tableBody.innerHTML = '';
+    events.forEach((item, index) => {
+        const createDate = item.createDate ? new Date(item.createDate).toLocaleString('zh-TW') : '';
+        const eventDate = item.eventDate ? new Date(item.eventDate).toLocaleString('zh-TW') : '';
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input type="checkbox" class="event-visibility-checkbox" data-id="${item._id}" ${item.visibility ? 'checked' : ''}></td>
+            <td><a href="${item.imgUrl}" target="_blank">檢視圖片</a></td>
+            <td>${item.title || ''}</td>
+            <td>${item.hashtag || ''}</td>
+            <td>${item.status || ''}</td>
+            <td>${item.content || ''}</td>
+            <td>${item.nonMemberPrice || 0}</td>
+            <td>${item.memberPrice || 0}</td>
+            <td>${item.publisher || ''}</td>
+            <td>${createDate}</td>
+            <td>${eventDate}</td>
+            <td>${item.enrollQuantity || 0}</td>
+            <td>${item.restrictDepartment || ''}</td>
+            <td>${item.restrictYear || ''}</td>
+            <td>${item.restrictMember ? '是' : '否'}</td>
+            <td>${item.restrictQuantity || 0}</td>
+            <td><button class="delete-event-btn" data-id="${item._id}">刪除</button></td>
+        `;
+        tableBody.appendChild(row);
+    });
+    // 綁定可見性切換
+    document.querySelectorAll('.event-visibility-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (event) => {
+            const eventId = event.target.dataset.id;
+            const isVisible = event.target.checked;
+            updateEventVisibility(eventId, isVisible);
+        });
+    });
+    // 綁定刪除事件
+    document.querySelectorAll('.delete-event-btn').forEach(button => {
+        button.addEventListener('click', async (event) => {
+            const eventId = event.target.dataset.id;
+            if (confirm('確定要刪除此活動嗎？')) {
+                try {
+                    const response = await fetch(`${API_URL}/api/admin/events/${eventId}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                    });
+                    if (!response.ok) throw new Error('Failed to delete event');
+                    alert('活動已刪除');
+                    fetchEvents();
+                } catch (err) {
+                    alert('刪除失敗');
+                }
+            }
+        });
+    });
+}
+
+// 新增活動可見性 PATCH function
+async function updateEventVisibility(id, visibility) {
+    try {
+        const response = await fetch(`${API_URL}/api/admin/events/${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ visibility }),
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Failed to update event visibility');
+        }
+    } catch (error) {
+        console.error('Error updating event visibility:', error);
+        fetchEvents(); // 失敗時刷新
+    }
+}

@@ -10,6 +10,7 @@ const Members = require('./models/members');
 const Flows = require('./models/flows');
 const members = require('./models/members');
 const session = require('express-session');
+const Events = require('./models/events');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -372,6 +373,127 @@ app.get('/api/me', async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ loggedIn: false, error: 'Server error' });
+    }
+});
+
+// 新增活動 API
+app.post('/api/admin/events', async (req, res) => {
+    try {
+        const {
+            imgUrl,
+            title,
+            hashtag,
+            status,
+            content,
+            nonMemberPrice,
+            memberPrice,
+            eventDate,
+            enrollQuantity,
+            restrictDepartment,
+            restrictYear,
+            restrictMember,
+            restrictQuantity
+        } = req.body;
+
+        let publisherName = 'N/A';
+        const userId = req.session.userId;
+        if (userId) {
+            try {
+                const member = await Members.findById(userId);
+                if (member) {
+                    publisherName = member.name;
+                }
+            } catch (err) {
+                console.error('Could not find publisher from session, using default. Error:', err.message);
+            }
+        }
+
+        const newEvent = new Events({
+            visibility: false, // 預設不可見
+            imgUrl,
+            title,
+            hashtag,
+            status,
+            content,
+            nonMemberPrice,
+            memberPrice,
+            publisher: publisherName,
+            createDate: new Date(),
+            eventDate: eventDate ? new Date(eventDate) : undefined,
+            enrollQuantity: enrollQuantity || 0,
+            restrictDepartment,
+            restrictYear,
+            restrictMember,
+            restrictQuantity
+        });
+
+        await newEvent.save();
+        await logHistory(req, `Create event: ${title}`);
+        res.status(201).json(newEvent);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to create event' });
+    }
+});
+
+// 刪除活動 API
+app.delete('/api/admin/events/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedEvent = await Events.findByIdAndDelete(id);
+        if (!deletedEvent) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+        await logHistory(req, `Delete event: ${id}`);
+        res.status(204).send();
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete event' });
+    }
+});
+
+// 取得活動列表 API
+app.get('/api/admin/events', async (req, res) => {
+    try {
+        const eventsList = await Events.find({}).sort({ createDate: -1 });
+        res.json(eventsList);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch events' });
+    }
+});
+
+// 新增 PATCH API for event visibility
+app.patch('/api/admin/events/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { visibility } = req.body;
+
+        if (typeof visibility !== 'boolean') {
+            return res.status(400).json({ error: 'Invalid visibility value' });
+        }
+
+        const updatedEvent = await Events.findByIdAndUpdate(
+            id,
+            { visibility },
+            { new: true }
+        );
+
+        if (!updatedEvent) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+        await logHistory(req, `Update event visibility: ${id} to ${visibility}`);
+        res.json(updatedEvent);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update event visibility' });
+    }
+});
+
+// 前台取得可見活動 API
+app.get('/api/events', async (req, res) => {
+    try {
+        const eventsList = await Events.find({ visibility: true }).sort({ createDate: -1 });
+        res.json(eventsList);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch events' });
     }
 });
 

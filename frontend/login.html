@@ -58,34 +58,40 @@
             </div>
             <form id="loginForm" class="form-panel">
                 <label for="loginEmail">電子郵件</label>
-                <input type="email" id="loginEmail" required>
+                <input type="email" id="loginEmail" placeholder="電子郵件｜Email" required>
                 <label for="loginPassword">密碼</label>
-                <input type="password" id="loginPassword" required>
+                <input type="password" id="loginPassword" placeholder="密碼｜Password" required>
+                <p>
+                    登入即表示您已閱讀、理解並同意遵守本平台之《<a href="#" target="_blank">使用者條款</a>》及《<a href="#" target="_blank">個人資料使用聲明</a>》。若您不同意，請勿登入或使用本服務。
+                </p>
                 <button type="submit">登入 Login</button>
                 <div class="form-message" id="loginMessage"></div>
             </form>
             <form id="registerForm" class="form-panel" style="display:none;">
-                <label for="registerEmail">電子郵件</label>
-                <input type="email" id="registerEmail" required>
-                <label for="registerPassword">密碼</label>
-                <input type="password" id="registerPassword" required>
-                <label for="registerConfirm">確認密碼</label>
-                <input type="password" id="registerConfirm" required>
-                <label for="name">姓名</label>
-                <input type="text" id="name" required>
-                <label for="studentId">學號</label>
-                <input type="text" id="studentId" required>
-                <label for="gender">生理性別</label>
+                <label for="registerEmail">電子郵件*</label>
+                <input type="email" id="registerEmail" placeholder="電子郵件｜Email" required>
+                <label for="registerPassword">密碼*</label>
+                <input type="password" id="registerPassword" placeholder="密碼｜Password" required>
+                <label for="registerConfirm">確認密碼*</label>
+                <input type="password" id="registerConfirm" placeholder="確認密碼｜Confirm Password" required>
+                <label for="name">姓名*</label>
+                <input type="text" id="name" placeholder="姓名｜Name" required>
+                <label for="studentId">學號*</label>
+                <input type="text" id="studentId" placeholder="學號｜Student ID" required>
+                <label for="gender">生理性別*</label>
                 <select id="gender">
                     <option>生理男</option>
                     <option>生理女</option>
                     <option>不方便透露</option>
                     <option>其他</option>
                 </select>
-                <label for="departmentYear">系級（例如：電機三）</label>
-                <input type="text" id="departmentYear" required>
+                <label for="departmentYear">系級（例如：電機三）*</label>
+                <input type="text" id="departmentYear"  placeholder="系級｜Department & Year" required>
                 <label for="phone">電話（非必填）</label>
-                <input type="tel" id="phone">
+                <input type="tel" id="phone"  placeholder="電話｜Phone">
+                <p>
+                    註冊即表示您已閱讀、理解並同意遵守本平台之《<a href="#" target="_blank">使用者條款</a>》及《<a href="#" target="_blank">個人資料使用聲明</a>》。若您不同意，請勿註冊或使用本服務。
+                </p>
                 <button type="submit">註冊 Register</button>
                 <div class="form-message" id="registerMessage"></div>
             </form>

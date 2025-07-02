@@ -47,6 +47,80 @@ async function checkLogin() {
     }
 }
 
+// 動態載入活動報名卡片
+async function fetchAndRenderEvents() {
+    try {
+        const res = await fetch(`${API_URL}/api/events`);
+        const events = await res.json();
+        // 取得會員狀態
+        let memberStatus = null;
+        try {
+            const meRes = await fetch(`${API_URL}/api/me`, { credentials: 'include' });
+            const meData = await meRes.json();
+            if (meData.loggedIn && meData.user) {
+                memberStatus = meData.user.status;
+            }
+        } catch {}
+        const activityPanels = document.querySelector('.activityPanels');
+        if (!activityPanels) return;
+        activityPanels.innerHTML = '';
+        events.filter(e => e.visibility).forEach(event => {
+            // 限制條件
+            let hashtags = `<p class="hashtag event">${event.hashtag || ''}</p>`;
+            if (event.restrictDepartment) hashtags += `<p class="hashtag event">系別限制</p>`;
+            if (event.restrictYear) hashtags += `<p class="hashtag event">年級限制</p>`;
+            if (event.restrictMember) hashtags += `<p class="hashtag event">會員專屬</p>`;
+            if (event.restrictQuantity === 0) {
+                hashtags += `<p class="hashtag event">人數無上限</p>`;
+            } else if (event.restrictQuantity > 0) {
+                hashtags += `<p class="hashtag event">${event.enrollQuantity || 0}/${event.restrictQuantity}</p>`;
+            }
+            // 價格顯示邏輯
+            let priceText = '';
+            const nonMemberPrice = Number(event.nonMemberPrice) || 0;
+            const memberPrice = Number(event.memberPrice) || 0;
+            if (memberStatus === '生效中') {
+                if (memberPrice === 0) {
+                    priceText = '免費參與';
+                } else if (memberPrice === nonMemberPrice) {
+                    priceText = `新台幣 ${memberPrice} 元整`;
+                } else {
+                    priceText = `新台幣 ${memberPrice} 元整（已套用會員優惠）`;
+                }
+            } else {
+                if (nonMemberPrice === 0) {
+                    priceText = '免費參與';
+                } else {
+                    priceText = `新台幣 ${nonMemberPrice} 元整`;
+                }
+            }
+            // 卡片
+            const card = document.createElement('div');
+            card.className = 'activityItem';
+            card.innerHTML = `
+                <img src="${event.imgUrl}" title="活動插圖">
+                <div class="textZone">
+                    <h2>${event.title || ''}</h2>
+                    <div class="activityHashtag">${hashtags}</div>
+                    <div class="activityContent">
+                        <p>${event.content || ''}</p>
+                        <div class="activityPrice">
+                            <h3>${priceText}</h3>
+                        </div>
+                        <div class="btnZone">
+                            <button class="readMore" title="了解詳情">了解詳情</button>
+                            <button class="enrollBtn" title="報名">報名</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            activityPanels.appendChild(card);
+        });
+    } catch (err) {
+        console.error('活動載入失敗', err);
+    }
+}
+
 // 監聽選擇變更
 serviceSelector.addEventListener('change', async function() {
     if (this.value === '會員相關服務') {
@@ -84,9 +158,16 @@ serviceSelector.addEventListener('change', async function() {
                 }
             }
         }
+    } else if (this.value === '活動報名') {
+        await fetchAndRenderEvents();
     }
     showInfoCard(this.value);
 });
+
+// 若一開始就在活動報名頁也自動載入
+if (serviceSelector.value === '活動報名') {
+    fetchAndRenderEvents();
+}
 
 // 登出功能
 const logoutBtn = document.querySelector('.logoutBtn');

@@ -270,37 +270,34 @@
 }
 
 .activityItem {
+    position: relative;
+    display: flex;
+    align-items: stretch;
     width: 100%;
+    height: 240px;
+    overflow: hidden;
     background: #fff;
     border: 1.5px solid #645038;
     border-radius: 20px;
     box-shadow: 0 4px 24px rgba(100, 80, 56, 0.10);
-    display: flex;
-    flex-direction: row;
-    overflow: hidden;
-    transition: box-shadow 0.2s, transform 0.2s;
-    max-height: 240px;
-    position: relative;
+    transition: box-shadow 0.3s, transform 0.3s;
 }
 
 .activityItem:hover {
     box-shadow: 0 8px 32px rgba(100, 80, 56, 0.18);
     transform: translateY(-4px) scale(1.02);
+    transition: box-shadow 0.3s, transform 0.3s;
 }
 
 .activityItem img {
-    height: 100%;
-    width: 40vw;
-    max-width: 320px;
+    width: 70%;
+    height: 240px;
     object-fit: cover;
-    aspect-ratio: 4/3;
-    position: relative;
     border-radius: 20px 0 0 20px;
-    transition: filter 0.3s;
     filter: brightness(0.7);
-    /* 淡出遮罩 */
-    mask-image: linear-gradient(to right, black 70%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
+    mask-image: linear-gradient(to right, black 0%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 0%, transparent 100%);
+    z-index: 1;
 }
 
 .activityItem:hover img {
@@ -308,15 +305,20 @@
 }
 
 .textZone {
-    position: relative;
-    left: -40px;
-    margin-left: 20px;
-    flex: 1 1 0;
-    min-width: 0;
-    padding: 1.2em 1em;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 60%;
+    height: 100%;
+    z-index: 2;
+    background: rgba(255,255,255,0.7);
     display: flex;
     flex-direction: column;
     justify-content: center;
+    padding: 1.2em 2em;
+    box-sizing: border-box;
+    overflow: hidden;
+    padding-left: 30%;
 }
 
 .textZone > h2,
@@ -331,10 +333,16 @@
     font-family: 'SoukouMincho', serif;
     position: relative;
     overflow: hidden;
+    font-size: 18px;
 }
 
 .activityContent{
     width: 100%;
+}
+
+.activityHashtag{
+    display: flex;
+    gap: 5px;
 }
 
 .activityHashtag .hashtag {
@@ -371,6 +379,11 @@
     color: #645038;
     font-size: 1.1em;
     margin-bottom: 0.8em;
+}
+
+.btnZone{
+    display: flex;
+    gap: 5px;
 }
 
 .enrollBtn {
@@ -421,9 +434,26 @@
 
 @media (max-width: 500px) {
 
+    .activityItem{
+        display: flex;
+        position: relative;
+        height: 300px;
+    }
+
     .textZone{
         margin: 0;
         left: 0;
+        z-index: 2;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 1em;
     }
 
     .textZone h2{
@@ -431,7 +461,18 @@
     }
 
     .activityItem img {
-        display: none;
+        z-index: 1;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: opacity(0.2) brightness(0.7); 
+        mask-image: linear-gradient(to right, black 0%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, black 0%, transparent 100%);
+    }
+
+    .activityItem:hover img{
+        filter: opacity(0.2);
     }
     
     .activityContent{
@@ -443,7 +484,7 @@
 
     .activityContent p{
         max-width: 100%;
-        height: 50px;
+        height: 80px;
     }
 
     .activityPrice{

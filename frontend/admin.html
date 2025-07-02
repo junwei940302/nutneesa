@@ -59,7 +59,9 @@
                 <option>控制中心｜Dashboard</option>
                 <option>歷史紀錄｜History</option>
                 <option>會員管理｜Members</option>
+                <option>活動管理｜Events</option>
                 <option>金流管理｜Flow</option>
+                <option>資源申請｜Apply</option>
                 <option>偏好設定｜Settings</option>
             </select>
             <button class="logoutBtn" title="logoutBtn" style="color: red;">登出管理系統</button>
@@ -70,17 +72,30 @@
                     <h3>最新消息控制項</h3>
                     <div>
                         <div>
-                            <select class="newsType" title="消息類型">
-                                <option>重要通知</option>
-                                <option>系會資訊</option>
-                                <option>活動快訊</option>
-                                <option>會員專屬</option>
-                            </select>
-                            <input type="text" placeholder="消息內容" id="newsContent" required>
-                            <input type="checkbox" class="publishNowCheckbox" title="立即發布" checked>
-                            立即發布消息
-                            <input type="datetime-local" class="arrangePublish" title="排程發布" disabled>
-                            <button class="addNews" title="addNews">新增消息</button>
+                            <div>
+                                消息類型
+                                <select class="newsType" title="消息類型">
+                                    <option>重要通知</option>
+                                    <option>系會資訊</option>
+                                    <option>活動快訊</option>
+                                    <option>會員專屬</option>
+                                </select>
+                            </div>
+                            <div>
+                                消息內容
+                                <input type="text" placeholder="消息內容" id="newsContent" required>
+                            </div>
+                            <div>
+                                <input type="checkbox" class="publishNowCheckbox" title="立即發布" checked>
+                                立即發布消息
+                            </div>
+                            <div>
+                                排程發布
+                                <input type="datetime-local" class="arrangePublish" title="排程發布" disabled>
+                            </div>
+                            <div>
+                                <button class="addNews" title="addNews">新增消息</button>
+                            </div>
                         </div>
                     </div>
                 </li>
@@ -138,33 +153,61 @@
                 <li>
                     <h3>會員控制項</h3>
                     <div>
-                        <select class="memberRole" title="身份類別">
-                            <option>管理員</option>
-                            <option>系學會人員</option>
-                            <option selected>本系會員</option>
-                            <option>非本系會員</option>
-                            <option>訪客</option>
-                        </select>
-                        <input class="memberName" type="text" placeholder="姓名" required>
-                        <select class="memberStatus" title="狀態">
-                            <option>生效中</option>
-                            <option selected>待驗證</option>
-                            <option>未生效</option>
-                            <option>已過期</option>
-                            <option>已撤銷</option>
-                        </select>
-                        <input class="memberStudentId" type="text" placeholder="學號" required>
-                        <select class="memberGender" title="性別">
-                            <option>生理男</option>
-                            <option>生理女</option>
-                            <option>其他</option>
-                        </select>
-                        <input class="memberEmail" type="email" placeholder="Email" required>
-                        <input class="memberPhone" type="tel" placeholder="電話">
-                        <input class="memberDepartmentYear" type="text" placeholder="系級" value="電機二" required>
-                        <input class="memberVerification" type="checkbox" title="已驗證" checked>
-                        已驗證
-                        <button class="addNews" title="addNews">新增會員</button>
+                        <div>
+                            身份類別
+                            <select class="memberRole" title="身份類別">
+                                <option>管理員</option>
+                                <option>系學會人員</option>
+                                <option selected>本系會員</option>
+                                <option>非本系會員</option>
+                                <option>訪客</option>
+                            </select>
+                        </div>
+                        <div>
+                            會員姓名
+                            <input class="memberName" type="text" placeholder="姓名" required>
+                        </div>
+                        <div>
+                            會員狀態
+                            <select class="memberStatus" title="狀態">
+                                <option>生效中</option>
+                                <option selected>待驗證</option>
+                                <option>未生效</option>
+                                <option>已過期</option>
+                                <option>已撤銷</option>
+                            </select>
+                        </div>
+                        <div>
+                            會員學號
+                            <input class="memberStudentId" type="text" placeholder="學號" required>
+                        </div>
+                        <div>
+                            會員性別
+                            <select class="memberGender" title="性別">
+                                <option>生理男</option>
+                                <option>生理女</option>
+                                <option>其他</option>
+                            </select>
+                        </div>
+                        <div>
+                            電子郵件
+                            <input class="memberEmail" type="email" placeholder="Email" required>
+                        </div>
+                        <div>
+                            行動電話
+                            <input class="memberPhone" type="tel" placeholder="電話">
+                        </div>
+                        <div>
+                            會員系級
+                            <input class="memberDepartmentYear" type="text" placeholder="系級" value="電機二" required>
+                        </div>
+                        <div>
+                            <input class="memberVerification" type="checkbox" title="已驗證" checked>
+                            已驗證
+                        </div>
+                        <div>
+                            <button class="addNews" title="addNews">新增會員</button>
+                        </div> 
                     </div>
                 </li>
                 <li>
@@ -197,6 +240,104 @@
                                 </thead>
                                 <tbody class="members-table-body"></tbody>
                             </table>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="panel" data-events>
+            <ul>
+                <li>
+                    <h3>活動控制項</h3>
+                    <div>
+                        <div>
+                            圖片連結
+                            <input type="url" class="eventImgUrl" title="圖片連結" placeholder="圖片連結" required>
+                        </div>
+                        <div>
+                            活動標題
+                            <input type="text" class="eventTitle" title="標題" placeholder="活動標題" required>
+                        </div>
+                        <div>
+                            活動類別
+                            <select class="eventHashtag" title="活動類別">
+                                <option>#賽事</option>
+                                <option selected>#聯合</option>
+                                <option>#實習</option>
+                            </select>
+                        </div>
+                        <div>
+                            活動狀態
+                            <select class="eventStatus" title="活動狀態">
+                                <option>尚未開始</option>
+                                <option selected>開放報名</option>
+                            </select>
+                        </div>
+                        <div>
+                            活動內文
+                            <input type="text" class="eventContent" title="內文" placeholder="活動內文" required>
+                        </div>
+                        <div>
+                            非會員價格
+                            <input type="number" min="0" step="1" class="eventNonMemberPrice" title="非會員價格" value="0">
+                        </div>
+                        <div>
+                            會員價格
+                            <input type="number" min="0" step="1" class="eventMemberPrice" title="會員價格" value="0">
+                        </div>
+                        <div>
+                            活動日期
+                            <input type="datetime-local" class="eventDate" title="活動日期" required>
+                        </div>
+                        <div>
+                            系別限制
+                            <input type="text" class="restrictDepartment" title="系別限制" placeholder="系別限制（以空格分隔）">
+                        </div>
+                        <div>
+                            年級限制
+                            <input type="text" class="restrictYear" title="年級限制" placeholder="年級限制（中文，以空格分隔）">
+                        </div>
+                        <div>
+                            <input type="checkbox" class="restrictMember" title="會員限制">
+                            會員限制
+                        </div>
+                        <div>
+                            人數限制（0表示無上限）
+                            <input type="number" min="0" step="1" class="restrictQuantity" title="人數限制" value="0">
+                        </div>
+                        <div>
+                            <button class="addEvent">新增活動</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div>
+                            <p>活動列表</p>
+                            <div class="table-scroll">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>可視</th>
+                                            <th>圖片連結</th>
+                                            <th>活動標題</th>
+                                            <th>活動類別</th>
+                                            <th>活動狀態</th>
+                                            <th>活動內文</th>
+                                            <th>非會員價格</th>
+                                            <th>會員價格</th>
+                                            <th>發布者</th>
+                                            <th>創建日期</th>
+                                            <th>活動日期</th>
+                                            <th>報名人數</th>
+                                            <th>系別限制</th>
+                                            <th>年級限制</th>
+                                            <th>會員限制</th>
+                                            <th>人數限制</th>
+                                            <th>編輯/刪除</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="events-table-body"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </li>
@@ -266,6 +407,18 @@
                                     </tr>
                                 </thead>
                             </table>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="panel" data-apply>
+            <ul>
+                <li>
+                    <h3>資源申請審核</h3>
+                    <div>
+                        <div>
+                            <p>審核列表</p>
                         </div>
                     </div>
                 </li>
