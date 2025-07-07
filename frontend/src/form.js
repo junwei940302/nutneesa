@@ -116,7 +116,7 @@ function renderForm(form, event) {
 
 function renderField(field) {
     const required = field.required ? 'required' : '';
-    const requiredLabel = field.required ? ' *' : '';
+    const requiredLabel = field.required ? ' <span class="required-star">*</span>' : '';
     
     switch (field.type) {
         case 'input':

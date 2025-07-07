@@ -61,6 +61,8 @@ publishNowCheckbox.addEventListener('change', function() {
     arrangePublish.disabled = this.checked;
 });
 
+const NEWS_TYPES = ['重要通知', '系會資訊', '活動快訊', '會員專屬']; // 正確分類
+
 async function fetchNews() {
     try {
         const response = await fetch(`${API_URL}/api/admin/news`, {
@@ -90,11 +92,14 @@ function populateNewsTable(news) {
         const createDate = new Date(item.createDate).toLocaleString('zh-TW');
         const publishDate = new Date(item.publishDate).toLocaleString('zh-TW');
 
+        // 動態產生 type select
+        let typeOptions = NEWS_TYPES.map(type => `<option value="${type}" ${item.type === type ? 'selected' : ''}>${type}</option>`).join('');
+        // 消息內容加修改按鈕
         row.innerHTML = `
             <td><input type="checkbox" class="visibility-checkbox" data-id="${item._id}" ${item.visibility ? 'checked' : ''}></td>
             <td>${index + 1}</td>
-            <td>${item.type}</td>
-            <td>${item.content}</td>
+            <td><select class="news-type-select" data-id="${item._id}">${typeOptions}</select></td>
+            <td><span class="news-content" data-id="${item._id}">${item.content}</span> <button class="edit-news-content-btn" data-id="${item._id}">修改</button></td>
             <td>${createDate}</td>
             <td>${publishDate}</td>
             <td>${item.publisher}</td>
@@ -117,6 +122,28 @@ function populateNewsTable(news) {
             const newsId = event.target.dataset.id;
             if (confirm('確定要刪除這則消息嗎？')) {
                 deleteNews(newsId);
+            }
+        });
+    });
+
+    // 新增：type select 變更
+    document.querySelectorAll('.news-type-select').forEach(select => {
+        select.addEventListener('change', (event) => {
+            const newsId = event.target.dataset.id;
+            const newType = event.target.value;
+            updateNewsField(newsId, 'type', newType);
+        });
+    });
+
+    // 新增：content 修改按鈕
+    document.querySelectorAll('.edit-news-content-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const newsId = event.target.dataset.id;
+            const contentSpan = document.querySelector(`.news-content[data-id='${newsId}']`);
+            const oldContent = contentSpan ? contentSpan.textContent : '';
+            const newContent = prompt('請輸入新的消息內容', oldContent);
+            if (newContent !== null && newContent !== oldContent) {
+                updateNewsField(newsId, 'content', newContent);
             }
         });
     });
@@ -158,6 +185,24 @@ async function updateNewsVisibility(id, visibility) {
         console.error('Error updating news visibility:', error);
         // Optionally, revert checkbox state on failure
         fetchNews();
+    }
+}
+
+// 新增：單欄位 PATCH
+async function updateNewsField(newsId, field, value) {
+    try {
+        const body = {};
+        body[field] = value;
+        const response = await fetch(`${API_URL}/api/admin/news/${newsId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            credentials: 'include',
+        });
+        if (!response.ok) throw new Error('Failed to update news');
+        fetchNews(); // 更新表格
+    } catch (err) {
+        alert('更新失敗');
     }
 }
 
@@ -214,6 +259,9 @@ addNewsButton.addEventListener('click', async () => {
 
 //會員管理Members
 
+const MEMBER_ROLES = ['管理員', '系學會成員', '本系會員', '非本系會員', '訪客'];
+const MEMBER_GENDERS = ['生理男', '生理女', '其他'];
+
 async function fetchMembers() {
     try {
         const response = await fetch(`${API_URL}/api/admin/members`,{
@@ -243,30 +291,33 @@ function populateMembersTable(members) {
         const registerDate = new Date(item.registerDate).toLocaleString('zh-TW');
         const lastOnline = new Date(item.lastOnline).toLocaleString('zh-TW');
 
+        // 產生 select options
+        let roleOptions = MEMBER_ROLES.map(role => `<option value="${role}" ${item.role === role ? 'selected' : ''}>${role}</option>`).join('');
+        let genderOptions = MEMBER_GENDERS.map(gender => `<option value="${gender}" ${item.gender === gender ? 'selected' : ''}>${gender}</option>`).join('');
+
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>${item._id}</td>
-            <td>${item.role}</td>
-            <td>${item.name}</td>
+            <td><select class="member-role-select" data-id="${item._id}">${roleOptions}</select></td>
+            <td><span class="member-name" data-id="${item._id}">${item.name}</span> <button class="edit-member-name-btn" data-id="${item._id}">修改</button></td>
             <td>${item.status}</td>
-            <td>${item.studentId}</td>
-            <td>${item.gender}</td>
-            <td>${item.email}</td>
-            <td>${item.phone}</td>
-            <td>${item.departmentYear}</td>
+            <td><span class="member-studentid" data-id="${item._id}">${item.studentId}</span> <button class="edit-member-studentid-btn" data-id="${item._id}">修改</button></td>
+            <td><select class="member-gender-select" data-id="${item._id}">${genderOptions}</select></td>
+            <td><span class="member-email" data-id="${item._id}">${item.email}</span> <button class="edit-member-email-btn" data-id="${item._id}">修改</button></td>
+            <td><span class="member-phone" data-id="${item._id}">${item.phone}</span> <button class="edit-member-phone-btn" data-id="${item._id}">修改</button></td>
+            <td><span class="member-departmentyear" data-id="${item._id}">${item.departmentYear}</span> <button class="edit-member-departmentyear-btn" data-id="${item._id}">修改</button></td>
             <td>${registerDate}</td>
             <td>${lastOnline}</td>
-            <td>${item.cumulativeConsumption}</td>
-            <td>${item.verification}</td>
+            <td><span class="member-cumulative" data-id="${item._id}">${item.cumulativeConsumption}</span> <button class="edit-member-cumulative-btn" data-id="${item._id}">修改</button></td>
+            <td><input type="checkbox" class="member-verification-checkbox" data-id="${item._id}" ${item.verification ? 'checked' : ''}></td>
             <td>
-                <button class="edit-member-btn" data-id="${item._id}">編輯</button>
                 <button class="revoke-member-btn" data-id="${item._id}">註銷</button>
             </td>
         `;
         tableBody.appendChild(row);
     });
 
-    // Add event listeners for revoke buttons
+    // 註銷功能保留
     document.querySelectorAll('.revoke-member-btn').forEach(button => {
         button.addEventListener('click', async (event) => {
             const memberId = event.target.dataset.id;
@@ -286,34 +337,120 @@ function populateMembersTable(members) {
         });
     });
 
-    // Add event listeners for edit buttons
-    document.querySelectorAll('.edit-member-btn').forEach(button => {
-        button.addEventListener('click', (event) => {
+    // 身份 select
+    document.querySelectorAll('.member-role-select').forEach(select => {
+        select.addEventListener('change', (event) => {
             const memberId = event.target.dataset.id;
-            const member = members.find(m => m._id === memberId);
-            if (!member) return;
-            // 彈窗編輯表單
-            const newName = prompt('修改姓名', member.name);
-            if (newName === null) return;
-            const newEmail = prompt('修改Email', member.email);
-            if (newEmail === null) return;
-            const newPhone = prompt('修改電話', member.phone);
-            if (newPhone === null) return;
-            // 可擴充更多欄位
-            fetch(`${API_URL}/api/admin/members/${memberId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newName, email: newEmail, phone: newPhone }),
-                credentials: 'include',
-            })
-            .then(res => {
-                if (!res.ok) throw new Error('Failed to update member');
-                alert('會員資料已更新');
-                fetchMembers();
-            })
-            .catch(() => alert('更新失敗'));
+            const newRole = event.target.value;
+            updateMemberField(memberId, 'role', newRole);
         });
     });
+    // 性別 select
+    document.querySelectorAll('.member-gender-select').forEach(select => {
+        select.addEventListener('change', (event) => {
+            const memberId = event.target.dataset.id;
+            const newGender = event.target.value;
+            updateMemberField(memberId, 'gender', newGender);
+        });
+    });
+    // 名稱
+    document.querySelectorAll('.edit-member-name-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const memberId = event.target.dataset.id;
+            const span = document.querySelector(`.member-name[data-id='${memberId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新名稱', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateMemberField(memberId, 'name', newValue);
+            }
+        });
+    });
+    // 學號
+    document.querySelectorAll('.edit-member-studentid-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const memberId = event.target.dataset.id;
+            const span = document.querySelector(`.member-studentid[data-id='${memberId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新學號', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateMemberField(memberId, 'studentId', newValue);
+            }
+        });
+    });
+    // Email
+    document.querySelectorAll('.edit-member-email-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const memberId = event.target.dataset.id;
+            const span = document.querySelector(`.member-email[data-id='${memberId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新Email', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateMemberField(memberId, 'email', newValue);
+            }
+        });
+    });
+    // 電話
+    document.querySelectorAll('.edit-member-phone-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const memberId = event.target.dataset.id;
+            const span = document.querySelector(`.member-phone[data-id='${memberId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新電話', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateMemberField(memberId, 'phone', newValue);
+            }
+        });
+    });
+    // 系級
+    document.querySelectorAll('.edit-member-departmentyear-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const memberId = event.target.dataset.id;
+            const span = document.querySelector(`.member-departmentyear[data-id='${memberId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新系級', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateMemberField(memberId, 'departmentYear', newValue);
+            }
+        });
+    });
+    // 累計消費金額
+    document.querySelectorAll('.edit-member-cumulative-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const memberId = event.target.dataset.id;
+            const span = document.querySelector(`.member-cumulative[data-id='${memberId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新累計消費金額', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateMemberField(memberId, 'cumulativeConsumption', newValue);
+            }
+        });
+    });
+    // 已驗證 checkbox
+    document.querySelectorAll('.member-verification-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (event) => {
+            const memberId = event.target.dataset.id;
+            const newValue = event.target.checked;
+            updateMemberField(memberId, 'verification', newValue);
+        });
+    });
+}
+
+// 單欄位 PATCH
+async function updateMemberField(memberId, field, value) {
+    try {
+        const body = {};
+        body[field] = value;
+        const response = await fetch(`${API_URL}/api/admin/members/${memberId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            credentials: 'include',
+        });
+        if (!response.ok) throw new Error('Failed to update member');
+        fetchMembers();
+    } catch (err) {
+        alert('更新失敗');
+    }
 }
 
 // 新增會員功能
@@ -598,6 +735,9 @@ async function fetchEvents() {
     }
 }
 
+const EVENT_HASHTAGS = ['#賽事', '#聯合', '#實習'];
+const EVENT_STATUS = ['尚未開始', '開放報名', '即將開始', '活動結束'];
+
 function populateEventsTable(events) {
     const tableBody = document.querySelector('.panel[data-events] .events-table-body');
     if (!tableBody) {
@@ -607,43 +747,201 @@ function populateEventsTable(events) {
     tableBody.innerHTML = '';
     events.forEach((item, index) => {
         const createDate = item.createDate ? new Date(item.createDate).toLocaleString('zh-TW') : '';
-        const eventDate = item.eventDate ? new Date(item.eventDate).toLocaleString('zh-TW') : '';
-        const startEnrollDate = item.startEnrollDate ? new Date(item.startEnrollDate).toLocaleString('zh-TW') : '';
-        const endEnrollDate = item.endEnrollDate ? new Date(item.endEnrollDate).toLocaleString('zh-TW') : '';
+        const eventDate = item.eventDate ? new Date(item.eventDate).toISOString().slice(0,16) : '';
+        const startEnrollDate = item.startEnrollDate ? new Date(item.startEnrollDate).toISOString().slice(0,16) : '';
+        const endEnrollDate = item.endEnrollDate ? new Date(item.endEnrollDate).toISOString().slice(0,16) : '';
+        let hashtagOptions = EVENT_HASHTAGS.map(tag => `<option value="${tag}" ${item.hashtag === tag ? 'selected' : ''}>${tag}</option>`).join('');
+        let statusOptions = EVENT_STATUS.map(status => `<option value="${status}" ${item.status === status ? 'selected' : ''}>${status}</option>`).join('');
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><input type="checkbox" class="event-visibility-checkbox" data-id="${item._id}" ${item.visibility ? 'checked' : ''}></td>
-            <td><a href="${item.imgUrl}" target="_blank">檢視圖片</a></td>
-            <td>${item.title || ''}</td>
-            <td>${item.hashtag || ''}</td>
-            <td>${item.status || ''}</td>
-            <td>${item.content || ''}</td>
-            <td>${item.nonMemberPrice || 0}</td>
-            <td>${item.memberPrice || 0}</td>
+            <td><span class="event-imgurl" data-id="${item._id}"><a href="${item.imgUrl}" target="_blank">${item.imgUrl ? '檢視圖片' : '無'}</a></span> <button class="edit-event-imgurl-btn" data-id="${item._id}">修改</button></td>
+            <td><span class="event-title" data-id="${item._id}">${item.title || ''}</span> <button class="edit-event-title-btn" data-id="${item._id}">修改</button></td>
+            <td><select class="event-hashtag-select" data-id="${item._id}">${hashtagOptions}</select></td>
+            <td><select class="event-status-select" data-id="${item._id}">${statusOptions}</select></td>
+            <td><span class="event-content" data-id="${item._id}">${item.content || ''}</span> <button class="edit-event-content-btn" data-id="${item._id}">修改</button></td>
+            <td><span class="event-nonmemberprice" data-id="${item._id}">${item.nonMemberPrice || 0}</span> <button class="edit-event-nonmemberprice-btn" data-id="${item._id}">修改</button></td>
+            <td><span class="event-memberprice" data-id="${item._id}">${item.memberPrice || 0}</span> <button class="edit-event-memberprice-btn" data-id="${item._id}">修改</button></td>
             <td>${item.publisher || ''}</td>
             <td>${createDate}</td>
-            <td>${eventDate}</td>
-            <td>${startEnrollDate}</td>
-            <td>${endEnrollDate}</td>
-            <td>${item.location || ''}</td>
+            <td><input type="datetime-local" class="event-date-input" data-id="${item._id}" value="${eventDate}"></td>
+            <td><input type="datetime-local" class="event-startenroll-input" data-id="${item._id}" value="${startEnrollDate}"></td>
+            <td><input type="datetime-local" class="event-endenroll-input" data-id="${item._id}" value="${endEnrollDate}"></td>
+            <td><span class="event-location" data-id="${item._id}">${item.location || ''}</span> <button class="edit-event-location-btn" data-id="${item._id}">修改</button></td>
             <td>${item.enrollQuantity || 0}</td>
-            <td>${item.restrictDepartment || ''}</td>
-            <td>${item.restrictYear || ''}</td>
-            <td>${item.restrictMember ? '是' : '否'}</td>
-            <td>${item.restrictQuantity || 0}</td>
+            <td><span class="event-restrictdepartment" data-id="${item._id}">${item.restrictDepartment || ''}</span> <button class="edit-event-restrictdepartment-btn" data-id="${item._id}">修改</button></td>
+            <td><span class="event-restrictyear" data-id="${item._id}">${item.restrictYear || ''}</span> <button class="edit-event-restrictyear-btn" data-id="${item._id}">修改</button></td>
+            <td><input type="checkbox" class="event-restrictmember-checkbox" data-id="${item._id}" ${item.restrictMember ? 'checked' : ''}></td>
+            <td><span class="event-restrictquantity" data-id="${item._id}">${item.restrictQuantity || 0}</span> <button class="edit-event-restrictquantity-btn" data-id="${item._id}">修改</button></td>
             <td><button class="delete-event-btn" data-id="${item._id}">刪除</button></td>
         `;
         tableBody.appendChild(row);
     });
-    // 綁定可見性切換
+
+    // 綁定所有 inline 編輯事件
+    // 圖片連結
+    document.querySelectorAll('.edit-event-imgurl-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const eventId = event.target.dataset.id;
+            const span = document.querySelector(`.event-imgurl[data-id='${eventId}'] a`);
+            const oldValue = span ? span.getAttribute('href') : '';
+            const newValue = prompt('請輸入新的圖片連結', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateEventField(eventId, 'imgUrl', newValue);
+            }
+        });
+    });
+    // 標題
+    document.querySelectorAll('.edit-event-title-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const eventId = event.target.dataset.id;
+            const span = document.querySelector(`.event-title[data-id='${eventId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新標題', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateEventField(eventId, 'title', newValue);
+            }
+        });
+    });
+    // 內文
+    document.querySelectorAll('.edit-event-content-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const eventId = event.target.dataset.id;
+            const span = document.querySelector(`.event-content[data-id='${eventId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新活動內文', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateEventField(eventId, 'content', newValue);
+            }
+        });
+    });
+    // 非會員價格
+    document.querySelectorAll('.edit-event-nonmemberprice-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const eventId = event.target.dataset.id;
+            const span = document.querySelector(`.event-nonmemberprice[data-id='${eventId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新非會員價格', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateEventField(eventId, 'nonMemberPrice', Number(newValue));
+            }
+        });
+    });
+    // 會員價格
+    document.querySelectorAll('.edit-event-memberprice-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const eventId = event.target.dataset.id;
+            const span = document.querySelector(`.event-memberprice[data-id='${eventId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新會員價格', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateEventField(eventId, 'memberPrice', Number(newValue));
+            }
+        });
+    });
+    // 地點
+    document.querySelectorAll('.edit-event-location-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const eventId = event.target.dataset.id;
+            const span = document.querySelector(`.event-location[data-id='${eventId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新地點', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateEventField(eventId, 'location', newValue);
+            }
+        });
+    });
+    // 年級限制
+    document.querySelectorAll('.edit-event-restrictyear-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const eventId = event.target.dataset.id;
+            const span = document.querySelector(`.event-restrictyear[data-id='${eventId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新年級限制', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateEventField(eventId, 'restrictYear', newValue);
+            }
+        });
+    });
+    // 系別限制
+    document.querySelectorAll('.edit-event-restrictdepartment-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const eventId = event.target.dataset.id;
+            const span = document.querySelector(`.event-restrictdepartment[data-id='${eventId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新系別限制', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateEventField(eventId, 'restrictDepartment', newValue);
+            }
+        });
+    });
+    // 人數限制
+    document.querySelectorAll('.edit-event-restrictquantity-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const eventId = event.target.dataset.id;
+            const span = document.querySelector(`.event-restrictquantity[data-id='${eventId}']`);
+            const oldValue = span ? span.textContent : '';
+            const newValue = prompt('請輸入新活動人數限制', oldValue);
+            if (newValue !== null && newValue !== oldValue) {
+                updateEventField(eventId, 'restrictQuantity', Number(newValue));
+            }
+        });
+    });
+    // 活動類別 select
+    document.querySelectorAll('.event-hashtag-select').forEach(select => {
+        select.addEventListener('change', (event) => {
+            const eventId = event.target.dataset.id;
+            const newValue = event.target.value;
+            updateEventField(eventId, 'hashtag', newValue);
+        });
+    });
+    // 活動狀態 select
+    document.querySelectorAll('.event-status-select').forEach(select => {
+        select.addEventListener('change', (event) => {
+            const eventId = event.target.dataset.id;
+            const newValue = event.target.value;
+            updateEventField(eventId, 'status', newValue);
+        });
+    });
+    // 會員限制 checkbox
+    document.querySelectorAll('.event-restrictmember-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (event) => {
+            const eventId = event.target.dataset.id;
+            const newValue = event.target.checked;
+            updateEventField(eventId, 'restrictMember', newValue);
+        });
+    });
+    // 日期 input
+    document.querySelectorAll('.event-date-input').forEach(input => {
+        input.addEventListener('change', (event) => {
+            const eventId = event.target.dataset.id;
+            const newValue = event.target.value;
+            updateEventField(eventId, 'eventDate', newValue);
+        });
+    });
+    document.querySelectorAll('.event-startenroll-input').forEach(input => {
+        input.addEventListener('change', (event) => {
+            const eventId = event.target.dataset.id;
+            const newValue = event.target.value;
+            updateEventField(eventId, 'startEnrollDate', newValue);
+        });
+    });
+    document.querySelectorAll('.event-endenroll-input').forEach(input => {
+        input.addEventListener('change', (event) => {
+            const eventId = event.target.dataset.id;
+            const newValue = event.target.value;
+            updateEventField(eventId, 'endEnrollDate', newValue);
+        });
+    });
+    // 可見性 checkbox
     document.querySelectorAll('.event-visibility-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', (event) => {
             const eventId = event.target.dataset.id;
             const isVisible = event.target.checked;
-            updateEventVisibility(eventId, isVisible);
+            updateEventField(eventId, 'visibility', isVisible);
         });
     });
-    // 綁定刪除事件
+    // 刪除事件
     document.querySelectorAll('.delete-event-btn').forEach(button => {
         button.addEventListener('click', async (event) => {
             const eventId = event.target.dataset.id;
@@ -664,23 +962,21 @@ function populateEventsTable(events) {
     });
 }
 
-// 新增活動可見性 PATCH function
-async function updateEventVisibility(id, visibility) {
+// 單欄位 PATCH（整合 visibility 與一般欄位）
+async function updateEventField(eventId, field, value) {
     try {
-        const response = await fetch(`${API_URL}/api/admin/events/${id}`, {
+        const body = {};
+        body[field] = value;
+        const response = await fetch(`${API_URL}/api/admin/events/${eventId}`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ visibility }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
             credentials: 'include',
         });
-        if (!response.ok) {
-            throw new Error('Failed to update event visibility');
-        }
-    } catch (error) {
-        console.error('Error updating event visibility:', error);
-        fetchEvents(); // 失敗時刷新
+        if (!response.ok) throw new Error('Failed to update event');
+        fetchEvents();
+    } catch (err) {
+        alert('更新失敗');
     }
 }
 
@@ -731,7 +1027,7 @@ function populateFormsTable(forms) {
             <td>${eventTitles}</td>
             <td>${responseCount}</td>
             <td>${createdAt}</td>
-            <td><button class="delete-form-btn" data-id="${form._id}">刪除</button></td>
+            <td><button class="edit-form-btn" data-id="${form._id}">編輯</button> <button class="delete-form-btn" data-id="${form._id}">刪除</button></td>
         `;
         tableBody.appendChild(tr);
     });
@@ -741,6 +1037,13 @@ function populateFormsTable(forms) {
             if (confirm('確定要刪除此表單嗎？')) {
                 await deleteForm(formId);
             }
+        });
+    });
+    // 新增：編輯按鈕
+    document.querySelectorAll('.edit-form-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const formId = event.target.dataset.id;
+            window.open(`buildForms.html?formId=${formId}`, '_blank');
         });
     });
 }
@@ -791,8 +1094,11 @@ function populateEnrollmentsTable(enrollments) {
         const userRole = item.userDepartmentYear && item.userDepartmentYear.includes('電機') ? 'member' : 'nonMember';
         const paymentAmount = userRole === 'member' ? item.memberPrice : item.nonMemberPrice;
 
-        // 從作答內容中提取付款方式
-        const paymentMethod = item.answers && (item.answers['paymentMethod'] || item.answers['payments']) || '未選擇';
+        // 修正付款方式顯示邏輯
+        const paymentMethod =
+            item.paymentMethod ||
+            (item.answers && (item.answers['paymentMethod'] || item.answers['payments'])) ||
+            '未選擇';
         
         row.innerHTML = `
             <td>${index + 1}</td>
@@ -878,6 +1184,7 @@ function showAnswersModal(answers, formSnapshot, enrollment) {
         background: white;
         padding: 20px;
         border-radius: 8px;
+        min-width: 200px;
         max-width: 80%;
         max-height: 80%;
         overflow-y: auto;
@@ -918,8 +1225,11 @@ function showAnswersModal(answers, formSnapshot, enrollment) {
     answersHtml += '<hr style="margin: 20px 0; border: 1px solid #eee;">';
     answersHtml += '<h4>付款方式詳細資訊</h4>';
     
-    // 從作答內容中提取付款方式相關資訊
-    const paymentMethod = answers['paymentMethod'] || answers['payments'] || '未選擇';
+    // 修正付款方式顯示邏輯
+    const paymentMethod =
+        (answers['paymentMethod'] || answers['payments']) ||
+        (enrollment && enrollment.paymentMethod) ||
+        '未選擇';
     answersHtml += `
         <div style="margin-bottom: 15px;">
             <strong>付款方式:</strong><br>
@@ -927,11 +1237,18 @@ function showAnswersModal(answers, formSnapshot, enrollment) {
         </div>
     `;
 
-    // 如果是轉帳，顯示轉帳相關資訊
+    // 如果是轉帳，顯示轉帳相關資訊（從 paymentNotes 解析）
     if (paymentMethod === '轉帳' || paymentMethod.includes('轉帳')) {
-        const bankCode = answers['bankCode'] || '未填寫';
-        const account = answers['account'] || '未填寫';
-        
+        let bankCode = '未填寫';
+        let account = '未填寫';
+        if (enrollment && enrollment.paymentNotes) {
+            // 格式為 <銀行代碼>｜<帳號>
+            const parts = enrollment.paymentNotes.split('｜');
+            if (parts.length === 2) {
+                bankCode = parts[0] || '未填寫';
+                account = parts[1] || '未填寫';
+            }
+        }
         answersHtml += `
             <div style="margin-bottom: 15px;">
                 <strong>銀行代碼:</strong><br>
@@ -960,6 +1277,4 @@ function showAnswersModal(answers, formSnapshot, enrollment) {
             modal.remove();
         }
     });
-
-
 }

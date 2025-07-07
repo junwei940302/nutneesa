@@ -35,7 +35,7 @@
 }
 
 .form-field {
-    margin-bottom: 20px;
+    margin-bottom: 28px;
 }
 
 .form-field label {
@@ -43,6 +43,18 @@
     margin-bottom: 5px;
     font-weight: bold;
     color: #333;
+    position: relative;
+}
+
+.form-field label:has(span.required-star) {
+    display: inline-block;
+}
+
+.required-star {
+    color: #e74c3c;
+    margin-left: 2px;
+    font-size: 1em;
+    vertical-align: middle;
 }
 
 .form-field input[type="text"],
@@ -85,7 +97,7 @@
     padding: 12px 32px;
     font-size: 1.1em;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    transition: transform 0.1s, box-shadow 0.2s;
     margin-top: 8px;
     margin-left: auto;
     margin-right: auto;
@@ -98,9 +110,8 @@
 
 .form-field button[type="submit"]:hover,
 .form-container button[type="submit"]:hover {
-    background: #fff;
-    color: #A67C52;
-    border: 1.5px solid #A67C52;
+    transform: scale(1.04);
+    box-shadow: 0 4px 16px rgba(166, 124, 82, 0.15);
 }
 
 /* 已提交表單的樣式 */
@@ -182,5 +193,25 @@
     background: white;
     color: #A67C52;
     border: 1.5px solid #A67C52;
+}
+
+/* 聚焦效果 */
+.form-field input[type="text"]:focus,
+.form-field input[type="date"]:focus,
+.form-field textarea:focus,
+.form-field select:focus {
+    border-color: #A67C52;
+    outline: none;
+    box-shadow: 0 0 0 2px #f3e7db;
+    background: #f9f6f3;
+    transition: box-shadow 0.2s, background 0.2s;
+}
+
+/* 錯誤提示樣式（可選） */
+.form-error {
+    color: #e74c3c;
+    font-size: 0.95em;
+    margin-top: 4px;
+    margin-bottom: 8px;
 }
 

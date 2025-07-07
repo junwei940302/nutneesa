@@ -131,25 +131,33 @@ app.get("/api/admin/news", async (req, res) => {
 app.patch("/api/admin/news/:id", async (req, res) => {
   try {
     const {id} = req.params;
-    const {visibility} = req.body;
-
-    if (typeof visibility !== "boolean") {
+    const updateFields = {};
+    const allowedFields = ["type", "content", "visibility"];
+    // 只允許這三個欄位
+    allowedFields.forEach(field => {
+      if (req.body.hasOwnProperty(field)) {
+        updateFields[field] = req.body[field];
+      }
+    });
+    // 如果有 visibility 欄位，檢查型別
+    if (updateFields.hasOwnProperty("visibility") && typeof updateFields.visibility !== "boolean") {
       return res.status(400).json({error: "Invalid visibility value"});
     }
-
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({error: "No valid fields to update"});
+    }
     const updatedNews = await News.findByIdAndUpdate(
         id,
-        {visibility},
+        updateFields,
         {new: true},
     );
-
     if (!updatedNews) {
       return res.status(404).json({error: "News not found"});
     }
-    await logHistory(req, `Update news visibility: ${id} to ${visibility}`);
+    await logHistory(req, `Update news: ${id} fields: ${Object.keys(updateFields).join(', ')}`);
     res.json(updatedNews);
   } catch (err) {
-    res.status(500).json({error: "Failed to update news visibility"});
+    res.status(500).json({error: "Failed to update news"});
   }
 });
 
@@ -246,6 +254,37 @@ app.post("/api/admin/members", async (req, res) => {
   }
 });
 
+// 新增 PATCH API for member inline update
+app.patch("/api/admin/members/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const allowedFields = [
+      "role", "name", "studentId", "gender", "email", "phone", "departmentYear", "cumulativeConsumption", "verification"
+    ];
+    const updateFields = {};
+    allowedFields.forEach(field => {
+      if (req.body.hasOwnProperty(field)) {
+        updateFields[field] = req.body[field];
+      }
+    });
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ error: "No valid fields to update" });
+    }
+    const updatedMember = await Members.findByIdAndUpdate(
+      id,
+      updateFields,
+      { new: true }
+    );
+    if (!updatedMember) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+    await logHistory(req, `Update member: ${id} fields: ${Object.keys(updateFields).join(', ')}`);
+    res.json(updatedMember);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update member" });
+  }
+});
+
 // 註銷 API
 app.delete("/api/admin/members/:id", async (req, res) => {
   try {
@@ -264,8 +303,97 @@ app.delete("/api/admin/members/:id", async (req, res) => {
 // 新增歷史紀錄 API
 app.get("/api/admin/history", async (req, res) => {
   try {
-    const historyList = await History.find({}).sort({alertDate: -1});
-    res.json(historyList);
+    const historyList = await History.find({}).sort({alertDate: -1}).lean();
+    // 處理 content 欄位中的 id 轉換
+    const result = await Promise.all(historyList.map(async (item) => {
+      let newContent = item.content;
+      // 嘗試識別內容格式
+      // 例如: "Delete news: 665f..."、"Delete member: 665f..."、"Delete event: 665f..."、"Delete form: 665f..."
+      const patterns = [
+        { key: 'news', model: News, regex: /news: ([a-fA-F0-9]{24})/ },
+        { key: 'member', model: Members, regex: /member: ([a-fA-F0-9]{24})/ },
+        { key: 'event', model: Events, regex: /event: ([a-fA-F0-9]{24})/ },
+        { key: 'form', model: Forms, regex: /form: ([a-fA-F0-9]{24})/ },
+        // 新增 enrollment/payment 狀態
+        { key: 'enrollment', model: require('./models/responses'), regex: /enrollment (review|payment status): ([a-fA-F0-9]{24})/ },
+        // 新增 event visibility
+        { key: 'eventVisibility', model: Events, regex: /event visibility: ([a-fA-F0-9]{24})/ },
+      ];
+      let replaced = false;
+      for (const {key, model, regex} of patterns) {
+        const match = item.content.match(regex);
+        if (match) {
+          let id = null;
+          let name = null;
+          if (key === 'enrollment') {
+            id = match[2];
+            const doc = await model.findById(id).lean();
+            if (doc) {
+              // 取參與者姓名
+              const member = doc.userId ? await Members.findById(doc.userId).lean() : null;
+              name = member ? member.name : '<已刪除的內容>';
+            } else {
+              name = '<已刪除的內容>';
+            }
+            newContent = item.content.replace(id, name);
+            replaced = true;
+            break;
+          } else if (key === 'eventVisibility') {
+            id = match[1];
+            const doc = await model.findById(id).lean();
+            name = doc ? (doc.title || id) : '<已刪除的內容>';
+            newContent = item.content.replace(id, name);
+            replaced = true;
+            break;
+          } else {
+            id = match[1];
+            if (key === 'news') {
+              const doc = await model.findById(id).lean();
+              name = doc ? (doc.content || doc.type || id) : '<已刪除的內容>';
+            } else if (key === 'member') {
+              const doc = await model.findById(id).lean();
+              name = doc ? (doc.name || id) : '<已刪除的內容>';
+            } else if (key === 'event') {
+              const doc = await model.findById(id).lean();
+              name = doc ? (doc.title || id) : '<已刪除的內容>';
+            } else if (key === 'form') {
+              const doc = await model.findById(id).lean();
+              name = doc ? (doc.title || id) : '<已刪除的內容>';
+            }
+            newContent = item.content.replace(id, name);
+            replaced = true;
+            break;
+          }
+        }
+      }
+      // fallback: 若是 update payment status 或 enrollment review 但格式不同
+      if (!replaced && /Update (enrollment review|payment status): ([a-fA-F0-9]{24})/.test(item.content)) {
+        const match = item.content.match(/Update (enrollment review|payment status): ([a-fA-F0-9]{24})/);
+        if (match) {
+          const id = match[2];
+          const Responses = require('./models/responses');
+          const doc = await Responses.findById(id).lean();
+          let name = '<已刪除的內容>';
+          if (doc) {
+            const member = doc.userId ? await Members.findById(doc.userId).lean() : null;
+            name = member ? member.name : '<已刪除的內容>';
+          }
+          newContent = item.content.replace(id, name);
+        }
+      }
+      // fallback: event visibility
+      if (!replaced && /Update event visibility: ([a-fA-F0-9]{24})/.test(item.content)) {
+        const match = item.content.match(/Update event visibility: ([a-fA-F0-9]{24})/);
+        if (match) {
+          const id = match[1];
+          const doc = await Events.findById(id).lean();
+          const name = doc ? (doc.title || id) : '<已刪除的內容>';
+          newContent = item.content.replace(id, name);
+        }
+      }
+      return { ...item, content: newContent };
+    }));
+    res.json(result);
   } catch (err) {
     res.status(500).json({error: "Failed to fetch history"});
   }
@@ -509,29 +637,34 @@ app.get("/api/admin/events", async (req, res) => {
   }
 });
 
-// 新增 PATCH API for event visibility
+// 新增 PATCH API for event inline update
 app.patch("/api/admin/events/:id", async (req, res) => {
   try {
-    const {id} = req.params;
-    const {visibility} = req.body;
-
-    if (typeof visibility !== "boolean") {
-      return res.status(400).json({error: "Invalid visibility value"});
+    const { id } = req.params;
+    const allowedFields = [
+      "title", "hashtag", "status", "content", "nonMemberPrice", "memberPrice", "eventDate", "startEnrollDate", "endEnrollDate", "location", "restrictDepartment", "restrictYear", "restrictMember", "restrictQuantity"
+    ];
+    const updateFields = {};
+    allowedFields.forEach(field => {
+      if (req.body.hasOwnProperty(field)) {
+        updateFields[field] = req.body[field];
+      }
+    });
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ error: "No valid fields to update" });
     }
-
     const updatedEvent = await Events.findByIdAndUpdate(
-        id,
-        {visibility},
-        {new: true},
+      id,
+      updateFields,
+      { new: true }
     );
-
     if (!updatedEvent) {
-      return res.status(404).json({error: "Event not found"});
+      return res.status(404).json({ error: "Event not found" });
     }
-    await logHistory(req, `Update event visibility: ${id} to ${visibility}`);
+    await logHistory(req, `Update event: ${id} fields: ${Object.keys(updateFields).join(', ')}`);
     res.json(updatedEvent);
   } catch (err) {
-    res.status(500).json({error: "Failed to update event visibility"});
+    res.status(500).json({ error: "Failed to update event" });
   }
 });
 
@@ -612,11 +745,17 @@ app.post("/api/admin/forms", async (req, res) => {
 app.get("/api/admin/forms/:id", async (req, res) => {
   try {
     const {id} = req.params;
-    const form = await Forms.findById(id);
+    const form = await Forms.findById(id).lean();
     if (!form) {
       return res.status(404).json({error: "Form not found"});
     }
-    res.json(form);
+    // 查詢關聯活動標題
+    let eventTitles = [];
+    if (form.eventId) {
+      const event = await Events.findById(form.eventId).lean();
+      if (event && event.title) eventTitles = [event.title];
+    }
+    res.json({ ...form, eventTitles });
   } catch (err) {
     res.status(500).json({error: "Failed to fetch form"});
   }
@@ -757,9 +896,9 @@ app.get("/api/responses/user", async (req, res) => {
         formId: response.formId,
         submittedAt: response.createdAt,
         answers: response.answers,
-        // 這裡可以根據實際需求添加更多欄位，如付款狀態等
-        paymentStatus: "待確認", // 預設值，實際應該從付款系統獲取
-        paymentMethod: "未指定", // 預設值
+        paymentStatus: response.paymentStatus || "未付款",
+        paymentMethod: response.paymentMethod || "未指定",
+        paymentNotes: response.paymentNotes || "",
         amount: event ? (event.memberPrice || event.nonMemberPrice || 0) : 0,
       };
     }));
@@ -820,6 +959,12 @@ app.get("/api/admin/enrollments", async (req, res) => {
       const form = await Forms.findById(response.formId).lean();
       const user = response.userId ? await Members.findById(response.userId).lean() : null;
 
+      // 付款方式優先順序：answers['paymentMethod'] > answers['payments'] > response.paymentMethod > '未指定'
+      let paymentMethod =
+        (response.answers && (response.answers['paymentMethod'] || response.answers['payments'])) ||
+        response.paymentMethod ||
+        "未指定";
+
       return {
         _id: response._id,
         eventTitle: event ? event.title : "未知活動",
@@ -845,7 +990,7 @@ app.get("/api/admin/enrollments", async (req, res) => {
         // 付款狀態
         paymentStatus: response.paymentStatus || "未付款",
         paymentNotes: response.paymentNotes || "",
-        paymentMethod: response.paymentMethod || "未指定",
+        paymentMethod,
       };
     }));
 
@@ -915,11 +1060,84 @@ app.patch("/api/admin/enrollments/:id", async (req, res) => {
   }
 });
 
-const apiRouter = express.Router();
-app.use('/api', apiRouter);
+// 新增：更新 paymentNotes（現金/銀行轉帳資料）
+app.post("/api/payments/notes", async (req, res) => {
+  try {
+    const { eventId, paymentNotes, paymentMethod } = req.body;
+
+    if (!eventId || !paymentMethod) {
+      return res.status(400).json({ error: "Missing eventId or paymentMethod" });
+    }
+
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ error: "User not logged in" });
+    }
+
+    const userId = req.session.userId;
+
+    const response = await Responses.findOne({
+      activityId: eventId,
+      userId: userId,
+    });
+
+    if (!response) {
+      return res.status(404).json({ error: "No enrollment found for this event" });
+    }
+
+    response.paymentMethod = paymentMethod;
+    if (paymentMethod === "轉帳" && paymentNotes) {
+      // paymentNotes 應為 { bankCode, bankName, account }
+      let formattedNotes = "";
+      if (typeof paymentNotes === "object" && paymentNotes.bankCode && paymentNotes.bankName && paymentNotes.account) {
+        formattedNotes = `${paymentNotes.bankCode} ${paymentNotes.bankName}｜${paymentNotes.account}`;
+      } else if (typeof paymentNotes === "string") {
+        // 若前端傳來已經是格式化字串
+        formattedNotes = paymentNotes;
+      }
+      response.paymentNotes = formattedNotes;
+      response.paymentStatus = "待確認";
+    } else if (paymentMethod === "現金支付") {
+      response.paymentNotes = "現金支付";
+      response.paymentStatus = "待確認";
+    }
+    await response.save();
+
+    res.json({ success: true, message: "付款資料已更新", paymentMethod: response.paymentMethod, paymentNotes: response.paymentNotes, paymentStatus: response.paymentStatus });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update payment notes", detail: err.message });
+  }
+});
+
+// 新增 PATCH API for form inline update
+app.patch("/api/admin/forms/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const allowedFields = ["title", "description", "fields", "eventId"];
+    const updateFields = {};
+    allowedFields.forEach(field => {
+      if (req.body.hasOwnProperty(field)) {
+        updateFields[field] = req.body[field];
+      }
+    });
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ error: "No valid fields to update" });
+    }
+    const updatedForm = await Forms.findByIdAndUpdate(
+      id,
+      updateFields,
+      { new: true }
+    );
+    if (!updatedForm) {
+      return res.status(404).json({ error: "Form not found" });
+    }
+    await logHistory(req, `Update form: ${id} fields: ${Object.keys(updateFields).join(', ')}`);
+    res.json(updatedForm);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update form" });
+  }
+});
 
 exports.api = onRequest(
-  /*
     {
       invoker: "public",
       cors: true, // 啟用 CORS 支援
@@ -929,6 +1147,5 @@ exports.api = onRequest(
       maxInstances: 3,
       minInstances: 0,
     },
-    */
     app
 );

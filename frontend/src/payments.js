@@ -85,7 +85,60 @@ document.addEventListener('DOMContentLoaded', async function() {
   enrollSuccessButtons.forEach(button => {
     button.addEventListener('click', async function() {
       try {
-        // 確認報名成功
+        // 判斷是哪一種支付方式
+        const paymentSelect = document.querySelector('.payments');
+        const selectedMethod = paymentSelect.value;
+
+        let paymentMethod = "";
+        let paymentNotes = null;
+
+        if (selectedMethod === "現金支付") {
+          paymentMethod = "現金支付";
+          paymentNotes = null; // 不需額外資料
+        } else if (selectedMethod === "轉帳") {
+          paymentMethod = "轉帳";
+          // 取得銀行代碼、名稱與帳號
+          const bankCodeSelect = document.querySelector('.bankCode');
+          const bankCode = bankCodeSelect.value;
+          const account = document.querySelector('.account').value.trim();
+          let bankName = '';
+          if (bankCodeSelect.selectedIndex > 0) {
+            // 取得 option 文字並去除前面的代碼
+            const optionText = bankCodeSelect.options[bankCodeSelect.selectedIndex].text;
+            // 例如 "700｜中華郵政"，分割取名稱
+            const match = optionText.match(/\d+｜(.+)/);
+            bankName = match ? match[1].trim() : optionText;
+          }
+          if (!bankCode || !account || !bankName) {
+            alert("請填寫完整銀行資訊");
+            return;
+          }
+          paymentNotes = { bankCode, bankName, account };
+        } else {
+          alert("請選擇支付方式");
+          return;
+        }
+
+        // 1. 先送付款資料
+        const paymentRes = await fetch(`${API_URL}/api/payments/notes`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            eventId: eventId,
+            paymentMethod,
+            paymentNotes
+          })
+        });
+
+        if (!paymentRes.ok) {
+          const errorData = await paymentRes.json();
+          throw new Error(errorData.error || '付款資料送出失敗');
+        }
+
+        // 2. 再送報名確認
         const confirmResponse = await fetch(`${API_URL}/api/enrollment/confirm`, {
           method: 'POST',
           headers: {
@@ -104,10 +157,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const confirmData = await confirmResponse.json();
         alert(confirmData.message);
-        
+
         // 跳轉到服務頁面
         window.location.href = 'services.html';
-        
+
       } catch (error) {
         console.error('Error confirming enrollment:', error);
         alert('確認報名失敗：' + error.message);

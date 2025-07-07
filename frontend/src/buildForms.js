@@ -1,5 +1,10 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     checkAuth();
+    // 若有 formId，載入表單
+    editingFormId = getFormIdFromUrl();
+    if (editingFormId) {
+        await loadFormForEdit(editingFormId);
+    }
 });
 
 async function checkAuth() {
@@ -41,6 +46,47 @@ async function fetchEventsForSelect() {
 
 // ===== 表單設計器核心 =====
 let fields = [];
+let editingFormId = null;
+
+function getFormIdFromUrl() {
+    const url = new URL(window.location.href);
+    return url.searchParams.get('formId');
+}
+
+async function loadFormForEdit(formId) {
+    try {
+        const res = await fetch(`${API_URL}/api/admin/forms/${formId}`, { credentials: 'include' });
+        if (!res.ok) throw new Error('無法載入表單');
+        const form = await res.json();
+        document.getElementById('formTitle').value = form.title || '';
+        document.getElementById('formDesc').value = form.description || '';
+        fields = (form.fields || []).map(f => ({...f}));
+        renderFields();
+        // 關聯活動選單自動選擇
+        if (form.eventId && document.getElementById('eventSelect')) {
+            const eventSelect = document.getElementById('eventSelect');
+            // 先檢查選單內有無該活動
+            let found = false;
+            for (let i = 0; i < eventSelect.options.length; i++) {
+                if (eventSelect.options[i].value === form.eventId) {
+                    eventSelect.selectedIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                // 若活動不在選單，新增一個選項
+                const opt = document.createElement('option');
+                opt.value = form.eventId;
+                opt.textContent = form.eventTitles && form.eventTitles.length > 0 ? form.eventTitles[0] : '(未知活動)';
+                opt.selected = true;
+                eventSelect.appendChild(opt);
+            }
+        }
+    } catch (err) {
+        alert('載入表單失敗：' + err.message);
+    }
+}
 
 function initFormBuilder() {
     document.getElementById('addFieldBtn').addEventListener('click', addField);
@@ -161,17 +207,30 @@ async function saveForm() {
         eventId
     };
     try {
-        // 建立表單
-        const res = await fetch(`${API_URL}/api/admin/forms`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error('建立表單失敗');
-        const form = await res.json();
-        alert('表單已建立並關聯活動！');
-        window.location.href = 'admin.html';
+        if (editingFormId) {
+            // PATCH 更新
+            const res = await fetch(`${API_URL}/api/admin/forms/${editingFormId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error('更新表單失敗');
+            alert('表單已更新！');
+            window.close();
+        } else {
+            // 建立表單
+            const res = await fetch(`${API_URL}/api/admin/forms`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error('建立表單失敗');
+            const form = await res.json();
+            alert('表單已建立並關聯活動！');
+            window.location.href = 'admin.html';
+        }
     } catch (err) {
         alert('儲存失敗：' + err.message);
     }
