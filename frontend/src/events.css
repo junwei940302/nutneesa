@@ -1,0 +1,284 @@
+.content{
+    position: relative;
+    width: calc(100% - 10vw);
+    top: 75px;
+    height: fit-content;
+    display: grid;
+    padding: 0 5vw 0 5vw;
+    max-width: 100vw;
+}
+
+/* 會員服務表格風格 */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.5em;
+    margin-bottom: 1.5em;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(230, 126, 34, 0.06);
+}
+td {
+    padding: 0.5em 0.8em;
+    font-size: 1em;
+    color: black;
+    white-space: nowrap;
+}
+tr:nth-child(even) td {
+    background: #F2F2F0;
+}
+tr:nth-child(odd) td {
+    background: #fff;
+}
+td:first-child {
+    color: #645038;
+    font-weight: 500;
+}
+
+/* hashtag 樣式（#645038） */
+.hashtag.event {
+    display: inline-block;
+    background: #f7f2ea;
+    color: #645038;
+    border-radius: 12px;
+    padding: 2px 10px;
+    margin: 0 2px 2px 0;
+    font-size: 0.95em;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    border: 1.2px solid #e0d6c2;
+}
+/* 活動狀態動態色彩 */
+.hashtag.status {
+    display: inline-block;
+    border-radius: 12px;
+    padding: 2px 10px;
+    margin: 0 2px 2px 0;
+    font-size: 0.95em;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    border: 1.2px solid transparent;
+}
+.hashtag.status.open {
+    color: #A67C52;
+    background: #F3E5D8;
+    border-color: #A67C52;
+}
+.hashtag.status.notyet {
+    color: #4A637D;
+    background: #E9EFF4;
+    border-color: #4A637D;
+}
+.hashtag.status.soon {
+    color: #B05C3B;
+    background: #F8E4DE;
+    border-color: #B05C3B;
+}
+.hashtag.status.ended {
+    color: #7C5C36;
+    background: #F9F6F2;
+    border-color: #C49A6C;
+    font-weight: bold;
+}
+/* 刪除 hashtag-row 第二欄底色，讓所有行一致 */
+
+/* 外層卡片感 */
+.event-detail-card {
+    max-width: 600px;
+    margin: 40px auto 40px auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(100,80,56,0.10);
+    padding: 2.5em 2em 2em 2em;
+}
+
+/* 表格美化 */
+.event-detail-card table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.5em;
+    background: transparent;
+}
+
+.event-detail-card td, .event-detail-card th {
+    padding: 1em 1.2em;
+    font-size: 1.08em;
+    border: none;
+}
+
+.event-detail-card tr:nth-child(even) td {
+    background: #f8f8f6;
+}
+
+.event-detail-card tr:nth-child(odd) td {
+    background: #fff;
+}
+
+.event-detail-card tr:first-child td:first-child { border-top-left-radius: 12px; }
+.event-detail-card tr:first-child td:last-child { border-top-right-radius: 12px; }
+.event-detail-card tr:last-child td:first-child { border-bottom-left-radius: 12px; }
+.event-detail-card tr:last-child td:last-child { border-bottom-right-radius: 12px; }
+
+/* hashtag 顏色加深 */
+.hashtag.event {
+    background: #ede3d1;
+    color: #645038;
+    border: 1.2px solid #e0d6c2;
+}
+
+/* 讓表格標題欄更明顯 */
+.event-detail-card td:first-child {
+    color: #645038;
+    font-weight: 600;
+    width: 30%;
+    letter-spacing: 1px;
+    background: #f6f3ee;
+    border-right: 1px solid #f0e8db;
+}
+
+/* 報名區塊主題化美化 */
+.enrollBtn {
+    max-width: 600px;
+    margin: 0 auto 48px auto;
+    padding: 0;
+}
+.enrollBtn .loggedIn {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(100,80,56,0.10);
+    padding: 32px;
+    margin-bottom: 16px;
+    text-align: center;
+    border: 1.5px solid #A67C52;
+}
+.enrollBtn .notLoggedIn {
+    background: #F8E4DE;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(176,92,59,0.10);
+    padding: 32px;
+    text-align: center;
+    border: 1.5px solid #B05C3B;
+}
+.enrollBtn h2 {
+    margin-bottom: 8px;
+    font-size: 1.5em;
+    color: #645038;
+}
+.enrollBtn .notLoggedIn h2 {
+    color: #B05C3B;
+    margin-bottom: 12px;
+}
+.enrollBtn p {
+    font-size: 1.1em;
+    color: #7C5C36;
+}
+.enrollBtn table {
+    margin: 0 auto 16px auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(166,124,82,0.06);
+}
+.enrollBtn td {
+    padding: 4px 12px;
+    font-size: 1em;
+    color: #645038;
+}
+.enrollBtn .userName, .enrollBtn .userEmail {
+    color: #A67C52;
+    font-weight: bold;
+}
+.enrollBtn .enrollSubmit, .enrollBtn .toLoginBtn {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 32px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    margin-top: 8px;
+    box-shadow: 0 2px 8px rgba(100, 80, 56, 0.08);
+}
+.enrollBtn .enrollSubmit {
+    background: #A67C52;
+    color: #fff;
+    border: 1.5px solid #A67C52;
+}
+.enrollBtn .enrollSubmit:hover {
+    background: #fff;
+    color: #A67C52;
+    border: 1.5px solid #A67C52;
+}
+.enrollBtn .toLoginBtn {
+    background: #B05C3B;
+    color: #fff;
+    border: 1.5px solid #B05C3B;
+}
+.enrollBtn .toLoginBtn:hover {
+    background: #fff;
+    color: #B05C3B;
+    border: 1.5px solid #B05C3B;
+}
+.enrollBtn .noEnroll {
+    background: #F3E5D8;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(166,124,82,0.10);
+    padding: 32px;
+    text-align: center;
+    border: 1.5px solid #A67C52;
+    margin-top: 0;
+}
+.enrollBtn .noEnroll h2 {
+    color: #B05C3B;
+    font-size: 1.3em;
+    margin-bottom: 18px;
+}
+.enrollBtn .toLastPage {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 32px;
+    font-size: 1.1em;
+    cursor: pointer;
+    background: #A67C52;
+    color: #fff;
+    border: 1.5px solid #A67C52;
+    box-shadow: 0 2px 8px rgba(100, 80, 56, 0.08);
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.enrollBtn .toLastPage:hover {
+    background: #fff;
+    color: #A67C52;
+    border: 1.5px solid #A67C52;
+}
+
+/* 讓活動詳情與報名區塊在寬螢幕時左右並排 */
+@media (min-width: 900px) {
+    .content {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 48px;
+    }
+    .event-detail-card {
+        flex: 1 1 0;
+        max-width: 600px;
+        margin: 40px 0 40px 0;
+    }
+    .enrollBtn {
+        flex: 0 0 340px;
+        max-width: 340px;
+        margin: 40px 0 40px 0;
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 899px) {
+    .content {
+        display: grid;
+        gap: 0;
+    }
+    .event-detail-card, .enrollBtn {
+        max-width: 600px;
+        margin: 40px auto 0 auto;
+    }
+}

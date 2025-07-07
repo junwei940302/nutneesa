@@ -50,6 +50,17 @@
     font-size: 1rem;
 }
 
+.newsContainer, .megaSupporter{
+    padding: 0 5vw 0 5vw;
+}
+
+.title{
+    color: #645038;
+    border-left: 5px solid #645038;
+    padding-left: 0.5em;
+    font-family: 'SoukouMincho', serif;
+}
+
 @media (max-width: 740px) {
 
     .countdown h1, .cardTitle h1{
@@ -94,13 +105,8 @@
     width: 100%;
     height: fit-content;
     display: grid;
-    justify-content: center;
-}
-
-.infoCardContainer{
-    width: 100%;
-    height: fit-content;
-    box-shadow: inset rgba(255, 255, 255, 0.8);
+    justify-content: start;
+    gap: 10px;
 }
 
 .news-item{
@@ -108,10 +114,23 @@
     height: fit-content;
     display: flex;
     align-items: center;
+    justify-content: space-between;
 }
 
-.news-item p{
+.news-item div {
+    min-width: 70px;
+    max-width: 70px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.news-item p {
     margin: 0 10px 0 10px;
+    text-align: start !important;
+    width: 100%;
+    display: block;
 }
 
 .important, .information, .activity, .member{
@@ -121,29 +140,34 @@
     padding: 5px 10px 5px 10px;;
     min-width: 80px;
     justify-content: center;
+    letter-spacing: 1px;
 }
 
 .important p, .information p, .activity p, .member p{
     margin: 10px 0 10px 0;
 }
 
-.important{
-    color: red;
-    border: 1px solid red;
+.important {
+    color: #B05C3B;
+    border: 1.5px solid #B05C3B;
+    background-color: #F8E4DE;
 }
 
-.information{
-    color: blue;
-    border: 1px solid blue;
+.information {
+    color: #4A637D;
+    border: 1.5px solid #4A637D;
+    background-color: #E9EFF4;
 }
 
-.activity{
-    color: orange;
-    border: 1px solid orange;
+.activity {
+    color: #A67C52;
+    border: 1.5px solid #A67C52;
+    background-color: #F3E5D8;
 }
 
-.member{
-    color: red;
-    background-color: orange;
-    border: 1px solid red;
+.member {
+    color: #7C5C36;
+    background-color: #F9F6F2;
+    border: 1.5px solid #C49A6C;
+    font-weight: bold;
 }

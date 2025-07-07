@@ -34,7 +34,7 @@ Start the local emulator:
 firebase emulators:start --only functions
 ```
 
-- 預設 Functions 會在 `http://localhost:5001/<你的專案ID>/us-central1/api`
+- 預設 Functions 會在 `http://localhost:5001/nutneesa-b8ea5/us-central1/api`
 - 你可以同時啟動其他 emulator（如 firestore、auth），例如：
   ```bash
   firebase emulators:start

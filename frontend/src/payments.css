@@ -1,0 +1,256 @@
+.content{
+    position: relative;
+    width: calc(100% - 10vw);
+    top: 75px;
+    height: fit-content;
+    display: grid;
+    padding: 0 5vw 0 5vw;
+    max-width: 100vw;
+    justify-content: center;
+}
+
+.content h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #333;
+}
+
+.payments {
+    margin: 20px auto;
+    display: block;
+    width: 30vw;
+    min-width: 200px;
+    height: 50px;
+    padding: 0 1.5em 0 1em;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 12px;
+    background: #fff;
+    color: #222;
+    font-size: 1.1rem;
+    font-family: inherit;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    appearance: none;
+    outline: none;
+    transition: border 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    /* Custom arrow (optional, for modern look) */
+    background-image: url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 20 20' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7.293 7.293a1 1 0 011.414 0L10 8.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 1em center;
+    background-size: 1.2em;
+}
+
+.payments:focus, .payments:hover {
+    border: 1.5px solid #bdbdbd;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.panel {
+    width: 30vw;
+    min-width: 400px;
+    max-width: 600px;
+    padding: 2rem;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    background-color: #f8f9fa;
+    margin: 1rem auto;
+    height: fit-content;
+}
+
+/* 表格美化 - 參考 events 頁面風格 */
+.panel table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.5em;
+    margin-bottom: 1.5em;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(230, 126, 34, 0.06);
+}
+
+.panel td {
+    padding: 0.5em 0.8em;
+    font-size: 1em;
+    color: black;
+    white-space: nowrap;
+}
+
+.panel tr:nth-child(even) td {
+    background: #F2F2F0;
+}
+
+.panel tr:nth-child(odd) td {
+    background: #fff;
+}
+
+.panel td:first-child {
+    color: #645038;
+    font-weight: 500;
+}
+
+/* 按鈕樣式 - 參考 events 頁面的 enrollSubmit 按鈕 */
+.enrollSuccess {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 32px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    margin-top: 8px;
+    box-shadow: 0 2px 8px rgba(100, 80, 56, 0.08);
+    background: #A67C52;
+    color: #fff;
+    border: 1.5px solid #A67C52;
+}
+
+.enrollSuccess:hover {
+    background: #fff;
+    color: #A67C52;
+    border: 1.5px solid #A67C52;
+}
+
+.panel.cash {
+    text-align: center;
+}
+
+.panel.cash h3 {
+    color: #28a745;
+    margin-bottom: 1rem;
+}
+
+.panel.cash p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.panel.transfer {
+    text-align: center;
+}
+
+.panel.transfer h3 {
+    color: #007bff;
+    margin-bottom: 1rem;
+}
+
+.panel.transfer .bank-info {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border: 1px solid #e9ecef;
+}
+
+.panel.transfer .bank-info p {
+    margin: 0.5rem 0;
+    font-family: monospace;
+    font-size: 14px;
+}
+
+/* 轉帳表單美化 */
+.panel.transfer .bank-info > div {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 1rem 0;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.panel.transfer .bank-info .bankCode,
+.panel.transfer .bank-info .account {
+    height: 45px;
+    padding: 0 15px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+    transition: border 0.2s, box-shadow 0.2s;
+    outline: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.panel.transfer .bank-info .bankCode {
+    min-width: 200px;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='gray' height='16' viewBox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M4.293 4.293a1 1 0 011.414 0L8 6.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 1em;
+    padding-right: 40px;
+}
+
+.panel.transfer .bank-info .account {
+    min-width: 180px;
+    flex: 1;
+    max-width: 250px;
+}
+
+.panel.transfer .bank-info .bankCode:focus,
+.panel.transfer .bank-info .account:focus {
+    border: 1.5px solid #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.panel.transfer .bank-info .bankCode:hover,
+.panel.transfer .bank-info .account:hover {
+    border: 1.5px solid #bdbdbd;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .content {
+        width: calc(100% - 4vw);
+        padding: 0 2vw 0 2vw;
+    }
+    
+    .panel {
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+    
+    .payments {
+        max-width: 100%;
+    }
+    
+    /* 轉帳表單響應式設計 */
+    .panel.transfer .bank-info > div {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .panel.transfer .bank-info .bankCode,
+    .panel.transfer .bank-info .account {
+        width: 100%;
+        max-width: none;
+        min-width: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    .payments {
+        font-size: 1rem;
+    }
+}
+
+
+
+/* 加載動畫 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

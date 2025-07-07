@@ -66,13 +66,27 @@ function getTypeIcon(type) {
 document.addEventListener('DOMContentLoaded', async () => {
     const infoCard = document.querySelector('.infoCard');
     try {
+        // 先取得會員狀態
+        let memberStatus = null;
+        try {
+            const meRes = await fetch(`${API_URL}/api/me`, { credentials: 'include' });
+            const meData = await meRes.json();
+            if (meData.loggedIn && meData.user) {
+                memberStatus = meData.user.status;
+            }
+        } catch {}
+        // 取得最新消息
         const res = await fetch(`${API_URL}/api/news`);
-        const newsList = await res.json();
+        let newsList = await res.json();
+        // 若未登入或 status 不是「生效中」，過濾掉 type 為「會員專屬」的消息
+        if (memberStatus !== '生效中') {
+            newsList = newsList.filter(news => news.type !== '會員專屬');
+        }
         infoCard.innerHTML = newsList.map(news => `
             <div class="news-item">
                 <h3 class="${getTypeClass(news.type)}">${getTypeIcon(news.type)} ${news.type}</h3>
                 <p>${news.content}</p>
-                <div>發布日期: ${new Date(news.publishDate).toLocaleDateString()}</div>
+                <div>${new Date(news.publishDate).toLocaleDateString()}</div>
             </div>
         `).join('');
     } catch (err) {

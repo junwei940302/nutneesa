@@ -103,6 +103,13 @@ async function fetchAndRenderEvents() {
             events = events.filter(e => (Number(e.memberPrice) || 0) === 0 && (Number(e.nonMemberPrice) || 0) === 0);
         }
 
+        // 依照活動狀態排序：將'活動結束'的活動排到最後
+        events.sort((a, b) => {
+            if (a.status === '活動結束' && b.status !== '活動結束') return 1;
+            if (a.status !== '活動結束' && b.status === '活動結束') return -1;
+            return 0;
+        });
+
         events.forEach(event => {
             // 限制條件
             let hashtags = '';
@@ -151,7 +158,7 @@ async function fetchAndRenderEvents() {
                             <h3>${priceText}</h3>
                         </div>
                         <div class="btnZone">
-                            <button class="readMore" title="了解詳情">了解詳情</button>
+                            <button class="readMore" data-id="${event._id}" title="詳細資料">詳細資料</button>
                             ${event.status === '開放報名' ? '<button class="enrollBtn" title="報名">報名</button>' : ''}
                         </div>
                     </div>
@@ -159,6 +166,20 @@ async function fetchAndRenderEvents() {
             `;
             activityPanels.appendChild(card);
         });
+
+        // 新增：監聽「詳細資料」按鈕，導向 events.html?id=活動id
+        // 新增：監聽「報名」按鈕，導向 form.html?id=活動id
+        if (activityPanels) {
+            activityPanels.addEventListener('click', function(e) {
+                if (e.target.classList.contains('readMore')) {
+                    const id = e.target.getAttribute('data-id');
+                    window.location.href = `events.html?id=${id}`;
+                } else if (e.target.classList.contains('enrollBtn')) {
+                    const id = e.target.closest('.activityItem').querySelector('.readMore').getAttribute('data-id');
+                    window.location.href = `form.html?eventId=${id}`;
+                }
+            });
+        }
     } catch (err) {
         console.error('活動載入失敗', err);
     }
@@ -199,6 +220,19 @@ serviceSelector.addEventListener('change', async function() {
                 if(user.verification === false){
                     verifyBtn.style.display = '';
                 }
+                
+                // 檢查是否為管理員或系學會成員，控制 .hrefAdmin 按鈕顯示
+                const hrefAdminBtn = document.querySelector('.hrefAdmin');
+                if (hrefAdminBtn) {
+                    if (user.role === '管理員' || user.role === '系學會人員') {
+                        hrefAdminBtn.style.display = '';
+                    } else {
+                        hrefAdminBtn.style.display = 'none';
+                    }
+                }
+                
+                // 載入用戶報名記錄
+                await loadUserEnrollmentHistory();
             }
         }
     } else if (this.value === '活動報名') {
@@ -206,6 +240,46 @@ serviceSelector.addEventListener('change', async function() {
     }
     showInfoCard(this.value);
 });
+
+// 載入用戶報名記錄
+async function loadUserEnrollmentHistory() {
+    try {
+        const res = await fetch(`${API_URL}/api/responses/user`, { credentials: 'include' });
+        if (!res.ok) {
+            console.error('Failed to fetch enrollment history');
+            return;
+        }
+        
+        const enrollments = await res.json();
+        const tableBody = document.querySelector('.enrollmentTableBody');
+        if (!tableBody) return;
+        
+        tableBody.innerHTML = '';
+        
+        if (enrollments.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">尚無報名記錄</td></tr>';
+            return;
+        }
+        
+        enrollments.forEach((enrollment, index) => {
+            const tr = document.createElement('tr');
+            const submittedDate = new Date(enrollment.submittedAt).toLocaleString('zh-TW');
+            
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${enrollment.eventTitle}</td>
+                <td>已填寫 (${submittedDate})</td>
+                <td>${enrollment.amount > 0 ? `NT$ ${enrollment.amount}` : '免費'}</td>
+                <td>${enrollment.paymentMethod}</td>
+                <td>${enrollment.paymentStatus}</td>
+            `;
+            
+            tableBody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('Error loading enrollment history:', err);
+    }
+}
 
 // 若一開始就在活動報名頁也自動載入
 if (serviceSelector.value === '活動報名') {
@@ -218,5 +292,13 @@ if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
         await fetch(`${API_URL}/api/logout`, { method: 'POST', credentials: 'include' });
         window.location.reload();
+    });
+}
+
+// 進入控制中心功能
+const hrefAdminBtn = document.querySelector('.hrefAdmin');
+if (hrefAdminBtn) {
+    hrefAdminBtn.addEventListener('click', () => {
+        window.location.href = 'admin.html';
     });
 }

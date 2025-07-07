@@ -142,11 +142,21 @@
     box-shadow: 0 4px 24px rgba(0,0,0,0.10);
     padding: 2.5em 2em 2em 2em;
     margin: 2em auto 2em auto;
-    max-width: 480px;
+    max-width: 900px;
     min-width: 260px;
     display: flex;
+    flex-direction: row;
+    gap: 2.5em;
     justify-content: center;
     align-items: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.personalInfo, .enrollmentHistory {
+    flex: 1 1 0;
+    min-width: 320px;
+    max-width: 100%;
 }
 
 .personalInfo h2 {
@@ -198,11 +208,103 @@
 }
 .personalInfo td:first-child {
     color: #645038;
-    font-weight: bold;
-    width: 36%;
 }
 
-.revokeMember, .logoutBtn, .verifyEmail{
+/* 報名記錄樣式 */
+.enrollmentHistory {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+.enrollmentHistory h2 {
+    font-size: 1.6em;
+    margin-bottom: 1em;
+    color: #645038;
+    border-left: 5px solid #645038;
+    padding-left: 0.5em;
+    font-family: 'SoukouMincho', serif;
+}
+
+.enrollmentTableContainer {
+    overflow-x: auto;
+    margin-top: 1rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.enrollment-table {
+    width: 100%;
+    max-width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(230, 126, 34, 0.06);
+    box-sizing: border-box;
+}
+
+.enrollment-table th,
+.enrollment-table td {
+    padding: 0.8em;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 0.9em;
+}
+
+.enrollment-table th {
+    background-color: #f8f8f8;
+    color: #645038;
+    font-weight: bold;
+    font-size: 0.95em;
+}
+
+.enrollment-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.enrollment-table tr:nth-child(odd) {
+    background-color: #fff;
+}
+
+.enrollment-table tr:hover {
+    background-color: inherit;
+}
+
+.enrollment-table td:first-child {
+    text-align: center;
+    font-weight: bold;
+    color: #645038;
+}
+
+.enrollment-table td:nth-child(4) {
+    text-align: center;
+    font-weight: bold;
+}
+
+.enrollment-table td:nth-child(5),
+.enrollment-table td:nth-child(6) {
+    text-align: center;
+}
+
+@media (max-width: 800px) {
+    .infoCard[data-memberServices] {
+        flex-direction: column;
+        gap: 1.5em;
+        padding: 1.2em 0.5em 1.5em 0.5em;
+        max-width: 98vw;
+    }
+    .personalInfo, .enrollmentHistory {
+        min-width: 0;
+    }
+    .enrollment-table {
+        min-width: 500px;
+    }
+}
+
+.revokeMember, .logoutBtn, .verifyEmail, .hrefAdmin{
     display: inline-block;
     margin: 0.5em 0.5em 0 0;
     padding: 0.6em 1.5em;
@@ -214,12 +316,12 @@
     transition: background 0.2s, color 0.2s, box-shadow 0.2s;
     box-shadow: 0 2px 8px rgba(230, 126, 34, 0.08);
 }
-.revokeMember, .verifyEmail{
+.revokeMember, .verifyEmail, .hrefAdmin{
     background: #fff;
     color: #645038;
     border: 1.5px solid #645038;
 }
-.revokeMember:hover, .verifyEmail:hover{
+.revokeMember:hover, .verifyEmail:hover, .hrefAdmin:hover{
     background: #E0C588;
 }
 .logoutBtn {
@@ -233,10 +335,6 @@
 }
 
 @media (max-width: 600px) {
-    .infoCard[data-memberServices] {
-        padding: 1.2em 0.5em 1.5em 0.5em;
-        max-width: 98vw;
-    }
     .personalInfo h2 {
         font-size: 1.2em;
     }
@@ -361,6 +459,8 @@
     font-size: 0.95em;
     margin-bottom: 0.1em;
     white-space: nowrap;
+    min-width: -webkit-fill-available;
+    min-width: -moz-fit-content;
     min-width: fit-content;
 }
 

@@ -5,28 +5,43 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": {
+          "function": "api",
+          "region": "us-central1"
+        }
+      }
     ]
   },
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "default",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint"
-      ]
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs18",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      "*.local"
+    ],
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run lint"
+    ],
+    "endpoints": {
+      "api": {
+        "region": "us-central1",
+        "ingress": "ALLOW_ALL",
+        "timeoutSeconds": 60,
+        "maxInstances": 3,
+        "minInstances": 0,
+        "concurrency": 80,
+        "labels": {
+          "env": "production"
+        },
+        "httpsTrigger": {}
+      }
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/**",
-      "function": "api"
-    }
-  ]
+  }
 }

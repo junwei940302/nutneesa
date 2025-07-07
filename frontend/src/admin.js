@@ -20,6 +20,7 @@ const panels = {
     '歷史紀錄｜History': document.querySelector('.panel[data-history]'),
     '會員管理｜Members': document.querySelector('.panel[data-members]'),
     '活動管理｜Events': document.querySelector('.panel[data-events]'),
+    '表單管理｜Forms': document.querySelector('.panel[data-forms]'),
     '金流管理｜Flow': document.querySelector('.panel[data-flow]'),
     '資源申請｜Apply': document.querySelector('.panel[data-apply]'),
     '偏好設定｜Settings': document.querySelector('.panel[data-settings]'),
@@ -165,6 +166,8 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchMembers();
     fetchHistory();
     fetchEvents();
+    fetchForms();
+    fetchEnrollments();
 });
 
 const addNewsButton = document.querySelector('.addNews');
@@ -515,6 +518,9 @@ addEventButton.addEventListener('click', async () => {
     const restrictYear = document.querySelector('.restrictYear').value;
     const restrictMember = document.querySelector('.restrictMember').checked;
     const restrictQuantity = Number(document.querySelector('.restrictQuantity').value) || 0;
+    const location = document.querySelector('.location').value;
+    const startEnrollDate = document.querySelector('.startEnrollDate').value;
+    const endEnrollDate = document.querySelector('.endEnrollDate').value;
 
     if (!title || !content || !eventDate) {
         alert('活動標題、內文、日期為必填！');
@@ -529,11 +535,14 @@ addEventButton.addEventListener('click', async () => {
         content,
         nonMemberPrice,
         memberPrice,
-        eventDate,
+        eventDate: localDatetimeToISOString(eventDate),
         restrictDepartment,
         restrictYear,
         restrictMember,
-        restrictQuantity
+        restrictQuantity,
+        location,
+        startEnrollDate: localDatetimeToISOString(startEnrollDate),
+        endEnrollDate: localDatetimeToISOString(endEnrollDate),
     };
 
     try {
@@ -563,7 +572,10 @@ addEventButton.addEventListener('click', async () => {
         document.querySelector('.restrictYear').value = '';
         document.querySelector('.restrictMember').checked = false;
         document.querySelector('.restrictQuantity').value = 0;
-        // TODO: fetchEvents(); // 若有活動列表可刷新
+        document.querySelector('.location').value = '';
+        document.querySelector('.startEnrollDate').value = '';
+        document.querySelector('.endEnrollDate').value = '';
+        fetchEvents(); // 若有活動列表可刷新
     } catch (error) {
         console.error('Error adding event:', error);
         alert('新增活動失敗');
@@ -596,6 +608,8 @@ function populateEventsTable(events) {
     events.forEach((item, index) => {
         const createDate = item.createDate ? new Date(item.createDate).toLocaleString('zh-TW') : '';
         const eventDate = item.eventDate ? new Date(item.eventDate).toLocaleString('zh-TW') : '';
+        const startEnrollDate = item.startEnrollDate ? new Date(item.startEnrollDate).toLocaleString('zh-TW') : '';
+        const endEnrollDate = item.endEnrollDate ? new Date(item.endEnrollDate).toLocaleString('zh-TW') : '';
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><input type="checkbox" class="event-visibility-checkbox" data-id="${item._id}" ${item.visibility ? 'checked' : ''}></td>
@@ -609,6 +623,9 @@ function populateEventsTable(events) {
             <td>${item.publisher || ''}</td>
             <td>${createDate}</td>
             <td>${eventDate}</td>
+            <td>${startEnrollDate}</td>
+            <td>${endEnrollDate}</td>
+            <td>${item.location || ''}</td>
             <td>${item.enrollQuantity || 0}</td>
             <td>${item.restrictDepartment || ''}</td>
             <td>${item.restrictYear || ''}</td>
@@ -665,4 +682,284 @@ async function updateEventVisibility(id, visibility) {
         console.error('Error updating event visibility:', error);
         fetchEvents(); // 失敗時刷新
     }
+}
+
+// 修正 datetime-local 的時區問題
+function localDatetimeToISOString(localStr) {
+    if (!localStr) return undefined;
+    const [date, time] = localStr.split('T');
+    const [year, month, day] = date.split('-');
+    const [hour, minute] = time.split(':');
+    const d = new Date(year, month - 1, day, hour, minute);
+    return d.toISOString();
+}
+
+// 表單建立按鈕
+const createFormBtn = document.getElementById('createFormBtn');
+if (createFormBtn) {
+    createFormBtn.addEventListener('click', function() {
+        window.open('buildForms.html', '_blank');
+    });
+}
+
+// 取得表單列表
+async function fetchForms() {
+    try {
+        const response = await fetch(`${API_URL}/api/admin/forms`, {
+            credentials: 'include',
+        });
+        if (!response.ok) throw new Error('Network response was not ok');
+        const forms = await response.json();
+        populateFormsTable(forms);
+    } catch (error) {
+        console.error('Failed to fetch forms:', error);
+    }
+}
+
+function populateFormsTable(forms) {
+    const tableBody = document.querySelector('.forms-table-body');
+    if (!tableBody) return;
+    tableBody.innerHTML = '';
+    forms.forEach((form, idx) => {
+        const createdAt = form.createdAt ? new Date(form.createdAt).toLocaleString('zh-TW') : '';
+        const eventTitles = (form.eventTitles && form.eventTitles.length > 0) ? form.eventTitles.join(', ') : '-';
+        const responseCount = form.responseCount || 0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td>${form.title || ''}</td>
+            <td>${eventTitles}</td>
+            <td>${responseCount}</td>
+            <td>${createdAt}</td>
+            <td><button class="delete-form-btn" data-id="${form._id}">刪除</button></td>
+        `;
+        tableBody.appendChild(tr);
+    });
+    document.querySelectorAll('.delete-form-btn').forEach(btn => {
+        btn.addEventListener('click', async (event) => {
+            const formId = event.target.dataset.id;
+            if (confirm('確定要刪除此表單嗎？')) {
+                await deleteForm(formId);
+            }
+        });
+    });
+}
+
+async function deleteForm(formId) {
+    try {
+        const response = await fetch(`${API_URL}/api/admin/forms/${formId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+        if (!response.ok) throw new Error('Failed to delete form');
+        fetchForms();
+    } catch (error) {
+        alert('刪除表單失敗');
+    }
+}
+
+// 活動報名審核功能
+async function fetchEnrollments() {
+    try {
+        const response = await fetch(`${API_URL}/api/admin/enrollments`, {
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const enrollments = await response.json();
+        populateEnrollmentsTable(enrollments);
+    } catch (error) {
+        console.error('Failed to fetch enrollments:', error);
+    }
+}
+
+function populateEnrollmentsTable(enrollments) {
+    const tableBody = document.querySelector('.event-registration-table-body');
+    if (!tableBody) {
+        console.error('Enrollments table body not found');
+        return;
+    }
+
+    tableBody.innerHTML = ''; // Clear existing rows
+
+    enrollments.forEach((item, index) => {
+        const row = document.createElement('tr');
+        const submittedDate = new Date(item.submittedAt).toLocaleString('zh-TW');
+        
+        // 計算需付款金額（根據用戶身份判斷）
+        const userRole = item.userDepartmentYear && item.userDepartmentYear.includes('電機') ? 'member' : 'nonMember';
+        const paymentAmount = userRole === 'member' ? item.memberPrice : item.nonMemberPrice;
+
+        // 從作答內容中提取付款方式
+        const paymentMethod = item.answers && (item.answers['paymentMethod'] || item.answers['payments']) || '未選擇';
+        
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${item.userName}</td>
+            <td>${item.userDepartmentYear}</td>
+            <td>${item.eventTitle}</td>
+            <td>NT$ ${paymentAmount}</td>
+            <td>${paymentMethod}</td>
+            <td><button class="view-answers-btn" data-id="${item._id}" data-answers='${JSON.stringify(item.answers)}' data-form-snapshot='${JSON.stringify(item.formSnapshot)}'>查看作答內容</button></td>
+            <td>
+                <select class="payment-status-select" data-id="${item._id}" style="padding: 2px 5px; border: 1px solid #ccc; border-radius: 3px;">
+                    <option value="未付款" ${item.paymentStatus === '未付款' ? 'selected' : ''}>未付款</option>
+                    <option value="已付款" ${item.paymentStatus === '已付款' ? 'selected' : ''}>已付款</option>
+                </select>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+
+    // Add event listeners for payment status selects
+    document.querySelectorAll('.payment-status-select').forEach(select => {
+        select.addEventListener('change', (event) => {
+            const enrollmentId = event.target.dataset.id;
+            const paymentStatus = event.target.value;
+            updatePaymentStatus(enrollmentId, paymentStatus);
+        });
+    });
+
+    // Add event listeners for view answers buttons
+    document.querySelectorAll('.view-answers-btn').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const answers = JSON.parse(event.target.dataset.answers);
+            const formSnapshot = JSON.parse(event.target.dataset.formSnapshot);
+            const enrollmentId = event.target.dataset.id;
+            const enrollment = enrollments.find(e => e._id === enrollmentId);
+            showAnswersModal(answers, formSnapshot, enrollment);
+        });
+    });
+}
+
+async function updatePaymentStatus(id, paymentStatus) {
+    try {
+        const response = await fetch(`${API_URL}/api/admin/enrollments/${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ paymentStatus }),
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update payment status');
+        }
+
+        // 不刷新整個表格，只更新當前選項的狀態
+        console.log(`付款狀態已更新為: ${paymentStatus}`);
+    } catch (error) {
+        console.error('Error updating payment status:', error);
+        alert('更新付款狀態失敗');
+        fetchEnrollments(); // Refresh to revert changes
+    }
+}
+
+function showAnswersModal(answers, formSnapshot, enrollment) {
+    // 創建模態框
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    `;
+
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 80%;
+        max-height: 80%;
+        overflow-y: auto;
+    `;
+
+    let answersHtml = '<h3>作答內容</h3>';
+    
+    if (formSnapshot && formSnapshot.fields) {
+        // 根據表單欄位顯示作答內容
+        formSnapshot.fields.forEach(field => {
+            const fieldId = field.id;
+            const fieldLabel = field.label || fieldId;
+            const answer = answers[fieldId];
+            
+            if (answer !== undefined) {
+                answersHtml += `
+                    <div style="margin-bottom: 15px;">
+                        <strong>${fieldLabel}:</strong><br>
+                        <span style="color: #666;">${Array.isArray(answer) ? answer.join(', ') : answer}</span>
+                    </div>
+                `;
+            }
+        });
+    } else {
+        // 如果沒有表單快照，直接顯示所有作答
+        Object.keys(answers).forEach(key => {
+            const answer = answers[key];
+            answersHtml += `
+                <div style="margin-bottom: 15px;">
+                    <strong>${key}:</strong><br>
+                    <span style="color: #666;">${Array.isArray(answer) ? answer.join(', ') : answer}</span>
+                </div>
+            `;
+        });
+    }
+
+    // 新增付款方式詳細資訊
+    answersHtml += '<hr style="margin: 20px 0; border: 1px solid #eee;">';
+    answersHtml += '<h4>付款方式詳細資訊</h4>';
+    
+    // 從作答內容中提取付款方式相關資訊
+    const paymentMethod = answers['paymentMethod'] || answers['payments'] || '未選擇';
+    answersHtml += `
+        <div style="margin-bottom: 15px;">
+            <strong>付款方式:</strong><br>
+            <span style="color: #666;">${paymentMethod}</span>
+        </div>
+    `;
+
+    // 如果是轉帳，顯示轉帳相關資訊
+    if (paymentMethod === '轉帳' || paymentMethod.includes('轉帳')) {
+        const bankCode = answers['bankCode'] || '未填寫';
+        const account = answers['account'] || '未填寫';
+        
+        answersHtml += `
+            <div style="margin-bottom: 15px;">
+                <strong>銀行代碼:</strong><br>
+                <span style="color: #666;">${bankCode}</span>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <strong>轉帳帳號:</strong><br>
+                <span style="color: #666;">${account}</span>
+            </div>
+        `;
+    }
+
+    modalContent.innerHTML = answersHtml + `
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="this.closest('.modal').remove()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">關閉</button>
+        </div>
+    `;
+
+    modal.className = 'modal';
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    // 點擊背景關閉模態框
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+
+
 }

@@ -12,57 +12,48 @@
  * 所有 API 路由與中介軟體設定於本檔案。
  */
 
-const functions = require("firebase-functions");
+const {onRequest} = require("firebase-functions/v2/https");
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
+const MongoStore = require("connect-mongo");
 const News = require("./models/news");
 const History = require("./models/history");
 const Members = require("./models/members");
 // const Flows = require("./models/flows");
 const Events = require("./models/events");
+const Forms = require("./models/forms");
+const Responses = require("./models/responses");
 
 // 只在本地開發時載入 dotenv
 if (process.env.FUNCTIONS_EMULATOR || process.env.NODE_ENV !== "production") {
   require("dotenv").config();
 }
 
-// 環境變數取得函式
-function getEnv(key, fallback) {
-  if (process.env.FUNCTIONS_EMULATOR || process.env.NODE_ENV !== "production") {
-    return process.env[key] || fallback;
-  }
-  if (key === "MONGODB_URI") return functions.config().mongodb.uri || fallback;
-  if (key === "SESSION_SECRET") return functions.config().session.secret || fallback;
-  if (key === "FRONTEND_URLS") return functions.config().frontend.urls || fallback;
-  return fallback;
+// 取得環境變數 - Firebase Functions v2 直接使用環境變數
+if (!process.env.SESSION_SECRET) {
+  throw new Error("SESSION_SECRET is missing in environment variables!");
 }
-
-const MONGODB_URI = getEnv("MONGODB_URI", "");
-const SESSION_SECRET = getEnv("SESSION_SECRET", "default_secret");
-const FRONTEND_URLS = getEnv("FRONTEND_URLS", "").split(",");
+const MONGODB_URI = process.env.MONGODB_URI;
+const SESSION_SECRET = process.env.SESSION_SECRET;
+// FRONTEND_URLS 不再需要，因為我們使用 rewrites
 
 const app = express();
 
-// 解析環境變數成陣列
-const allowedOrigins = FRONTEND_URLS;
+// 環境變數已設定，但 CORS 由 V2 和 rewrites 處理
+console.log("- MongoDB URI configured:", !!MONGODB_URI);
+console.log("- Session secret configured:", !!SESSION_SECRET);
 
 /**
  * Express app setup and middleware
  * 設定 CORS、Session、MongoDB 等中介軟體。
  */
+// 簡化的 CORS 設定，因為 V2 已經處理了基本的 CORS
 app.use(cors({
-  origin: function(origin, callback) {
-    // 允許本地測試時 origin 為 undefined
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: true, // 允許所有 origin，因為我們使用 rewrites
   credentials: true,
 }));
 app.use(express.json());
@@ -71,6 +62,13 @@ app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: MONGODB_URI,
+    ttl: 14*24*60*60,
+    crypto: {
+      secret: SESSION_SECRET,
+    },
+  }),
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -112,7 +110,7 @@ async function logHistory(req, operation) {
  * 包含新聞相關的 API 路由。
  */
 // 新增 API 路由
-app.get("/news", async (req, res) => {
+app.get("/api/news", async (req, res) => {
   try {
     const newsList = await News.find({visibility: true}).sort({publishDate: -1});
     res.json(newsList);
@@ -121,7 +119,7 @@ app.get("/news", async (req, res) => {
   }
 });
 
-app.get("/admin/news", async (req, res) => {
+app.get("/api/admin/news", async (req, res) => {
   try {
     const newsList = await News.find({}).sort({publishDate: -1});
     res.json(newsList);
@@ -130,7 +128,7 @@ app.get("/admin/news", async (req, res) => {
   }
 });
 
-app.patch("/admin/news/:id", async (req, res) => {
+app.patch("/api/admin/news/:id", async (req, res) => {
   try {
     const {id} = req.params;
     const {visibility} = req.body;
@@ -155,7 +153,7 @@ app.patch("/admin/news/:id", async (req, res) => {
   }
 });
 
-app.post("/admin/news", async (req, res) => {
+app.post("/api/admin/news", async (req, res) => {
   try {
     const {type, content, publishDate, visibility} = req.body;
 
@@ -194,7 +192,7 @@ app.post("/admin/news", async (req, res) => {
   }
 });
 
-app.delete("/admin/news/:id", async (req, res) => {
+app.delete("/api/admin/news/:id", async (req, res) => {
   try {
     const {id} = req.params;
     const deletedNews = await News.findByIdAndDelete(id);
@@ -210,7 +208,7 @@ app.delete("/admin/news/:id", async (req, res) => {
 });
 
 // 新增會員列表 API
-app.get("/admin/members", async (req, res) => {
+app.get("/api/admin/members", async (req, res) => {
   try {
     const membersList = await Members.find({});
     res.json(membersList);
@@ -220,7 +218,7 @@ app.get("/admin/members", async (req, res) => {
 });
 
 // 新增會員 API
-app.post("/admin/members", async (req, res) => {
+app.post("/api/admin/members", async (req, res) => {
   try {
     const {role, name, status, studentId, departmentYear, email, phone, gender, verification} = req.body;
     if (!name) {
@@ -249,7 +247,7 @@ app.post("/admin/members", async (req, res) => {
 });
 
 // 註銷 API
-app.delete("/admin/members/:id", async (req, res) => {
+app.delete("/api/admin/members/:id", async (req, res) => {
   try {
     const {id} = req.params;
     const deletedMember = await Members.findByIdAndDelete(id);
@@ -264,7 +262,7 @@ app.delete("/admin/members/:id", async (req, res) => {
 });
 
 // 新增歷史紀錄 API
-app.get("/admin/history", async (req, res) => {
+app.get("/api/admin/history", async (req, res) => {
   try {
     const historyList = await History.find({}).sort({alertDate: -1});
     res.json(historyList);
@@ -273,7 +271,7 @@ app.get("/admin/history", async (req, res) => {
   }
 });
 
-app.patch("/admin/history/:id", async (req, res) => {
+app.patch("/api/admin/history/:id", async (req, res) => {
   try {
     const {id} = req.params;
     const {confirm} = req.body;
@@ -322,7 +320,7 @@ function sha256(password) {
  * 包含活動相關的 API 路由。
  */
 // 註冊 API
-app.post("/register", async (req, res) => {
+app.post("/api/register", async (req, res) => {
   const {email, password, memberName, studentId, gender, departmentYear, phone} = req.body;
   if (!email || !password) {
     return res.json({success: false, message: "請填寫所有欄位 / Please fill all fields."});
@@ -357,7 +355,7 @@ app.post("/register", async (req, res) => {
 });
 
 // 登入 API
-app.post("/login", async (req, res) => {
+app.post("/api/login", async (req, res) => {
   const {email, password} = req.body;
   if (!email || !password) {
     return res.json({success: false, message: "請輸入帳號密碼 / Please enter email and password."});
@@ -379,7 +377,7 @@ app.post("/login", async (req, res) => {
 });
 
 // 登出 API
-app.post("/logout", async (req, res) => {
+app.post("/api/logout", async (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       return res.status(500).json({success: false, message: "登出失敗 / Logout failed"});
@@ -390,7 +388,7 @@ app.post("/logout", async (req, res) => {
 });
 
 // 新增 /api/me API，回傳登入狀態
-app.get("/me", async (req, res) => {
+app.get("/api/me", async (req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   const userId = req.session.userId;
   if (!userId) return res.json({loggedIn: false});
@@ -421,7 +419,7 @@ app.get("/me", async (req, res) => {
  * API route handler: Events APIs
  */
 // 新增活動 API
-app.post("/admin/events", async (req, res) => {
+app.post("/api/admin/events", async (req, res) => {
   try {
     const {
       imgUrl,
@@ -437,6 +435,9 @@ app.post("/admin/events", async (req, res) => {
       restrictYear,
       restrictMember,
       restrictQuantity,
+      location,
+      startEnrollDate,
+      endEnrollDate,
     } = req.body;
 
     let publisherName = "N/A";
@@ -469,6 +470,9 @@ app.post("/admin/events", async (req, res) => {
       restrictYear,
       restrictMember,
       restrictQuantity,
+      location,
+      startEnrollDate: startEnrollDate ? new Date(startEnrollDate) : undefined,
+      endEnrollDate: endEnrollDate ? new Date(endEnrollDate) : undefined,
     });
 
     await newEvent.save();
@@ -481,7 +485,7 @@ app.post("/admin/events", async (req, res) => {
 });
 
 // 刪除活動 API
-app.delete("/admin/events/:id", async (req, res) => {
+app.delete("/api/admin/events/:id", async (req, res) => {
   try {
     const {id} = req.params;
     const deletedEvent = await Events.findByIdAndDelete(id);
@@ -496,7 +500,7 @@ app.delete("/admin/events/:id", async (req, res) => {
 });
 
 // 取得活動列表 API
-app.get("/admin/events", async (req, res) => {
+app.get("/api/admin/events", async (req, res) => {
   try {
     const eventsList = await Events.find({}).sort({createDate: -1});
     res.json(eventsList);
@@ -506,7 +510,7 @@ app.get("/admin/events", async (req, res) => {
 });
 
 // 新增 PATCH API for event visibility
-app.patch("/admin/events/:id", async (req, res) => {
+app.patch("/api/admin/events/:id", async (req, res) => {
   try {
     const {id} = req.params;
     const {visibility} = req.body;
@@ -532,7 +536,7 @@ app.patch("/admin/events/:id", async (req, res) => {
 });
 
 // 前台取得可見活動 API
-app.get("/events", async (req, res) => {
+app.get("/api/events", async (req, res) => {
   try {
     const eventsList = await Events.find({visibility: true}).sort({createDate: -1});
     res.json(eventsList);
@@ -541,4 +545,390 @@ app.get("/events", async (req, res) => {
   }
 });
 
-exports.api = functions.https.onRequest(app);
+// 取得所有表單（含關聯活動與填寫人數）
+app.get("/api/admin/forms", async (req, res) => {
+  try {
+    // 取得所有表單
+    const forms = await Forms.find().lean();
+    // 取得所有活動（只取 formId, title）
+    const events = await Events.find({formId: {$ne: null}}, {formId: 1, title: 1}).lean();
+    // 取得所有 responses 的 formId 統計
+    const responseCounts = await Responses.aggregate([
+      {$group: {_id: "$formId", count: {$sum: 1}}},
+    ]);
+    // 整理 event map: formId -> [活動標題...]
+    const eventMap = {};
+    events.forEach((ev) => {
+      if (ev.formId) {
+        const key = ev.formId.toString();
+        if (!eventMap[key]) eventMap[key] = [];
+        eventMap[key].push(ev.title);
+      }
+    });
+    // 整理 responseCount map
+    const responseCountMap = {};
+    responseCounts.forEach((rc) => {
+      responseCountMap[rc._id ? rc._id.toString() : ""] = rc.count;
+    });
+    // 組合回傳
+    const result = forms.map((form) => ({
+      _id: form._id,
+      title: form.title,
+      createdAt: form.createdAt,
+      eventTitles: eventMap[form._id.toString()] || [],
+      responseCount: responseCountMap[form._id.toString()] || 0,
+    }));
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({error: "Failed to fetch forms"});
+  }
+});
+
+// 建立新表單，並可直接關聯活動
+app.post("/api/admin/forms", async (req, res) => {
+  try {
+    const {title, description, fields, eventId} = req.body;
+    if (!title || !fields || !Array.isArray(fields) || fields.length === 0) {
+      return res.status(400).json({error: "Title and fields are required"});
+    }
+    // 建立表單
+    const form = await Forms.create({title, description, fields});
+    let eventUpdate = null;
+    if (eventId) {
+      // 更新活動的 formId
+      eventUpdate = await Events.findByIdAndUpdate(
+          eventId,
+          {formId: form._id},
+          {new: true},
+      );
+    }
+    res.status(201).json({form, event: eventUpdate});
+  } catch (err) {
+    res.status(500).json({error: "Failed to create form", detail: err.message});
+  }
+});
+
+// 根據 ID 取得表單資料（管理員用）
+app.get("/api/admin/forms/:id", async (req, res) => {
+  try {
+    const {id} = req.params;
+    const form = await Forms.findById(id);
+    if (!form) {
+      return res.status(404).json({error: "Form not found"});
+    }
+    res.json(form);
+  } catch (err) {
+    res.status(500).json({error: "Failed to fetch form"});
+  }
+});
+
+// 刪除表單
+app.delete("/api/admin/forms/:id", async (req, res) => {
+  try {
+    const {id} = req.params;
+    const deletedForm = await Forms.findByIdAndDelete(id);
+    if (!deletedForm) {
+      return res.status(404).json({error: "Form not found"});
+    }
+    await logHistory(req, `Delete form: ${id}`);
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({error: "Failed to delete form"});
+  }
+});
+
+// 根據 ID 取得表單資料
+app.get("/api/forms/:id", async (req, res) => {
+  try {
+    const {id} = req.params;
+    const form = await Forms.findById(id);
+    if (!form) {
+      return res.status(404).json({error: "Form not found"});
+    }
+    res.json(form);
+  } catch (err) {
+    res.status(500).json({error: "Failed to fetch form"});
+  }
+});
+
+// 檢查用戶是否已提交過表單
+app.get("/api/responses/check/:activityId/:formId", async (req, res) => {
+  try {
+    const {activityId, formId} = req.params;
+
+    // 取得當前用戶 ID（如果已登入）
+    let userId = null;
+    if (req.session && req.session.userId) {
+      userId = req.session.userId;
+    }
+
+    const existingResponse = await Responses.findOne({
+      activityId,
+      formId,
+      userId: userId || null,
+    });
+
+    if (existingResponse) {
+      res.json({
+        submitted: true,
+        submittedAt: existingResponse.createdAt,
+        message: "您已經提交過此表單",
+      });
+    } else {
+      res.json({submitted: false});
+    }
+  } catch (err) {
+    res.status(500).json({error: "Failed to check response status", detail: err.message});
+  }
+});
+
+// 提交表單回應
+app.post("/api/responses", async (req, res) => {
+  try {
+    const {activityId, formId, answers, formSnapshot} = req.body;
+
+    if (!activityId || !formId || !answers) {
+      return res.status(400).json({error: "Missing required fields"});
+    }
+
+    // 取得當前用戶 ID（如果已登入）
+    let userId = null;
+    if (req.session && req.session.userId) {
+      userId = req.session.userId;
+    }
+
+    // 檢查是否已經提交過此表單
+    const existingResponse = await Responses.findOne({
+      activityId,
+      formId,
+      userId: userId || null,
+    });
+
+    if (existingResponse) {
+      return res.status(409).json({
+        error: "您已經提交過此表單，無法重複提交",
+        submittedAt: existingResponse.createdAt,
+      });
+    }
+
+    const response = await Responses.create({
+      activityId,
+      formId,
+      userId,
+      answers,
+      formSnapshot,
+    });
+
+    // 更新活動的報名人數
+    await Events.findByIdAndUpdate(
+        activityId,
+        {$inc: {enrollQuantity: 1}},
+    );
+
+    res.status(201).json(response);
+  } catch (err) {
+    res.status(500).json({error: "Failed to submit response", detail: err.message});
+  }
+});
+
+// 獲取用戶報名記錄
+app.get("/api/responses/user", async (req, res) => {
+  try {
+    // 檢查用戶是否已登入
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({error: "User not logged in"});
+    }
+
+    const userId = req.session.userId;
+
+    // 獲取用戶的所有報名記錄
+    const responses = await Responses.find({userId}).sort({createdAt: -1}).lean();
+
+    // 獲取相關的活動和表單資訊
+    const result = await Promise.all(responses.map(async (response) => {
+      const event = await Events.findById(response.activityId).lean();
+      const form = await Forms.findById(response.formId).lean();
+
+      return {
+        _id: response._id,
+        eventTitle: event ? event.title : "未知活動",
+        eventId: response.activityId,
+        formTitle: form ? form.title : "未知表單",
+        formId: response.formId,
+        submittedAt: response.createdAt,
+        answers: response.answers,
+        // 這裡可以根據實際需求添加更多欄位，如付款狀態等
+        paymentStatus: "待確認", // 預設值，實際應該從付款系統獲取
+        paymentMethod: "未指定", // 預設值
+        amount: event ? (event.memberPrice || event.nonMemberPrice || 0) : 0,
+      };
+    }));
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({error: "Failed to fetch user responses", detail: err.message});
+  }
+});
+
+// 確認報名成功
+app.post("/api/enrollment/confirm", async (req, res) => {
+  try {
+    const {eventId} = req.body;
+
+    if (!eventId) {
+      return res.status(400).json({error: "Missing eventId"});
+    }
+
+    // 檢查用戶是否已登入
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({error: "User not logged in"});
+    }
+
+    const userId = req.session.userId;
+
+    // 檢查用戶是否已經提交過此活動的表單
+    const existingResponse = await Responses.findOne({
+      activityId: eventId,
+      userId: userId,
+    });
+
+    if (!existingResponse) {
+      return res.status(404).json({error: "No enrollment found for this event"});
+    }
+
+    // 這裡可以添加其他邏輯，比如更新付款狀態等
+    // 目前只是確認報名成功，返回成功訊息
+
+    res.json({
+      success: true,
+      message: "報名成功！",
+      eventId: eventId,
+    });
+  } catch (err) {
+    res.status(500).json({error: "Failed to confirm enrollment", detail: err.message});
+  }
+});
+
+// 獲取所有活動報名記錄（管理員用）
+app.get("/api/admin/enrollments", async (req, res) => {
+  try {
+    // 獲取所有報名記錄，並關聯用戶、活動和表單資訊
+    const responses = await Responses.find().sort({createdAt: -1}).lean();
+
+    const result = await Promise.all(responses.map(async (response) => {
+      const event = await Events.findById(response.activityId).lean();
+      const form = await Forms.findById(response.formId).lean();
+      const user = response.userId ? await Members.findById(response.userId).lean() : null;
+
+      return {
+        _id: response._id,
+        eventTitle: event ? event.title : "未知活動",
+        eventId: response.activityId,
+        formTitle: form ? form.title : "未知表單",
+        formId: response.formId,
+        submittedAt: response.createdAt,
+        answers: response.answers,
+        formSnapshot: response.formSnapshot,
+        // 用戶資訊
+        userName: user ? user.name : "匿名用戶",
+        userDepartmentYear: user ? user.departmentYear : "未知",
+        userEmail: user ? user.email : "未知",
+        userPhone: user ? user.phone : "未知",
+        // 活動資訊
+        memberPrice: event ? event.memberPrice : 0,
+        nonMemberPrice: event ? event.nonMemberPrice : 0,
+        // 審核狀態
+        reviewed: response.reviewed || false,
+        reviewedBy: response.reviewedBy || null,
+        reviewedAt: response.reviewedAt || null,
+        reviewNotes: response.reviewNotes || "",
+        // 付款狀態
+        paymentStatus: response.paymentStatus || "未付款",
+        paymentNotes: response.paymentNotes || "",
+        paymentMethod: response.paymentMethod || "未指定",
+      };
+    }));
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({error: "Failed to fetch enrollments", detail: err.message});
+  }
+});
+
+// 更新報名審核狀態
+app.patch("/api/admin/enrollments/:id", async (req, res) => {
+  try {
+    const {id} = req.params;
+    const {reviewed, reviewNotes, paymentStatus, paymentNotes} = req.body;
+
+    let reviewerName = "Unknown";
+    const userId = req.session.userId;
+    if (userId) {
+      try {
+        const member = await Members.findById(userId);
+        if (member) {
+          reviewerName = member.name;
+        }
+      } catch (err) {
+        console.error("Could not find reviewer from session, using default. Error:", err.message);
+      }
+    }
+
+    // 準備更新資料
+    const updateData = {};
+
+    // 如果有審核狀態更新
+    if (typeof reviewed === "boolean") {
+      updateData.reviewed = reviewed;
+      updateData.reviewedBy = reviewed ? reviewerName : null;
+      updateData.reviewedAt = reviewed ? new Date() : null;
+      updateData.reviewNotes = reviewNotes || "";
+    }
+
+    // 如果有付款狀態更新
+    if (paymentStatus) {
+      updateData.paymentStatus = paymentStatus;
+      updateData.paymentNotes = paymentNotes || "";
+    }
+
+    // 更新報名記錄
+    const updatedResponse = await Responses.findByIdAndUpdate(
+        id,
+        updateData,
+        {new: true},
+    );
+
+    if (!updatedResponse) {
+      return res.status(404).json({error: "Enrollment not found"});
+    }
+
+    if (typeof reviewed === "boolean") {
+      await logHistory(req, `Update enrollment review: ${id} to ${reviewed}`);
+    }
+    if (paymentStatus) {
+      await logHistory(req, `Update payment status: ${id} to ${paymentStatus}`);
+    }
+
+    res.json(updatedResponse);
+  } catch (err) {
+    res.status(500).json({error: "Failed to update enrollment"});
+  }
+});
+
+const apiRouter = express.Router();
+app.use('/api', apiRouter);
+
+exports.api = onRequest(
+  /*
+    {
+      invoker: "public",
+      cors: true, // 啟用 CORS 支援
+      region: "us-central1",
+      memory: "512MiB",
+      timeoutSeconds: 60,
+      maxInstances: 3,
+      minInstances: 0,
+    },
+    */
+    app
+);

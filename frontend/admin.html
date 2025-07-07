@@ -60,6 +60,7 @@
                 <option>歷史紀錄｜History</option>
                 <option>會員管理｜Members</option>
                 <option>活動管理｜Events</option>
+                <option>表單管理｜Forms</option>
                 <option>金流管理｜Flow</option>
                 <option>資源申請｜Apply</option>
                 <option>偏好設定｜Settings</option>
@@ -286,8 +287,20 @@
                             <input type="number" min="0" step="1" class="eventMemberPrice" title="會員價格" value="0">
                         </div>
                         <div>
+                            報名開始
+                            <input type="datetime-local" class="startEnrollDate" title="報名開始" required>
+                        </div>
+                        <div>
+                            報名截止
+                            <input type="datetime-local" class="endEnrollDate" title="報名截止" required>
+                        </div>
+                        <div>
                             活動日期
                             <input type="datetime-local" class="eventDate" title="活動日期" required>
+                        </div>
+                        <div>
+                            活動地點
+                            <input type="text" class="location" placeholder="活動地點" required>
                         </div>
                         <div>
                             系別限制
@@ -327,6 +340,9 @@
                                             <th>發布者</th>
                                             <th>創建日期</th>
                                             <th>活動日期</th>
+                                            <th>報名開始</th>
+                                            <th>報名截止</th>
+                                            <th>活動地點</th>
                                             <th>報名人數</th>
                                             <th>系別限制</th>
                                             <th>年級限制</th>
@@ -339,6 +355,32 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="panel" data-forms>
+            <ul>
+                <li>
+                    <h3>表單控制</h3>
+                    <button id="createFormBtn" type="button">建立新表單</button>
+                </li>
+                <li>
+                    <h3>表單列表</h3>
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>序號</th>
+                                    <th>標題</th>
+                                    <th>關聯活動</th>
+                                    <th>填寫人數</th>
+                                    <th>建立時間</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="forms-table-body"></tbody>
+                        </table>
                     </div>
                 </li>
             </ul>
@@ -382,7 +424,7 @@
                         </div>
                         <div>
                             <p>由CSV匯入</p>
-                            <input type="file" title="uploadCSV">
+                            <input type="file" title="uploadCSV" disabled>
                         </div>
                     </div>
                 </li>
@@ -422,6 +464,31 @@
                         </div>
                     </div>
                 </li>
+                <li>
+                    <h3>活動報名審核</h3>
+                    <div>
+                        <div>
+                            <p>審核列表</p>
+                            <div class="table-scroll">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>序號</th>
+                                            <th>姓名</th>
+                                            <th>系級</th>
+                                            <th>報名內容</th>
+                                            <th>需付款金額</th>
+                                            <th>付款方式</th>
+                                            <th>作答內容</th>
+                                            <th>付款狀態</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="event-registration-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </li>
             </ul>
         </div>
         <div class="panel" data-settings>
@@ -444,7 +511,7 @@
                         </div>
                         <div>
                             <p>上次更新</p>
-                            <p>202506270228</p>
+                            <p>202507050535</p>
                         </div>
                     </div>
                 </li>
