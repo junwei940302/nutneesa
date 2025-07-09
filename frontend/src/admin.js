@@ -946,6 +946,10 @@ function populateEventsTable(events) {
 
 // 單欄位 PATCH（整合 visibility 與一般欄位）
 async function updateEventField(eventId, field, value) {
+    if (!field || typeof value === "undefined") {
+        alert("更新欄位或值無效");
+        return;
+    }
     try {
         const body = {};
         body[field] = value;
@@ -1263,46 +1267,7 @@ function showAnswersModal(answers, formSnapshot, enrollment) {
 
 // ====== 美食地圖 Maps 新增地標功能 ======
 // 1. 動態營業時段表格
-const openingHoursList = document.querySelector(".openingHoursList tbody");
-const addOpeningHoursBtn = document.querySelector(".addOpeningHours");
-
-addOpeningHoursBtn.addEventListener("click", function() {
-  // 移除「無資料」行
-  const noDataRow = openingHoursList.querySelector("tr td[colspan]");
-  if (noDataRow) openingHoursList.innerHTML = "";
-
-  // 新增一行
-  const tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td>
-      <select class="openingDay">
-        <option value="monday">星期一</option>
-        <option value="tuesday">星期二</option>
-        <option value="wednesday">星期三</option>
-        <option value="thursday">星期四</option>
-        <option value="friday">星期五</option>
-        <option value="saturday">星期六</option>
-        <option value="sunday">星期日</option>
-      </select>
-    </td>
-    <td><input type="time" class="openingTime"></td>
-    <td><input type="time" class="closingTime"></td>
-    <td><button type="button" class="removeOpeningHours">移除</button></td>
-  `;
-  openingHoursList.appendChild(tr);
-});
-
-openingHoursList.addEventListener("click", function(e) {
-  if (e.target.classList.contains("removeOpeningHours")) {
-    e.target.closest("tr").remove();
-    // 若刪到沒資料，補回「無資料」
-    if (openingHoursList.children.length === 0) {
-      const emptyTr = document.createElement("tr");
-      emptyTr.innerHTML = `<td colspan="4" style="text-align: center;">無資料</td>`;
-      openingHoursList.appendChild(emptyTr);
-    }
-  }
-});
+// (已移除 addOpeningHoursBtn 及其功能)
 
 // ====== 新增：美食地圖地標列表與編輯功能 ======
 const MAP_CATEGORIES = ["A級美食嘉年華", "B級美食嘉年華", "咖啡廳及甜點店"];
@@ -1570,23 +1535,4 @@ async function fetchGooglePlaceDetails(placeId) {
 function getGooglePhotoUrl(photoReference) {
   const apiKey = window.GOOGLE_MAPS_API_KEY;
   return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=${photoReference}&key=${apiKey}`;
-}
-
-function collectOpeningHours() {
-  const rows = openingHoursList.querySelectorAll("tr");
-  const hours = [];
-  rows.forEach(row => {
-    const daySel = row.querySelector(".openingDay");
-    const openInput = row.querySelector(".openingTime");
-    const closeInput = row.querySelector(".closingTime");
-    if (daySel && openInput && closeInput) {
-      hours.push({
-        day: daySel.value,
-        open: openInput.value,
-        close: closeInput.value,
-        closed: false
-      });
-    }
-  });
-  return hours;
 }

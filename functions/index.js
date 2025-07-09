@@ -91,33 +91,17 @@ app.get("/", (req, res) => {
 // Helper function for logging
 async function logHistory(req, operation) {
   const executer = await Members.findById(req.session.userId);
-
   try {
     await History.create({
       alertDate: new Date(),
       alertPath: req.originalUrl,
+      content: operation,
+      executer: executer ? executer.name : "Unknown"
     });
   } catch (err) {
     console.error("Failed to log history:", err);
   }
-
-  const updatedNews = await News.findByIdAndUpdate(
-    id,
-    updateFields,
-    {new: true}
-  );
-
-  const updatedMember = await Members.findByIdAndUpdate(
-    id,
-    updateFields,
-    {new: true}
-  );
-
-  const updatedEvent = await Events.findByIdAndUpdate(
-    id,
-    updateFields,
-  );
-};
+}
 
 app.get("/api/admin/news", async (req, res) => {
   try {
@@ -640,7 +624,7 @@ app.patch("/api/admin/events/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const allowedFields = [
-      "title", "hashtag", "status", "content", "nonMemberPrice", "memberPrice", "eventDate", "startEnrollDate", "endEnrollDate", "location", "restrictDepartment", "restrictYear", "restrictMember", "restrictQuantity"
+      "title", "hashtag", "status", "content", "nonMemberPrice", "memberPrice", "eventDate", "startEnrollDate", "endEnrollDate", "location", "restrictDepartment", "restrictYear", "restrictMember", "restrictQuantity", "visibility"
     ];
     const updateFields = {};
     allowedFields.forEach((field) => {
