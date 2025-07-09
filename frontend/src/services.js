@@ -22,31 +22,6 @@ function showInfoCard(selected) {
 // 初始化顯示
 showInfoCard(serviceSelector.value);
 
-// 新增：自動檢查登入，若已登入則自動切換到會員相關服務
-(async function autoSelectMemberServiceIfLoggedIn() {
-    if (await checkLogin()) {
-        serviceSelector.value = '會員相關服務';
-        // 觸發 change 事件以載入會員資料與顯示卡片
-        const event = new Event('change', { bubbles: true });
-        serviceSelector.dispatchEvent(event);
-
-        const matlabKey = document.querySelector('.matlabKey');
-        matlabKey.innerHTML = '13550-01396-46365-69095-09126';
-        matlabKey.classList.remove('unauthorize');
-        matlabKey.classList.add('authorized');
-    }
-})();
-
-async function checkLogin() {
-    try {
-        const res = await fetch(`${API_URL}/api/me`, { credentials: 'include' ,});
-        const data = await res.json();
-        return data.loggedIn;
-    } catch {
-        return false;
-    }
-}
-
 // 取得活動搜尋器控件
 const activitySearcher = document.querySelector('.activitySearcher');
 let activityStatusSelect, activityTypeSelect, freeOnlyCheckbox;
@@ -185,7 +160,7 @@ async function fetchAndRenderEvents() {
     }
 }
 
-// 監聽選擇變更
+// 監聽 serviceSelector 變更時才載入對應資料
 serviceSelector.addEventListener('change', async function() {
     if (this.value === '會員相關服務') {
         if(!(await checkLogin())){
@@ -220,7 +195,6 @@ serviceSelector.addEventListener('change', async function() {
                 if(user.verification === false){
                     verifyBtn.style.display = '';
                 }
-                
                 // 檢查是否為管理員或系學會成員，控制 .hrefAdmin 按鈕顯示
                 const hrefAdminBtn = document.querySelector('.hrefAdmin');
                 if (hrefAdminBtn) {
@@ -230,7 +204,6 @@ serviceSelector.addEventListener('change', async function() {
                         hrefAdminBtn.style.display = 'none';
                     }
                 }
-                
                 // 載入用戶報名記錄
                 await loadUserEnrollmentHistory();
             }
@@ -281,10 +254,37 @@ async function loadUserEnrollmentHistory() {
     }
 }
 
-// 若一開始就在活動報名頁也自動載入
-if (serviceSelector.value === '活動報名') {
-    fetchAndRenderEvents();
+// 恢復：自動檢查登入，若已登入則自動切換到會員相關服務並載入資料
+(async function autoSelectMemberServiceIfLoggedIn() {
+    if (serviceSelector.value === '會員相關服務' && await checkLogin()) {
+        // 觸發 change 事件以載入會員資料與顯示卡片
+        const event = new Event('change', { bubbles: true });
+        serviceSelector.dispatchEvent(event);
+        const matlabKey = document.querySelector('.matlabKey');
+        if (matlabKey) {
+            matlabKey.innerHTML = '13550-01396-46365-69095-09126';
+            matlabKey.classList.remove('unauthorize');
+            matlabKey.classList.add('authorized');
+        }
+    }
+})();
+
+async function checkLogin() {
+    try {
+        const res = await fetch(`${API_URL}/api/me`, { credentials: 'include' ,});
+        const data = await res.json();
+        return data.loggedIn;
+    } catch {
+        return false;
+    }
 }
+
+// 頁面初始時只根據預設選項載入一次
+(async function initPanel() {
+    if (serviceSelector.value === '活動報名') {
+        await fetchAndRenderEvents();
+    }
+})();
 
 // 登出功能
 const logoutBtn = document.querySelector('.logoutBtn');

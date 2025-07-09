@@ -27,6 +27,7 @@ const Members = require("./models/members");
 const Events = require("./models/events");
 const Forms = require("./models/forms");
 const Responses = require("./models/responses");
+const MapItems = require("./models/mapItems");
 
 // 只在本地開發時載入 dotenv
 if (process.env.FUNCTIONS_EMULATOR || process.env.NODE_ENV !== "production") {
@@ -80,8 +81,8 @@ app.use(session({
 app.set("trust proxy", 1);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("MongoDB connected!"))
-    .catch((err) => console.error("MongoDB connection error:", err));
+  .then(() => console.log("MongoDB connected!"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 
 app.get("/", (req, res) => {
   res.json({message: "API is running!"});
@@ -95,29 +96,28 @@ async function logHistory(req, operation) {
     await History.create({
       alertDate: new Date(),
       alertPath: req.originalUrl,
-      content: operation,
-      executer: executer ? executer.name : "Unknown",
-      confirm: false,
-      securityChecker: "Uncheck",
     });
   } catch (err) {
     console.error("Failed to log history:", err);
   }
-}
 
-/**
- * API route handler: News APIs
- * 包含新聞相關的 API 路由。
- */
-// 新增 API 路由
-app.get("/api/news", async (req, res) => {
-  try {
-    const newsList = await News.find({visibility: true}).sort({publishDate: -1});
-    res.json(newsList);
-  } catch (err) {
-    res.status(500).json({error: "Failed to fetch news"});
-  }
-});
+  const updatedNews = await News.findByIdAndUpdate(
+    id,
+    updateFields,
+    {new: true}
+  );
+
+  const updatedMember = await Members.findByIdAndUpdate(
+    id,
+    updateFields,
+    {new: true}
+  );
+
+  const updatedEvent = await Events.findByIdAndUpdate(
+    id,
+    updateFields,
+  );
+};
 
 app.get("/api/admin/news", async (req, res) => {
   try {
@@ -133,28 +133,26 @@ app.patch("/api/admin/news/:id", async (req, res) => {
     const {id} = req.params;
     const updateFields = {};
     const allowedFields = ["type", "content", "visibility"];
-    // 只允許這三個欄位
-    allowedFields.forEach(field => {
-      if (req.body.hasOwnProperty(field)) {
+    allowedFields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
         updateFields[field] = req.body[field];
       }
     });
-    // 如果有 visibility 欄位，檢查型別
-    if (updateFields.hasOwnProperty("visibility") && typeof updateFields.visibility !== "boolean") {
-      return res.status(400).json({error: "Invalid visibility value"});
+    if (Object.prototype.hasOwnProperty.call(updateFields, "visibility") && typeof updateFields.visibility !== "boolean") {
+      return res.status(400).json({ error: "Invalid visibility value" });
     }
     if (Object.keys(updateFields).length === 0) {
       return res.status(400).json({error: "No valid fields to update"});
     }
     const updatedNews = await News.findByIdAndUpdate(
-        id,
-        updateFields,
-        {new: true},
+      id,
+      updateFields,
+      {new: true}
     );
     if (!updatedNews) {
       return res.status(404).json({error: "News not found"});
     }
-    await logHistory(req, `Update news: ${id} fields: ${Object.keys(updateFields).join(', ')}`);
+    await logHistory(req, `Update news: ${id} fields: ${Object.keys(updateFields).join(", ")}`);
     res.json(updatedNews);
   } catch (err) {
     res.status(500).json({error: "Failed to update news"});
@@ -262,8 +260,8 @@ app.patch("/api/admin/members/:id", async (req, res) => {
       "role", "name", "studentId", "gender", "email", "phone", "departmentYear", "cumulativeConsumption", "verification"
     ];
     const updateFields = {};
-    allowedFields.forEach(field => {
-      if (req.body.hasOwnProperty(field)) {
+    allowedFields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
         updateFields[field] = req.body[field];
       }
     });
@@ -273,12 +271,12 @@ app.patch("/api/admin/members/:id", async (req, res) => {
     const updatedMember = await Members.findByIdAndUpdate(
       id,
       updateFields,
-      { new: true }
+      {new: true}
     );
     if (!updatedMember) {
       return res.status(404).json({ error: "Member not found" });
     }
-    await logHistory(req, `Update member: ${id} fields: ${Object.keys(updateFields).join(', ')}`);
+    await logHistory(req, `Update member: ${id} fields: ${Object.keys(updateFields).join(", ")}`);
     res.json(updatedMember);
   } catch (err) {
     res.status(500).json({ error: "Failed to update member" });
@@ -310,14 +308,14 @@ app.get("/api/admin/history", async (req, res) => {
       // 嘗試識別內容格式
       // 例如: "Delete news: 665f..."、"Delete member: 665f..."、"Delete event: 665f..."、"Delete form: 665f..."
       const patterns = [
-        { key: 'news', model: News, regex: /news: ([a-fA-F0-9]{24})/ },
-        { key: 'member', model: Members, regex: /member: ([a-fA-F0-9]{24})/ },
-        { key: 'event', model: Events, regex: /event: ([a-fA-F0-9]{24})/ },
-        { key: 'form', model: Forms, regex: /form: ([a-fA-F0-9]{24})/ },
+        { key: "news", model: News, regex: /news: ([a-fA-F0-9]{24})/ },
+        { key: "member", model: Members, regex: /member: ([a-fA-F0-9]{24})/ },
+        { key: "event", model: Events, regex: /event: ([a-fA-F0-9]{24})/ },
+        { key: "form", model: Forms, regex: /form: ([a-fA-F0-9]{24})/ },
         // 新增 enrollment/payment 狀態
-        { key: 'enrollment', model: require('./models/responses'), regex: /enrollment (review|payment status): ([a-fA-F0-9]{24})/ },
+        { key: "enrollment", model: require("./models/responses"), regex: /enrollment (review|payment status): ([a-fA-F0-9]{24})/ },
         // 新增 event visibility
-        { key: 'eventVisibility', model: Events, regex: /event visibility: ([a-fA-F0-9]{24})/ },
+        { key: "eventVisibility", model: Events, regex: /event visibility: ([a-fA-F0-9]{24})/ },
       ];
       let replaced = false;
       for (const {key, model, regex} of patterns) {
@@ -325,40 +323,40 @@ app.get("/api/admin/history", async (req, res) => {
         if (match) {
           let id = null;
           let name = null;
-          if (key === 'enrollment') {
+          if (key === "enrollment") {
             id = match[2];
             const doc = await model.findById(id).lean();
             if (doc) {
               // 取參與者姓名
               const member = doc.userId ? await Members.findById(doc.userId).lean() : null;
-              name = member ? member.name : '<已刪除的內容>';
+              name = member ? member.name : "<已刪除的內容>";
             } else {
-              name = '<已刪除的內容>';
+              name = "<已刪除的內容>";
             }
             newContent = item.content.replace(id, name);
             replaced = true;
             break;
-          } else if (key === 'eventVisibility') {
+          } else if (key === "eventVisibility") {
             id = match[1];
             const doc = await model.findById(id).lean();
-            name = doc ? (doc.title || id) : '<已刪除的內容>';
+            name = doc ? (doc.title || id) : "<已刪除的內容>";
             newContent = item.content.replace(id, name);
             replaced = true;
             break;
           } else {
             id = match[1];
-            if (key === 'news') {
+            if (key === "news") {
               const doc = await model.findById(id).lean();
-              name = doc ? (doc.content || doc.type || id) : '<已刪除的內容>';
-            } else if (key === 'member') {
+              name = doc ? (doc.content || doc.type || id) : "<已刪除的內容>";
+            } else if (key === "member") {
               const doc = await model.findById(id).lean();
-              name = doc ? (doc.name || id) : '<已刪除的內容>';
-            } else if (key === 'event') {
+              name = doc ? (doc.name || id) : "<已刪除的內容>";
+            } else if (key === "event") {
               const doc = await model.findById(id).lean();
-              name = doc ? (doc.title || id) : '<已刪除的內容>';
-            } else if (key === 'form') {
+              name = doc ? (doc.title || id) : "<已刪除的內容>";
+            } else if (key === "form") {
               const doc = await model.findById(id).lean();
-              name = doc ? (doc.title || id) : '<已刪除的內容>';
+              name = doc ? (doc.title || id) : "<已刪除的內容>";
             }
             newContent = item.content.replace(id, name);
             replaced = true;
@@ -371,12 +369,12 @@ app.get("/api/admin/history", async (req, res) => {
         const match = item.content.match(/Update (enrollment review|payment status): ([a-fA-F0-9]{24})/);
         if (match) {
           const id = match[2];
-          const Responses = require('./models/responses');
+          const Responses = require("./models/responses");
           const doc = await Responses.findById(id).lean();
-          let name = '<已刪除的內容>';
+          let name = "<已刪除的內容>";
           if (doc) {
             const member = doc.userId ? await Members.findById(doc.userId).lean() : null;
-            name = member ? member.name : '<已刪除的內容>';
+            name = member ? member.name : "<已刪除的內容>";
           }
           newContent = item.content.replace(id, name);
         }
@@ -387,7 +385,7 @@ app.get("/api/admin/history", async (req, res) => {
         if (match) {
           const id = match[1];
           const doc = await Events.findById(id).lean();
-          const name = doc ? (doc.title || id) : '<已刪除的內容>';
+          const name = doc ? (doc.title || id) : "<已刪除的內容>";
           newContent = item.content.replace(id, name);
         }
       }
@@ -422,12 +420,12 @@ app.patch("/api/admin/history/:id", async (req, res) => {
     }
 
     const updatedHistory = await History.findByIdAndUpdate(
-        id,
-        {
-          confirm,
-          securityChecker: confirm ? securityCheckerName : "Uncheck",
-        },
-        {new: true},
+      id,
+      {
+        confirm,
+        securityChecker: confirm ? securityCheckerName : "Uncheck",
+      },
+      {new: true}
     );
 
     if (!updatedHistory) {
@@ -645,8 +643,8 @@ app.patch("/api/admin/events/:id", async (req, res) => {
       "title", "hashtag", "status", "content", "nonMemberPrice", "memberPrice", "eventDate", "startEnrollDate", "endEnrollDate", "location", "restrictDepartment", "restrictYear", "restrictMember", "restrictQuantity"
     ];
     const updateFields = {};
-    allowedFields.forEach(field => {
-      if (req.body.hasOwnProperty(field)) {
+    allowedFields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
         updateFields[field] = req.body[field];
       }
     });
@@ -656,12 +654,12 @@ app.patch("/api/admin/events/:id", async (req, res) => {
     const updatedEvent = await Events.findByIdAndUpdate(
       id,
       updateFields,
-      { new: true }
+      {new: true}
     );
     if (!updatedEvent) {
       return res.status(404).json({ error: "Event not found" });
     }
-    await logHistory(req, `Update event: ${id} fields: ${Object.keys(updateFields).join(', ')}`);
+    await logHistory(req, `Update event: ${id} fields: ${Object.keys(updateFields).join(", ")}`);
     res.json(updatedEvent);
   } catch (err) {
     res.status(500).json({ error: "Failed to update event" });
@@ -687,7 +685,7 @@ app.get("/api/admin/forms", async (req, res) => {
     const events = await Events.find({formId: {$ne: null}}, {formId: 1, title: 1}).lean();
     // 取得所有 responses 的 formId 統計
     const responseCounts = await Responses.aggregate([
-      {$group: {_id: "$formId", count: {$sum: 1}}},
+      { $group: { _id: "$formId", count: { $sum: 1 } } },
     ]);
     // 整理 event map: formId -> [活動標題...]
     const eventMap = {};
@@ -755,7 +753,10 @@ app.get("/api/admin/forms/:id", async (req, res) => {
       const event = await Events.findById(form.eventId).lean();
       if (event && event.title) eventTitles = [event.title];
     }
-    res.json({ ...form, eventTitles });
+    res.json({
+      ...form,
+      eventTitles,
+    });
   } catch (err) {
     res.status(500).json({error: "Failed to fetch form"});
   }
@@ -959,9 +960,9 @@ app.get("/api/admin/enrollments", async (req, res) => {
       const form = await Forms.findById(response.formId).lean();
       const user = response.userId ? await Members.findById(response.userId).lean() : null;
 
-      // 付款方式優先順序：answers['paymentMethod'] > answers['payments'] > response.paymentMethod > '未指定'
-      let paymentMethod =
-        (response.answers && (response.answers['paymentMethod'] || response.answers['payments'])) ||
+      // 付款方式優先順序：answers["paymentMethod"] > answers["payments"] > response.paymentMethod > "未指定"
+      const paymentMethod =
+        (response.answers && (response.answers["paymentMethod"] || response.answers["payments"])) ||
         response.paymentMethod ||
         "未指定";
 
@@ -1038,9 +1039,9 @@ app.patch("/api/admin/enrollments/:id", async (req, res) => {
 
     // 更新報名記錄
     const updatedResponse = await Responses.findByIdAndUpdate(
-        id,
-        updateData,
-        {new: true},
+      id,
+      updateData,
+      {new: true}
     );
 
     if (!updatedResponse) {
@@ -1114,8 +1115,8 @@ app.patch("/api/admin/forms/:id", async (req, res) => {
     const { id } = req.params;
     const allowedFields = ["title", "description", "fields", "eventId"];
     const updateFields = {};
-    allowedFields.forEach(field => {
-      if (req.body.hasOwnProperty(field)) {
+    allowedFields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
         updateFields[field] = req.body[field];
       }
     });
@@ -1125,16 +1126,81 @@ app.patch("/api/admin/forms/:id", async (req, res) => {
     const updatedForm = await Forms.findByIdAndUpdate(
       id,
       updateFields,
-      { new: true }
+      {new: true}
     );
     if (!updatedForm) {
       return res.status(404).json({ error: "Form not found" });
     }
-    await logHistory(req, `Update form: ${id} fields: ${Object.keys(updateFields).join(', ')}`);
+    await logHistory(req, `Update form: ${id} fields: ${Object.keys(updateFields).join(", ")}`);
     res.json(updatedForm);
   } catch (err) {
     res.status(500).json({ error: "Failed to update form" });
   }
+});
+
+/**
+ * API route handler: MapItems APIs
+ * 美食地圖地標相關 API
+ */
+// 新增地標（餐廳）API
+app.post("/api/admin/maps", async (req, res) => {
+  try {
+    const {
+      name,
+      category,
+      formattedAddress,
+      description,
+      phone,
+      longitude,
+      latitude,
+      website,
+      openingHours,
+      photos,
+      isActive
+    } = req.body;
+
+    if (!name || !longitude || !latitude) {
+      return res.status(400).json({ error: "Name, longitude, and latitude are required" });
+    }
+
+    const newMapItem = new MapItems({
+      name,
+      category: category || "restaurant",
+      formattedAddress,
+      description,
+      phone,
+      longitude,
+      latitude,
+      website,
+      openingHours: Array.isArray(openingHours) ? openingHours : [],
+      photos: Array.isArray(photos) ? photos : [],
+      isActive: isActive !== undefined ? isActive : true
+    });
+
+    await newMapItem.save();
+    await logHistory(req, `Create map item: ${name}`);
+    res.status(201).json(newMapItem);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to create map item" });
+  }
+});
+
+// 新增：取得所有地標（餐廳）API（管理員用）
+app.get("/api/admin/maps", async (req, res) => {
+  try {
+    const mapItems = await MapItems.find({}).sort({createdAt: -1});
+    res.json(mapItems);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch map items" });
+  }
+});
+
+// 新增：API 取得 Google Maps API Key（僅供前端用）
+app.get("/api/env", (req, res) => {
+  res.json({
+    GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY || ""
+  });
 });
 
 exports.api = onRequest(

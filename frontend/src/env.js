@@ -8,3 +8,6 @@ if (isLocalhost) {
   // 在生產環境中，API 通常與前端在同一個域名下，通過 Firebase Hosting 的 rewrites 規則路由
   API_URL = ``;
 }
+
+// Google Maps API Key from Vite env
+window.GOOGLE_MAPS_API_KEY = "AIzaSyDeOzMvp4EWuR7G1_niSjLOZRnOJrN59zY";

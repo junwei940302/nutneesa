@@ -63,6 +63,7 @@
                 <option>表單管理｜Forms</option>
                 <option>金流管理｜Flow</option>
                 <option>資源申請｜Apply</option>
+                <option>美食地圖｜Maps</option>
                 <option>偏好設定｜Settings</option>
             </select>
             <button class="logoutBtn" title="logoutBtn" style="color: red;">登出管理系統</button>
@@ -539,7 +540,6 @@
                     <h3>活動報名審核</h3>
                     <div>
                         <div>
-                            <p>審核列表</p>
                             <div class="table-scroll">
                                 <table>
                                     <thead>
@@ -556,6 +556,84 @@
                                     </thead>
                                     <tbody class="event-registration-table-body">
                                         <tr>
+                                            <td>載入中</td>
+                                            <td>載入中</td>
+                                            <td>載入中</td>
+                                            <td>載入中</td>
+                                            <td>載入中</td>
+                                            <td>載入中</td>
+                                            <td>載入中</td>
+                                            <td>載入中</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="panel" data-maps>
+            <ul>
+                <li>
+                    <h3>美食地圖控制項</h3>
+                    <div>
+                        <div>
+                            <p>新增地標</p>
+                            <div>
+                                餐廳類別
+                                <select class="restaurantType" title="餐廳類別"> 
+                                    <option>A級美食嘉年華</option>
+                                    <option>B級美食嘉年華</option>
+                                    <option>咖啡廳及甜點店</option>
+                                </select>
+                            </div>
+                            <div>
+                                餐廳描述
+                                <input type="text" class="restaurantDescription" placeholder="餐廳描述" required>
+                            </div>
+                            <div>
+                                Google map連結
+                                <input type="text" class="restaurantGoogleMapUrl" placeholder="Google map連結" required>
+                            </div>
+                            <div>
+                                菜單連結
+                                <input type="url" class="restaurantMenuUrl" placeholder="菜單連結（非必填）">
+                            </div>
+                            <div>
+                                <button class="addRestaurant">新增餐廳</button>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                <li>
+                    <h3>美食地圖列表</h3>
+                    <div>
+                        <div>
+                            <div class="table-scroll">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>序號</th>
+                                            <th>名稱</th>
+                                            <th>類別</th>
+                                            <th>地址</th>
+                                            <th>描述</th>
+                                            <th>電話</th>
+                                            <th>營業時間</th>
+                                            <th>經度</th>
+                                            <th>緯度</th>
+                                            <th>網址</th>
+                                            <th>圖片</th>
+                                            <th>刪除</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="mapitems-table-body">
+                                        <tr>
+                                            <td>載入中</td>
+                                            <td>載入中</td>
+                                            <td>載入中</td>
+                                            <td>載入中</td>
                                             <td>載入中</td>
                                             <td>載入中</td>
                                             <td>載入中</td>
