@@ -304,16 +304,22 @@ function populateMembersTable(members) {
         button.addEventListener("click", async (event) => {
             const memberId = event.target.dataset.id;
             if (confirm("確定要註銷該會員資格嗎？")) {
+                button.disabled = true; // 防止重複點擊
                 try {
                     const response = await fetch(`${API_URL}/api/admin/members/${memberId}`, {
                         method: "DELETE",
                         credentials :"include"
                     });
+                    if (response.status === 404) {
+                        alert("會員已不存在，畫面將自動刷新");
+                        fetchMembers();
+                        return;
+                    }
                     if (!response.ok) throw new Error("Failed to revoke member");
                     alert("會員已註銷");
                     fetchMembers();
                 } catch (err) {
-                    alert("註銷失敗");
+                    alert("註銷失敗，請稍後再試");
                 }
             }
         });
@@ -928,16 +934,22 @@ function populateEventsTable(events) {
         button.addEventListener("click", async (event) => {
             const eventId = event.target.dataset.id;
             if (confirm("確定要刪除此活動嗎？")) {
+                button.disabled = true; // 防止重複點擊
                 try {
                     const response = await fetch(`${API_URL}/api/admin/events/${eventId}`, {
                         method: "DELETE",
                         credentials: "include",
                     });
+                    if (response.status === 404) {
+                        alert("活動已不存在，畫面將自動刷新");
+                        fetchEvents();
+                        return;
+                    }
                     if (!response.ok) throw new Error("Failed to delete event");
                     alert("活動已刪除");
                     fetchEvents();
                 } catch (err) {
-                    alert("刪除失敗");
+                    alert("刪除活動失敗，請稍後再試");
                 }
             }
         });
@@ -1040,10 +1052,16 @@ async function deleteForm(formId) {
             method: "DELETE",
             credentials: "include",
         });
+        if (response.status === 404) {
+            alert("表單已不存在，畫面將自動刷新");
+            fetchForms();
+            return;
+        }
         if (!response.ok) throw new Error("Failed to delete form");
+        alert("表單已刪除");
         fetchForms();
     } catch (error) {
-        alert("刪除表單失敗");
+        alert("刪除表單失敗，請稍後再試");
     }
 }
 

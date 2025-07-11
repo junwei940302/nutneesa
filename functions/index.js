@@ -17,8 +17,8 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
-const mongoose = require("mongoose");
-const crypto = require("crypto");
+const mongoose = require("mongoose");//delete
+const crypto = require("crypto");//delete
 const MongoStore = require("connect-mongo");
 const News = require("./models/news");
 const History = require("./models/history");
@@ -39,14 +39,13 @@ if (process.env.FUNCTIONS_EMULATOR || process.env.NODE_ENV !== "production") {
 if (!process.env.SESSION_SECRET) {
   throw new Error("SESSION_SECRET is missing in environment variables!");
 }
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI;//delete
 const SESSION_SECRET = process.env.SESSION_SECRET;
 // FRONTEND_URLS 不再需要，因為我們使用 rewrites
 
 const app = express();
 
 // 環境變數已設定，但 CORS 由 V2 和 rewrites 處理
-console.log("- MongoDB URI configured:", !!MONGODB_URI);
 console.log("- Session secret configured:", !!SESSION_SECRET);
 
 /**
@@ -80,10 +79,6 @@ app.use(session({
 }));
 
 app.set("trust proxy", 1);
-
-mongoose.connect(MONGODB_URI)
-    .then(() => console.log("MongoDB connected!"))
-    .catch((err) => console.error("MongoDB connection error:", err));
 
 app.get("/", (req, res) => {
   res.json({message: "API is running!"});

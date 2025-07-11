@@ -6,15 +6,22 @@ function sha256(password) {
   return crypto.createHash("sha256").update(password).digest("hex");
 }
 
-// 非同步歷史紀錄紀錄 function
+// Firestore 版 logHistory
 async function logHistory(req, operation) {
-  const executer = await Members.findById(req.session.userId);
+  let executerName = "Unknown";
   try {
-    await History.create({
+    if (req.session && req.session.userId) {
+      const memberDoc = await Members.doc(req.session.userId).get();
+      if (memberDoc.exists) {
+        const member = memberDoc.data();
+        executerName = member.name || "Unknown";
+      }
+    }
+    await History.add({
       alertDate: new Date(),
       alertPath: req.originalUrl,
       content: operation,
-      executer: executer ? executer.name : "Unknown",
+      executer: executerName,
       confirm: false,
       securityChecker: "Uncheck",
     });

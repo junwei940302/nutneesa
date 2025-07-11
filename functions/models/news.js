@@ -1,12 +1,4 @@
-const mongoose = require("mongoose");
-
-const newsSchema = new mongoose.Schema({
-  visibility: Boolean,
-  type: String,
-  content: String,
-  publisher: String,
-  createDate: Date,
-  publishDate: Date,
-}, {collection: "news"});
-
-module.exports = mongoose.model("News", newsSchema);
+// Firestore 版本
+const db = require("../firestore");
+const newsCollection = db.collection("news");
+module.exports = newsCollection;
