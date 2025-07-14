@@ -6,10 +6,28 @@
     <link rel="stylesheet" href="./src/payments.css">
     <link rel="stylesheet" href="./src/global.css">
     <script src="./src/env.js" defer></script>
-    <script src="./src/payments.js" defer></script>
     <script src="./src/global.js" defer></script>
     <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
     <title>電機系系學會EESA｜國立臺南大學NUTN</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDzHVViQRq4F9oXBSU1i_5oEmoOqpe58MA",
+        authDomain: "nutneesa-b8ea5.firebaseapp.com",
+        projectId: "nutneesa-b8ea5",
+        storageBucket: "nutneesa-b8ea5.firebasestorage.app",
+        messagingSenderId: "375506095597",
+        appId: "1:375506095597:web:78278d3f10b65ff8a52be4",
+        measurementId: "G-HR7RQ51WVE"
+      };
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
+    <script src="./src/utils.js"></script>
+    <script src="./src/payments.js" defer></script>
 </head>
 <body>
     <div class="toTop hidden">

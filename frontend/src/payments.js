@@ -27,10 +27,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 取得用戶狀態
     let userStatus = null;
     try {
-      const meRes = await fetch(`${API_URL}/api/me`, { credentials: 'include' });
+      // 取得 Firebase 使用者 token
+      const user = await getCurrentUserAsync();
+      const idToken = await user.getIdToken();
+      const meRes = await fetch(`${API_URL}/api/me`, {
+        headers: { 
+          'Authorization': 'Bearer ' + idToken ,
+        }
+      });
       const meData = await meRes.json();
       if (meData.loggedIn && meData.user) {
-        userStatus = meData.user.status;
+        userStatus = meData.user.isActive;
       }
     } catch (error) {
       console.log('無法取得用戶狀態，使用非會員價格');
@@ -120,12 +127,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
 
         // 1. 先送付款資料
+        const user = await getCurrentUserAsync();
+        const idToken = await user.getIdToken();
         const paymentRes = await fetch(`${API_URL}/api/payments/notes`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + idToken
           },
-          credentials: 'include',
           body: JSON.stringify({
             eventId: eventId,
             paymentMethod,
@@ -143,8 +152,8 @@ document.addEventListener('DOMContentLoaded', async function() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + idToken
           },
-          credentials: 'include',
           body: JSON.stringify({
             eventId: eventId
           })

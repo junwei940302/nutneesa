@@ -48,10 +48,14 @@ async function fetchAndRenderEvents() {
         // 取得會員狀態
         let memberStatus = null;
         try {
-            const meRes = await fetch(`${API_URL}/api/me`, { credentials: 'include' });
-            const meData = await meRes.json();
-            if (meData.loggedIn && meData.user) {
-                memberStatus = meData.user.status;
+            const user = firebase.auth().currentUser;
+            const idToken = await user.getIdToken();
+            const res = await fetch(`${API_URL}/api/me`, {
+                headers: { Authorization: 'Bearer ' + idToken }
+            });
+            const data = await res.json();
+            if (data.loggedIn && data.user) {
+                memberStatus = data.user.status;
             }
         } catch {}
         const activityPanels = document.querySelector('.activityPanels');
@@ -160,53 +164,58 @@ async function fetchAndRenderEvents() {
     }
 }
 
+
 // 監聽 serviceSelector 變更時才載入對應資料
 serviceSelector.addEventListener('change', async function() {
     if (this.value === '會員相關服務') {
-        if(!(await checkLogin())){
+        const user = await getCurrentUserAsync();
+        if (!user) {
             alert('本服務需先登入');
             window.location.href = 'login.html';
             return;
-        }else if((await checkLogin())){
-            // 取得會員資料
-            const res = await fetch(`${API_URL}/api/me`, { credentials: 'include' });
-            const data = await res.json();
-            if (data.loggedIn && data.user) {
-                const user = data.user;
-                // 依序填入 table
-                const infoTable = document.querySelector('.personalInfo table');
-                if (infoTable) {
-                    const tds = infoTable.querySelectorAll('td:nth-child(2)');
-                    tds[0].textContent = user.memberId || 'N/A';
-                    tds[1].textContent = user.name || 'N/A';
-                    tds[2].textContent = user.studentId || 'N/A';
-                    tds[3].textContent = user.gender || 'N/A';
-                    tds[4].textContent = user.departmentYear || 'N/A';
-                    tds[5].textContent = user.email || 'N/A';
-                    tds[6].textContent = user.phone || 'N/A';
-                    tds[7].textContent = user.status || 'N/A';
-                    tds[8].textContent = user.verification ? '已驗證' : '未驗證';
-                }
-                const qrImg = document.querySelector('.personalInfo img');
-                if (qrImg && user.memberId) {
-                    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(user.memberId)}`;
-                }
-                const verifyBtn = document.querySelector('.verifyEmail');
-                if(user.verification === false){
-                    verifyBtn.style.display = '';
-                }
-                // 檢查是否為管理員或系學會成員，控制 .hrefAdmin 按鈕顯示
-                const hrefAdminBtn = document.querySelector('.hrefAdmin');
-                if (hrefAdminBtn) {
-                    if (user.role === '管理員' || user.role === '系學會人員') {
-                        hrefAdminBtn.style.display = '';
-                    } else {
-                        hrefAdminBtn.style.display = 'none';
-                    }
-                }
-                // 載入用戶報名記錄
-                await loadUserEnrollmentHistory();
+        }
+        const idToken = await user.getIdToken();
+        const res = await fetch(`${API_URL}/api/me`, {
+            headers: { Authorization: 'Bearer ' + idToken }
+        });
+        const data = await res.json();
+        if (data.loggedIn && data.user) {
+            const user = data.user;
+            // 依序填入 table
+            const infoTable = document.querySelector('.personalInfo table');
+            if (infoTable) {
+                const tds = infoTable.querySelectorAll('td:nth-child(2)');
+                tds[0].textContent = user.memberId || '載入中';
+                tds[1].textContent = user.displayName || '載入中';
+                tds[2].textContent = user.studentId || '載入中';
+                tds[3].textContent = user.gender || '載入中';
+                tds[4].textContent = user.departmentYear || '載入中';
+                tds[5].textContent = user.email || '載入中';
+                tds[6].textContent = user.phoneNumber || '載入中';
+                // 狀態顯示（isActive: string）
+                let statusText = '載入中';
+                if (user.isActive === '生效中') statusText = '生效中';
+                else if (user.isActive === '待驗證') statusText = '待驗證';
+                else if (user.isActive === '未生效') statusText = '未生效';
+                else if (user.isActive === '已撤銷') statusText = '已撤銷';
+                tds[7].textContent = statusText;
+                tds[8].textContent = user.emailVerified ? '已驗證' : '未驗證';
             }
+            const qrImg = document.querySelector('.personalInfo img');
+            if (qrImg && user.memberId) {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(user.memberId)}`;
+            }
+            // 檢查是否為管理員或系學會成員，控制 .hrefAdmin 按鈕顯示
+            const hrefAdminBtn = document.querySelector('.hrefAdmin');
+            if (hrefAdminBtn) {
+                if (user.role === '管理員' || user.role === '系學會人員') {
+                    hrefAdminBtn.style.display = '';
+                } else {
+                    hrefAdminBtn.style.display = 'none';
+                }
+            }
+            // 載入用戶報名記錄
+            await loadUserEnrollmentHistory();
         }
     } else if (this.value === '活動報名') {
         await fetchAndRenderEvents();
@@ -217,27 +226,30 @@ serviceSelector.addEventListener('change', async function() {
 // 載入用戶報名記錄
 async function loadUserEnrollmentHistory() {
     try {
-        const res = await fetch(`${API_URL}/api/responses/user`, { credentials: 'include' });
+        const user = await getCurrentUserAsync();
+        if (!user) {
+            window.location.href = 'login.html';
+            return;
+        }
+        const idToken = await user.getIdToken();
+        const res = await fetch(`${API_URL}/api/responses/user`, {
+            headers: { Authorization: 'Bearer ' + idToken }
+        });
         if (!res.ok) {
             console.error('Failed to fetch enrollment history');
             return;
         }
-        
         const enrollments = await res.json();
         const tableBody = document.querySelector('.enrollmentTableBody');
         if (!tableBody) return;
-        
         tableBody.innerHTML = '';
-        
         if (enrollments.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">尚無報名記錄</td></tr>';
             return;
         }
-        
         enrollments.forEach((enrollment, index) => {
             const tr = document.createElement('tr');
             const submittedDate = new Date(enrollment.submittedAt).toLocaleString('zh-TW');
-            
             tr.innerHTML = `
                 <td>${index + 1}</td>
                 <td>${enrollment.eventTitle}</td>
@@ -246,7 +258,6 @@ async function loadUserEnrollmentHistory() {
                 <td>${enrollment.paymentMethod}</td>
                 <td>${enrollment.paymentStatus}</td>
             `;
-            
             tableBody.appendChild(tr);
         });
     } catch (err) {
@@ -271,7 +282,14 @@ async function loadUserEnrollmentHistory() {
 
 async function checkLogin() {
     try {
-        const res = await fetch(`${API_URL}/api/me`, { credentials: 'include' ,});
+        const user = await getCurrentUserAsync();
+        if (!user) {
+            return false;
+        }
+        const idToken = await user.getIdToken();
+        const res = await fetch(`${API_URL}/api/me`, {
+            headers: { Authorization: 'Bearer ' + idToken }
+        });
         const data = await res.json();
         return data.loggedIn;
     } catch {
@@ -290,7 +308,7 @@ async function checkLogin() {
 const logoutBtn = document.querySelector('.logoutBtn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
-        await fetch(`${API_URL}/api/logout`, { method: 'POST', credentials: 'include' });
+        await firebase.auth().signOut();
         window.location.reload();
     });
 }

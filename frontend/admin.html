@@ -1,14 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./src/admin.css">
     <link rel="stylesheet" href="./src/global.css">
     <script src="./src/env.js" defer></script>
-    <script src="./src/admin.js" defer></script>
     <script src="./src/global.js" defer></script>
     <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDzHVViQRq4F9oXBSU1i_5oEmoOqpe58MA",
+        authDomain: "nutneesa-b8ea5.firebaseapp.com",
+        projectId: "nutneesa-b8ea5",
+        storageBucket: "nutneesa-b8ea5.firebasestorage.app",
+        messagingSenderId: "375506095597",
+        appId: "1:375506095597:web:78278d3f10b65ff8a52be4",
+        measurementId: "G-HR7RQ51WVE"
+      };
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
+    <script src="./src/utils.js"></script>
+    <script src="./src/admin-news.js"></script>
+    <script src="./src/admin-members.js"></script>
+    <script src="./src/admin-history.js"></script>
+    <script src="./src/admin-events.js"></script>
+    <script src="./src/admin-forms.js"></script>
+    <script src="./src/admin-apply.js"></script>
+    <script src="./src/admin-flow.js"></script>
+    <script src="./src/admin-maps.js"></script>
+    <script src="./src/admin.js" defer></script>
     <title>Admin Center｜NUTNEESA</title>
 </head>
 <body>
@@ -173,66 +199,7 @@
         </div>
         <div class="panel" data-members>
             <ul>
-                <li>
-                    <h3>會員控制項</h3>
-                    <div>
-                        <div>
-                            身份類別
-                            <select class="memberRole" title="身份類別">
-                                <option>管理員</option>
-                                <option>系學會人員</option>
-                                <option selected>本系會員</option>
-                                <option>非本系會員</option>
-                                <option>訪客</option>
-                            </select>
-                        </div>
-                        <div>
-                            會員姓名
-                            <input class="memberName" type="text" placeholder="姓名" required>
-                        </div>
-                        <div>
-                            會員狀態
-                            <select class="memberStatus" title="狀態">
-                                <option>生效中</option>
-                                <option selected>待驗證</option>
-                                <option>未生效</option>
-                                <option>已過期</option>
-                                <option>已撤銷</option>
-                            </select>
-                        </div>
-                        <div>
-                            會員學號
-                            <input class="memberStudentId" type="text" placeholder="學號" required>
-                        </div>
-                        <div>
-                            會員性別
-                            <select class="memberGender" title="性別">
-                                <option>生理男</option>
-                                <option>生理女</option>
-                                <option>其他</option>
-                            </select>
-                        </div>
-                        <div>
-                            電子郵件
-                            <input class="memberEmail" type="email" placeholder="Email" required>
-                        </div>
-                        <div>
-                            行動電話
-                            <input class="memberPhone" type="tel" placeholder="電話">
-                        </div>
-                        <div>
-                            會員系級
-                            <input class="memberDepartmentYear" type="text" placeholder="系級" value="電機二" required>
-                        </div>
-                        <div>
-                            <input class="memberVerification" type="checkbox" title="已驗證" checked>
-                            已驗證
-                        </div>
-                        <div>
-                            <button class="addNews" title="addNews">新增會員</button>
-                        </div> 
-                    </div>
-                </li>
+                <!-- 移除會員控制項（新增會員）區塊，僅保留會員列表 -->
                 <li>
                     <h3>會員列表</h3>
                     <div>
@@ -248,7 +215,7 @@
                                         <th>會員編號</th>
                                         <th>身份類別</th>
                                         <th>會員名稱</th>
-                                        <th>狀態</th>
+                                        <th>會員狀態</th>
                                         <th>學號</th>
                                         <th>性別</th>
                                         <th>Email</th>
@@ -257,7 +224,7 @@
                                         <th>註冊日期</th>
                                         <th>上次上線</th>
                                         <th>累計消費金額</th>
-                                        <th>已驗證</th>
+                                        <th>電子郵件驗證</th>
                                         <th>註銷會員資格</th>
                                     </tr>
                                 </thead>
@@ -361,6 +328,10 @@
                         <div>
                             <button class="addEvent">新增活動</button>
                         </div>
+                    </div>
+                    <!-- 活動預覽區塊 -->
+                    <div style="display:flex;justify-content: center;">
+                        <div class="event-preview"></div>
                     </div>
                     <div>
                         <div>

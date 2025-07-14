@@ -46,11 +46,16 @@ adminRouter.get("/news", async (req, res) => {
 adminRouter.patch("/news/:id", async (req, res) => {
   try {
     const {id} = req.params;
-    const {visibility} = req.body;
-    if (typeof visibility !== "boolean") {
-      return res.status(400).json({error: "Invalid visibility value"});
+    const {visibility, type, content, publishDate} = req.body;
+    const updateData = {};
+    if (typeof visibility === "boolean") updateData.visibility = visibility;
+    if (typeof type === "string") updateData.type = type;
+    if (typeof content === "string") updateData.content = content;
+    if (publishDate) updateData.publishDate = new Date(publishDate);
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({error: "No valid fields to update"});
     }
-    await News.doc(id).update({visibility});
+    await News.doc(id).update(updateData);
     const updatedDoc = await News.doc(id).get();
     if (!updatedDoc.exists) {
       return res.status(404).json({error: "News not found"});
@@ -63,7 +68,7 @@ adminRouter.patch("/news/:id", async (req, res) => {
       createDate: safeToISOString(updatedNews.createDate),
     });
   } catch (err) {
-    res.status(500).json({error: "Failed to update news visibility"});
+    res.status(500).json({error: "Failed to update news"});
   }
 });
 
@@ -73,14 +78,14 @@ adminRouter.post("/news", async (req, res) => {
     if (!type || !content) {
       return res.status(400).json({error: "Type and content are required"});
     }
-    let publisherName = "N/A";
-    const userId = req.session.userId;
+    let publisherName = "Unknown";
+    const userId = req.userId;
     if (userId) {
       try {
         const memberDoc = await Members.doc(userId).get();
         if (memberDoc.exists) {
           const member = memberDoc.data();
-          publisherName = member.name;
+          publisherName = member.name || member.displayName || "Unknown";
         }
       } catch (err) {
         console.error("Could not find publisher from session, using default. Error:", err.message);
@@ -132,9 +137,20 @@ adminRouter.get("/members", async (req, res) => {
       const data = doc.data();
       return {
         _id: doc.id,
-        ...data,
-        registerDate: safeToISOString(data.registerDate),
-        lastOnline: safeToISOString(data.lastOnline),
+        displayName: data.displayName || "",
+        isActive: data.isActive || "待驗證", // string: 生效中/待驗證/未生效/已撤銷
+        studentId: data.studentId || "",
+        departmentYear: data.departmentYear || "",
+        email: data.email || "",
+        phoneNumber: data.phoneNumber || "",
+        gender: data.gender || "其他",
+        emailVerified: typeof data.emailVerified === "boolean" ? data.emailVerified : false,
+        role: data.role,
+        metadata: {
+          creationTime: safeToISOString(data.metadata?.creationTime),
+          lastSignInTime: safeToISOString(data.metadata?.lastSignInTime),
+        },
+        cumulativeConsumption: data.cumulativeConsumption || 0,
       };
     });
     res.json(membersList);
@@ -145,22 +161,31 @@ adminRouter.get("/members", async (req, res) => {
 
 adminRouter.post("/members", async (req, res) => {
   try {
-    const {role, name, status, studentId, departmentYear, email, phone, gender, verification} = req.body;
-    if (!name) {
-      return res.status(400).json({error: "Name is required"});
-    }
+    const {
+      role,
+      displayName,
+      isActive,
+      studentId,
+      departmentYear,
+      email,
+      phoneNumber,
+      gender,
+      emailVerified,
+    } = req.body;
     const newMemberData = {
       role: role || "本系會員",
-      name,
-      status: status || "待驗證",
+      displayName: displayName || "",
+      isActive: ["生效中","待驗證","未生效","已撤銷"].includes(isActive) ? isActive : "待驗證",
       studentId: studentId || "",
       departmentYear: departmentYear || "",
       email: email || "",
-      phone: phone || "",
+      phoneNumber: phoneNumber || "",
       gender: gender || "其他",
-      verification: verification !== undefined ? verification : false,
-      registerDate: new Date(),
-      lastOnline: new Date(),
+      emailVerified: typeof emailVerified === "boolean" ? emailVerified : false,
+      metadata: {
+        creationTime: new Date(),
+        lastSignInTime: new Date(),
+      },
       cumulativeConsumption: 0,
     };
     const newDocRef = await Members.add(newMemberData);
@@ -168,9 +193,20 @@ adminRouter.post("/members", async (req, res) => {
     const newMember = newDoc.data();
     res.status(201).json({
       _id: newDoc.id,
-      ...newMember,
-      registerDate: safeToISOString(newMember.registerDate),
-      lastOnline: safeToISOString(newMember.lastOnline),
+      displayName: newMember.displayName,
+      isActive: newMember.isActive,
+      studentId: newMember.studentId,
+      departmentYear: newMember.departmentYear,
+      email: newMember.email,
+      phoneNumber: newMember.phoneNumber,
+      gender: newMember.gender,
+      emailVerified: newMember.emailVerified,
+      role: newMember.role,
+      metadata: {
+        creationTime: safeToISOString(newMember.metadata?.creationTime),
+        lastSignInTime: safeToISOString(newMember.metadata?.lastSignInTime),
+      },
+      cumulativeConsumption: newMember.cumulativeConsumption,
     });
   } catch (err) {
     res.status(500).json({error: "Failed to add member"});
@@ -180,18 +216,48 @@ adminRouter.post("/members", async (req, res) => {
 adminRouter.patch("/members/:id", async (req, res) => {
   try {
     const {id} = req.params;
-    const updateData = req.body;
+    const updateDataRaw = req.body;
+    const updateData = {};
+    if (updateDataRaw.displayName) updateData.displayName = updateDataRaw.displayName;
+    if (updateDataRaw.isActive && ["生效中","待驗證","未生效","已撤銷"].includes(updateDataRaw.isActive)) updateData.isActive = updateDataRaw.isActive;
+    if (updateDataRaw.studentId) updateData.studentId = updateDataRaw.studentId;
+    if (updateDataRaw.departmentYear) updateData.departmentYear = updateDataRaw.departmentYear;
+    if (updateDataRaw.email) updateData.email = updateDataRaw.email;
+    if (updateDataRaw.phoneNumber) updateData.phoneNumber = updateDataRaw.phoneNumber;
+    if (updateDataRaw.gender) updateData.gender = updateDataRaw.gender;
+    if (updateDataRaw.cumulativeConsumption) updateData.cumulativeConsumption = updateDataRaw.cumulativeConsumption;
+    if (typeof updateDataRaw.emailVerified === "boolean") updateData.emailVerified = updateDataRaw.emailVerified;
+    if (updateDataRaw.role) updateData.role = updateDataRaw.role;
+    if (updateDataRaw.metadata) {
+      if (updateDataRaw.metadata.creationTime) updateData["metadata.creationTime"] = new Date(updateDataRaw.metadata.creationTime);
+      if (updateDataRaw.metadata.lastSignInTime) updateData["metadata.lastSignInTime"] = new Date(updateDataRaw.metadata.lastSignInTime);
+    }
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({error: "No valid fields to update"});
+    }
     const doc = await Members.doc(id).get();
     if (!doc.exists) {
       return res.status(404).json({error: "Member not found"});
     }
     await Members.doc(id).update(updateData);
     const updatedDoc = await Members.doc(id).get();
+    const updatedData = updatedDoc.data();
     res.json({
       _id: updatedDoc.id,
-      ...updatedDoc.data(),
-      registerDate: safeToISOString(updatedDoc.data().registerDate),
-      lastOnline: safeToISOString(updatedDoc.data().lastOnline),
+      displayName: updatedData.displayName,
+      isActive: updatedData.isActive,
+      studentId: updatedData.studentId,
+      departmentYear: updatedData.departmentYear,
+      email: updatedData.email,
+      phoneNumber: updatedData.phoneNumber,
+      gender: updatedData.gender,
+      emailVerified: updatedData.emailVerified,
+      role: updatedData.role,
+      metadata: {
+        creationTime: safeToISOString(updatedData.metadata?.creationTime),
+        lastSignInTime: safeToISOString(updatedData.metadata?.lastSignInTime),
+      },
+      cumulativeConsumption: updatedData.cumulativeConsumption,
     });
   } catch (err) {
     console.error("Failed to update member:", err);
@@ -237,9 +303,6 @@ adminRouter.patch("/history/:id", async (req, res) => {
   try {
     const {id} = req.params;
     const {confirm} = req.body;
-    if (typeof confirm !== "boolean") {
-      return res.status(400).json({error: "Invalid confirm value"});
-    }
     let securityCheckerName = "Unknown";
     const userId = req.session.userId;
     if (userId) {
@@ -253,10 +316,15 @@ adminRouter.patch("/history/:id", async (req, res) => {
         console.error("Could not find member from session for security checker, using default. Error:", err.message);
       }
     }
-    await History.doc(id).update({
-      confirm,
-      securityChecker: confirm ? securityCheckerName : "Uncheck",
-    });
+    const updateData = {};
+    if (typeof confirm === "boolean") {
+      updateData.confirm = confirm;
+      updateData.securityChecker = confirm ? securityCheckerName : "Uncheck";
+    }
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({error: "No valid fields to update"});
+    }
+    await History.doc(id).update(updateData);
     const updatedDoc = await History.doc(id).get();
     if (!updatedDoc.exists) {
       return res.status(404).json({error: "History record not found"});
@@ -293,14 +361,14 @@ adminRouter.post("/events", async (req, res) => {
       startEnrollDate,
       endEnrollDate,
     } = req.body;
-    let publisherName = "N/A";
-    const userId = req.session.userId;
+    let publisherName = "Unknown";
+    const userId = req.userId;
     if (userId) {
       try {
         const memberDoc = await Members.doc(userId).get();
         if (memberDoc.exists) {
           const member = memberDoc.data();
-          publisherName = member.name;
+          publisherName = member.name || member.displayName || "Unknown";
         }
       } catch (err) {
         console.error("Could not find publisher from session, using default. Error:", err.message);
@@ -382,11 +450,36 @@ adminRouter.get("/events", async (req, res) => {
 adminRouter.patch("/events/:id", async (req, res) => {
   try {
     const {id} = req.params;
-    const {visibility} = req.body;
-    if (typeof visibility !== "boolean") {
-      return res.status(400).json({error: "Invalid visibility value"});
+    const {
+      visibility, imgUrl, title, hashtag, status, content,
+      nonMemberPrice, memberPrice, eventDate, enrollQuantity,
+      restrictDepartment, restrictYear, restrictMember, restrictQuantity,
+      location, startEnrollDate, endEnrollDate
+    } = req.body;
+
+    const updateData = {};
+    if (typeof visibility === "boolean") updateData.visibility = visibility;
+    if (typeof imgUrl === "string") updateData.imgUrl = imgUrl;
+    if (typeof title === "string") updateData.title = title;
+    if (typeof hashtag === "string") updateData.hashtag = hashtag;
+    if (typeof status === "string") updateData.status = status;
+    if (typeof content === "string") updateData.content = content;
+    if (typeof nonMemberPrice !== "undefined") updateData.nonMemberPrice = nonMemberPrice;
+    if (typeof memberPrice !== "undefined") updateData.memberPrice = memberPrice;
+    if (eventDate) updateData.eventDate = new Date(eventDate);
+    if (typeof enrollQuantity !== "undefined") updateData.enrollQuantity = enrollQuantity;
+    if (typeof restrictDepartment === "string") updateData.restrictDepartment = restrictDepartment;
+    if (typeof restrictYear === "string") updateData.restrictYear = restrictYear;
+    if (typeof restrictMember === "boolean") updateData.restrictMember = restrictMember;
+    if (typeof restrictQuantity !== "undefined") updateData.restrictQuantity = restrictQuantity;
+    if (typeof location === "string") updateData.location = location;
+    if (startEnrollDate) updateData.startEnrollDate = new Date(startEnrollDate);
+    if (endEnrollDate) updateData.endEnrollDate = new Date(endEnrollDate);
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({error: "No valid fields to update"});
     }
-    await Events.doc(id).update({visibility});
+    await Events.doc(id).update(updateData);
     const updatedDoc = await Events.doc(id).get();
     if (!updatedDoc.exists) {
       return res.status(404).json({error: "Event not found"});
@@ -401,7 +494,7 @@ adminRouter.patch("/events/:id", async (req, res) => {
       endEnrollDate: safeToISOString(updatedEvent.endEnrollDate),
     });
   } catch (err) {
-    res.status(500).json({error: "Failed to update event visibility"});
+    res.status(500).json({error: "Failed to update event"});
   }
 });
 
@@ -450,7 +543,8 @@ adminRouter.post("/forms", async (req, res) => {
     if (!title || !fields || !Array.isArray(fields) || fields.length === 0) {
       return res.status(400).json({error: "Title and fields are required"});
     }
-    const formDocRef = await Forms.add({title, description, fields, createdAt: new Date()});
+    // 這裡加上 eventId
+    const formDocRef = await Forms.add({title, description, fields, eventId, createdAt: new Date()});
     const formDoc = await formDocRef.get();
     let eventUpdate = null;
     if (eventId) {
@@ -537,7 +631,7 @@ adminRouter.get("/enrollments", async (req, res) => {
         userName: user ? user.name : "匿名用戶",
         userDepartmentYear: user ? user.departmentYear : "未知",
         userEmail: user ? user.email : "未知",
-        userPhone: user ? user.phone : "未知",
+        userPhone: user ? user.phoneNumber : "未知",
         memberPrice: event ? event.memberPrice : 0,
         nonMemberPrice: event ? event.nonMemberPrice : 0,
         reviewed: response.reviewed || false,
@@ -582,6 +676,9 @@ adminRouter.patch("/enrollments/:id", async (req, res) => {
     if (paymentStatus) {
       updateData.paymentStatus = paymentStatus;
       updateData.paymentNotes = paymentNotes || "";
+    }
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({error: "No valid fields to update"});
     }
     await Responses.doc(id).update(updateData);
     const updatedDoc = await Responses.doc(id).get();

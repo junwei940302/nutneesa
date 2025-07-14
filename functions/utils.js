@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const Members = require("./models/members");
 const History = require("./models/history");
+const admin = require("firebase-admin");
 
 function sha256(password) {
   return crypto.createHash("sha256").update(password).digest("hex");
@@ -10,8 +11,9 @@ function sha256(password) {
 async function logHistory(req, operation) {
   let executerName = "Unknown";
   try {
-    if (req.session && req.session.userId) {
-      const memberDoc = await Members.doc(req.session.userId).get();
+    const userId = req.userId;
+    if (userId) {
+      const memberDoc = await Members.doc(userId).get();
       if (memberDoc.exists) {
         const member = memberDoc.data();
         executerName = member.name || "Unknown";
@@ -30,4 +32,19 @@ async function logHistory(req, operation) {
   }
 }
 
-module.exports = { sha256, logHistory }; 
+async function firebaseAuthMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "No auth token" });
+  }
+  const idToken = authHeader.split("Bearer ")[1];
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    req.userId = decodedToken.uid;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid auth token" });
+  }
+}
+
+module.exports = { sha256, logHistory, firebaseAuthMiddleware }; 

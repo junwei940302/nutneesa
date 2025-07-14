@@ -1,11 +1,17 @@
 // 登入檢查，未登入則導回 login.html
-fetch(`${API_URL}/api/me`, { credentials: 'include' })
-  .then(res => res.json())
-  .then(data => {
-    if (data.loggedIn) {
-      window.location.href = 'services.html';
-      return;
-    }
+firebase.auth().onAuthStateChanged(async function(user) {
+  if (user) {
+    // 已登入，取得 token
+    const idToken = await user.getIdToken();
+    fetch(`${API_URL}/api/me`, {headers: { Authorization: 'Bearer ' + idToken }})
+      .then(res => res.json())
+      .then(data => {
+        if (data.loggedIn) {
+          window.location.href = 'services.html';
+        }
+      });
+  }
+  // else: 未登入，不做事，留在登入頁
 });
 
 // 切換登入/註冊面板
@@ -34,34 +40,31 @@ loginForm.addEventListener('submit', async function(e) {
     const email = document.getElementById('loginEmail').value.toLowerCase();
     const password = document.getElementById('loginPassword').value;
     const message = document.getElementById('loginMessage');
-    // 簡單驗證
     if (!email || !password) {
         message.textContent = '請輸入帳號密碼 / Please enter email and password.';
         return;
     }
     message.textContent = '登入中... / Logging in...';
     try {
-        const res = await fetch(`${API_URL}/api/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-            credentials: 'include'
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        await user.reload(); // 這行會同步最新的 emailVerified 狀態
+        if (!user.emailVerified) {
+            message.textContent = '請先驗證您的信箱 / Please verify your email first.';
+            await user.sendEmailVerification();
+            return;
+        }
+        // 取得 ID Token，後續可用於呼叫後端
+        const idToken = await userCredential.user.getIdToken();
+        // 範例：帶 token 呼叫 /api/me
+        const res = await fetch('/api/me', {
+            headers: { 'Authorization': `Bearer ${idToken}` }
         });
         const data = await res.json();
-        if (data.success) {
-            message.textContent = '登入成功 / Login success!';
-            if (data.role === '管理員' || data.role === '系學會人員') {
-                localStorage.setItem('isAdminLogin', 'true');
-                window.location.href = 'admin.html';
-            } else {
-                localStorage.removeItem('isAdminLogin');
-                window.location.href = 'services.html';
-            }
-        } else {
-            message.textContent = data.message || '登入失敗 / Login failed.';
-        }
+        message.textContent = '登入成功 / Login success!';
+        window.location.href = 'services.html';
     } catch (err) {
-        message.textContent = '伺服器錯誤 / Server error.';
+        message.textContent = err.message || '登入失敗 / Login failed.';
     }
 });
 
@@ -87,19 +90,32 @@ registerForm.addEventListener('submit', async function(e) {
     }
     message.textContent = '註冊中... / Registering...';
     try {
-        const res = await fetch(`${API_URL}/api/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, memberName, studentId, gender, departmentYear, phone})
+        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        await user.sendEmailVerification();
+        // 新增 Firestore 會員資料
+        const db = firebase.firestore();
+        await db.collection("members").doc(user.uid).set({
+          uid: user.uid,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          displayName: memberName,
+          phoneNumber: user.phoneNumber || "未填寫",
+          disabled: false,
+          metadata: {
+            creationTime: user.metadata.creationTime,
+            lastSignInTime: user.metadata.lastSignInTime
+          },
+          studentId,
+          gender,
+          departmentYear,
+          role: departmentYear && departmentYear.includes("電機") ? "本系會員" : "非本系會員",
+          cumulativeConsumption: 0,
+          isActive: "待驗證",
         });
-        const data = await res.json();
-        if (data.success) {
-            message.textContent = '註冊成功 / Register success!';
-            loginTab.click(); // 可選：註冊成功自動切換到登入
-        } else {
-            message.textContent = data.message || '註冊失敗 / Register failed.';
-        }
+        message.textContent = '註冊成功，請至信箱收信並點擊驗證連結 / Register success! Please check your email to verify.';
+        loginTab.click();
     } catch (err) {
-        message.textContent = '伺服器錯誤 / Server error.';
+        message.textContent = err.message || '註冊失敗 / Register failed.';
     }
 });

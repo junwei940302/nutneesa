@@ -108,18 +108,38 @@ async function handleEnrollBtnAuth(eventStatus) {
     }
     if (!loggedInDiv || !notLoggedInDiv) return;
     let user = null;
+    let idToken = null;
     try {
-        const res = await fetch((window.API_URL || '') + '/api/me', { credentials: 'include' });
-        const data = await res.json();
-        if (data.loggedIn && data.user) {
-            user = data.user;
+        // 取得 Firebase 使用者
+        if (typeof getCurrentUserAsync === 'function') {
+            user = await getCurrentUserAsync();
+        } else if (window.getCurrentUserAsync) {
+            user = await window.getCurrentUserAsync();
+        }
+        if (user) {
+            await user.reload();
+            idToken = await user.getIdToken();
         }
     } catch (e) {}
-    if (user) {
+    let userInfo = null;
+    if (idToken) {
+        try {
+            const res = await fetch((window.API_URL || '') + '/api/me', {
+                headers: {
+                    'Authorization': 'Bearer ' + idToken,
+                },
+            });
+            const data = await res.json();
+            if (data.loggedIn && data.user) {
+                userInfo = data.user;
+            }
+        } catch (e) {}
+    }
+    if (userInfo) {
         loggedInDiv.hidden = false;
         notLoggedInDiv.hidden = true;
-        loggedInDiv.querySelector('.userName').textContent = user.name;
-        loggedInDiv.querySelector('.userEmail').textContent = user.email;
+        loggedInDiv.querySelector('.userName').textContent = userInfo.displayName;
+        loggedInDiv.querySelector('.userEmail').textContent = userInfo.email;
     } else {
         loggedInDiv.hidden = true;
         notLoggedInDiv.hidden = false;

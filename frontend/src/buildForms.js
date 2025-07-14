@@ -1,24 +1,31 @@
 document.addEventListener('DOMContentLoaded', async () => {
     checkAuth();
-    // 若有 formId，載入表單
-    editingFormId = getFormIdFromUrl();
-    if (editingFormId) {
-        await loadFormForEdit(editingFormId);
-    }
 });
 
 async function checkAuth() {
     try {
-        const res = await fetch(`${API_URL}/api/me`, { credentials: 'include' });
-        const data = await res.json();
-        if (!data.loggedIn) {
+        const user = await getCurrentUserAsync();
+        if (!user) {
             alert('未經授權的訪問！');
             window.location.href = 'login.html';
             return;
         }
+        await user.reload();
+        const idToken = await user.getIdToken();
+        const res = await fetch(`${API_URL}/api/me`, {
+            headers: { 
+                'Authorization': 'Bearer ' + idToken ,
+            }
+        });
+        const data = await res.json();
         // 驗證通過才載入活動與設計器
-        fetchEventsForSelect();
+        await fetchEventsForSelect(); // 等待活動選單載入
         initFormBuilder();
+        // 若有 formId，載入表單（此時活動選單已載入）
+        editingFormId = getFormIdFromUrl();
+        if (editingFormId) {
+            await loadFormForEdit(editingFormId);
+        }
     } catch (err) {
         alert('驗證身份時發生錯誤');
     }
@@ -26,27 +33,78 @@ async function checkAuth() {
 
 async function fetchEventsForSelect() {
     const select = document.getElementById('eventSelect');
-    if (!select) return;
+    console.log('[fetchEventsForSelect] called. select:', !!select);
+    if (!select) {
+        console.error('[fetchEventsForSelect] eventSelect not found!');
+        return;
+    }
     try {
-        const response = await fetch(`${API_URL}/api/admin/events`, { credentials: 'include' });
+        const user = await getCurrentUserAsync();
+        await user.reload();
+        const idToken = await user.getIdToken();
+        const response = await fetch(`${API_URL}/api/admin/events`, { 
+            credentials: 'include' ,
+            headers: { 
+                'Authorization': 'Bearer ' + idToken ,
+            },
+        });
         if (!response.ok) throw new Error('Failed to fetch events');
         const events = await response.json();
         // 清空舊選項，保留第一個
-        select.innerHTML = '<option value="">請選擇活動</option>';
+        select.innerHTML = '<option value=\"\">請選擇活動</option>';
         events.forEach(ev => {
             const option = document.createElement('option');
             option.value = ev._id;
             option.textContent = ev.title || '(無標題)';
             select.appendChild(option);
         });
+        console.log('[fetchEventsForSelect] events loaded:', events.map(e => e._id));
     } catch (err) {
-        select.innerHTML = '<option value="">載入活動失敗</option>';
+        select.innerHTML = '<option value=\"\">載入活動失敗</option>';
+        alert('[fetchEventsForSelect] error: ' + err.message);
+        console.error('[fetchEventsForSelect] error:', err);
     }
+    trySelectPendingEvent();
 }
 
 // ===== 表單設計器核心 =====
 let fields = [];
 let editingFormId = null;
+let pendingEventId = null;
+
+function trySelectPendingEvent() {
+    const eventSelect = document.getElementById('eventSelect');
+    console.log('[trySelectPendingEvent] called. pendingEventId:', pendingEventId, 'eventSelect:', !!eventSelect);
+    if (!pendingEventId) {
+        console.log('[trySelectPendingEvent] No pendingEventId, return.');
+        return;
+    }
+    if (!eventSelect) {
+        console.error('[trySelectPendingEvent] eventSelect not found!');
+        return;
+    }
+    const eventIdStr = String(pendingEventId).trim();
+    let found = false;
+    for (let i = 0; i < eventSelect.options.length; i++) {
+        const optVal = String(eventSelect.options[i].value).trim();
+        if (optVal === eventIdStr) {
+            eventSelect.selectedIndex = i;
+            found = true;
+            console.log('[trySelectPendingEvent] Matched eventId:', eventIdStr, 'at index', i);
+            break;
+        }
+    }
+    if (!found && eventIdStr) {
+        const opt = document.createElement('option');
+        opt.value = eventIdStr;
+        opt.textContent = '(未知活動)';
+        opt.selected = true;
+        eventSelect.appendChild(opt);
+        console.warn('[trySelectPendingEvent] Appended new event option:', opt.value, opt.textContent);
+    }
+    if (found) pendingEventId = null; // 選到就清掉
+    console.log('[trySelectPendingEvent] eventSelect options:', Array.from(eventSelect.options).map(o => o.value));
+}
 
 function getFormIdFromUrl() {
     const url = new URL(window.location.href);
@@ -54,37 +112,33 @@ function getFormIdFromUrl() {
 }
 
 async function loadFormForEdit(formId) {
+    console.log('[loadFormForEdit] called with formId:', formId);
     try {
-        const res = await fetch(`${API_URL}/api/admin/forms/${formId}`, { credentials: 'include' });
+        const user = await getCurrentUserAsync();
+        await user.reload();
+        const idToken = await user.getIdToken();
+        const res = await fetch(`${API_URL}/api/admin/forms/${formId}`, { 
+            credentials: 'include' ,
+            headers: { Authorization: 'Bearer ' + idToken }
+        });
         if (!res.ok) throw new Error('無法載入表單');
         const form = await res.json();
+        console.log('[loadFormForEdit] loaded form:', form);
         document.getElementById('formTitle').value = form.title || '';
         document.getElementById('formDesc').value = form.description || '';
         fields = (form.fields || []).map(f => ({...f}));
         renderFields();
-        // 關聯活動選單自動選擇
-        if (form.eventId && document.getElementById('eventSelect')) {
-            const eventSelect = document.getElementById('eventSelect');
-            // 先檢查選單內有無該活動
-            let found = false;
-            for (let i = 0; i < eventSelect.options.length; i++) {
-                if (eventSelect.options[i].value === form.eventId) {
-                    eventSelect.selectedIndex = i;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                // 若活動不在選單，新增一個選項
-                const opt = document.createElement('option');
-                opt.value = form.eventId;
-                opt.textContent = form.eventTitles && form.eventTitles.length > 0 ? form.eventTitles[0] : '(未知活動)';
-                opt.selected = true;
-                eventSelect.appendChild(opt);
-            }
+        // 記錄 eventId，等活動選單載入時自動選擇
+        if (form.eventId) {
+            pendingEventId = form.eventId;
+            console.log('[loadFormForEdit] pendingEventId set:', pendingEventId);
+            trySelectPendingEvent();
+        } else {
+            console.warn('[loadFormForEdit] form.eventId is empty:', form.eventId);
         }
     } catch (err) {
-        alert('載入表單失敗：' + err.message);
+        alert('[loadFormForEdit] error: ' + err.message);
+        console.error('[loadFormForEdit] error:', err);
     }
 }
 
@@ -209,9 +263,16 @@ async function saveForm() {
     try {
         if (editingFormId) {
             // PATCH 更新
+            const user = await getCurrentUserAsync();
+            await user.reload();
+            const idToken = await user.getIdToken();
             const res = await fetch(`${API_URL}/api/admin/forms/${editingFormId}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + idToken,
+
+                },
                 credentials: 'include',
                 body: JSON.stringify(payload)
             });
@@ -220,9 +281,15 @@ async function saveForm() {
             window.close();
         } else {
             // 建立表單
+            const user = await getCurrentUserAsync();
+            await user.reload();
+            const idToken = await user.getIdToken();
             const res = await fetch(`${API_URL}/api/admin/forms`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json' ,
+                    'Authorization': 'Bearer ' + idToken,
+                },
                 credentials: 'include',
                 body: JSON.stringify(payload)
             });

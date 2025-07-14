@@ -6,6 +6,24 @@ const Forms = require("./models/forms");
 const Responses = require("./models/responses");
 const { sha256 } = require("./utils");
 const db = require("./firestore"); // 如果在 models 目錄下，請用 ../firestore
+const admin = require("firebase-admin");
+if (!admin.apps.length) admin.initializeApp();
+const FieldValue = admin.firestore.FieldValue;
+
+async function verifyFirebaseToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "No token" });
+  }
+  const idToken = authHeader.split(" ")[1];
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    req.user = decodedToken;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid token" });
+  }
+}
 
 const userRouter = express.Router();
 
@@ -42,21 +60,13 @@ userRouter.post("/register", async (req, res) => {
       return res.json({success: false, message: "Email 已註冊 / Email already registered."});
     }
     const targetRole = departmentYear && departmentYear.includes("電機") ? "本系會員" : "非本系會員";
-    const hashed = sha256(password);
     const memberData = {
       role: targetRole,
-      name: memberName,
-      status: "待驗證",
+      isActive: false,
       studentId,
       gender,
-      email,
-      phone,
       departmentYear,
-      registerDate: new Date(),
-      lastOnline: new Date(),
       cumulativeConsumption: 0,
-      verification: false,
-      password: hashed,
     };
     await Members.add(memberData);
     res.json({success: true, message: "註冊成功 / Register success!"});
@@ -90,37 +100,45 @@ userRouter.post("/login", async (req, res) => {
 });
 
 userRouter.post("/logout", async (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({success: false, message: "登出失敗 / Logout failed"});
-    }
-    res.clearCookie("connect.sid");
-    res.json({success: true, message: "已登出 / Logged out"});
-  });
+  // 前端只要呼叫 firebase.auth().signOut() 即可
+  res.json({success: true, message: "已登出 / Logged out"});
 });
 
-userRouter.get("/me", async (req, res) => {
+// 用 verifyFirebaseToken 保護需登入 API
+userRouter.get("/me", verifyFirebaseToken, async (req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
-  const userId = req.session.userId;
-  if (!userId) return res.json({loggedIn: false});
+  const uid = req.user.uid;
+  if (!uid) return res.json({loggedIn: false});
   try {
-    // Firestore: 以 userId 查詢
-    const memberDoc = await Members.doc(userId).get();
+    // Firestore: 以 uid 查詢
+    const memberDoc = await Members.doc(uid).get();
     if (!memberDoc.exists) return res.json({loggedIn: false});
     const member = memberDoc.data();
+    // 從 Firebase Auth 取得最新 emailVerified 狀態
+    const adminUser = await require("firebase-admin").auth().getUser(uid);
+    const latestEmailVerified = adminUser.emailVerified;
+    // 若 Firestore 尚未同步，則自動更新
+    if (latestEmailVerified && !member.emailVerified) {
+      await Members.doc(uid).update({ emailVerified: true });
+      member.emailVerified = true;
+    }
     res.json({
       loggedIn: true,
       user: {
         memberId: memberDoc.id,
-        name: member.name,
+        displayName: member.displayName,
         studentId: member.studentId,
         gender: member.gender,
         departmentYear: member.departmentYear,
         email: member.email,
-        phone: member.phone,
-        status: member.status,
-        verification: member.verification,
+        phoneNumber: member.phoneNumber,
+        emailVerified: member.emailVerified,
         role: member.role,
+        disabled: member.disabled,
+        metadata: member.metadata,
+        cumulativeConsumption: member.cumulativeConsumption,
+        isActive: member.isActive,
+        lastOnline: member.metadata ? member.metadata.lastSignInTime : null
       },
     });
   } catch (err) {
@@ -184,17 +202,14 @@ userRouter.get("/forms/:id", async (req, res) => {
   }
 });
 
-userRouter.get("/responses/check/:activityId/:formId", async (req, res) => {
+userRouter.get("/responses/check/:activityId/:formId", verifyFirebaseToken, async (req, res) => {
   try {
     const {activityId, formId} = req.params;
-    let userId = null;
-    if (req.session && req.session.userId) {
-      userId = req.session.userId;
-    }
+    const uid = req.user.uid;
     let snap = await Responses
       .where("activityId", "==", activityId)
       .where("formId", "==", formId)
-      .where("userId", "==", userId || null)
+      .where("userId", "==", uid)
       .get();
     if (!snap.empty) {
       const doc = snap.docs[0];
@@ -212,21 +227,18 @@ userRouter.get("/responses/check/:activityId/:formId", async (req, res) => {
   }
 });
 
-userRouter.post("/responses", async (req, res) => {
+userRouter.post("/responses", verifyFirebaseToken, async (req, res) => {
   try {
     const {activityId, formId, answers, formSnapshot} = req.body;
     if (!activityId || !formId || !answers) {
       return res.status(400).json({error: "Missing required fields"});
     }
-    let userId = null;
-    if (req.session && req.session.userId) {
-      userId = req.session.userId;
-    }
+    const uid = req.user.uid;
     // 檢查是否已經提交過
     const snap = await Responses
       .where("activityId", "==", activityId)
       .where("formId", "==", formId)
-      .where("userId", "==", userId || null)
+      .where("userId", "==", uid)
       .get();
     if (!snap.empty) {
       const doc = snap.docs[0];
@@ -240,7 +252,7 @@ userRouter.post("/responses", async (req, res) => {
     const responseData = {
       activityId,
       formId,
-      userId,
+      userId: uid,
       answers,
       formSnapshot,
       createdAt: new Date(),
@@ -248,7 +260,10 @@ userRouter.post("/responses", async (req, res) => {
     const newDocRef = await Responses.add(responseData);
     const newDoc = await newDocRef.get();
     // 更新活動人數
-    await Events.doc(activityId).update({enrollQuantity: db.FieldValue.increment(1)});
+    const eventRef = Events.doc(activityId);
+    await eventRef.update({
+      enrollQuantity: FieldValue ? FieldValue.increment(1) : (await eventRef.get()).data().enrollQuantity + 1
+    });
     res.status(201).json({
       _id: newDoc.id,
       ...newDoc.data(),
@@ -259,13 +274,10 @@ userRouter.post("/responses", async (req, res) => {
   }
 });
 
-userRouter.get("/responses/user", async (req, res) => {
+userRouter.get("/responses/user", verifyFirebaseToken, async (req, res) => {
   try {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({error: "User not logged in"});
-    }
-    const userId = req.session.userId;
-    const snap = await Responses.where("userId", "==", userId).orderBy("createdAt", "desc").get();
+    const uid = req.user.uid;
+    const snap = await Responses.where("userId", "==", uid).orderBy("createdAt", "desc").get();
     const responses = snap.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
     const [eventsSnap, formsSnap] = await Promise.all([
       Events.get(),
@@ -298,16 +310,14 @@ userRouter.get("/responses/user", async (req, res) => {
   }
 });
 
-userRouter.post("/enrollment/confirm", async (req, res) => {
+// 報名確認（需登入）
+userRouter.post("/enrollment/confirm", verifyFirebaseToken, async (req, res) => {
   try {
     const {eventId} = req.body;
     if (!eventId) {
       return res.status(400).json({error: "Missing eventId"});
     }
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({error: "User not logged in"});
-    }
-    const userId = req.session.userId;
+    const userId = req.user.uid;
     const snap = await Responses
       .where("activityId", "==", eventId)
       .where("userId", "==", userId)
@@ -322,6 +332,35 @@ userRouter.post("/enrollment/confirm", async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({error: "Failed to confirm enrollment", detail: err.message});
+  }
+});
+
+// 新增：付款資料備註 API
+userRouter.post("/payments/notes", verifyFirebaseToken, async (req, res) => {
+  try {
+    const { eventId, paymentMethod, paymentNotes } = req.body;
+    if (!eventId || !paymentMethod) {
+      return res.status(400).json({ error: "Missing eventId or paymentMethod" });
+    }
+    const uid = req.user.uid;
+    // 找到該活動的該用戶報名紀錄
+    const snap = await Responses
+      .where("activityId", "==", eventId)
+      .where("userId", "==", uid)
+      .get();
+    if (snap.empty) {
+      return res.status(404).json({ error: "No enrollment found for this event" });
+    }
+    const doc = snap.docs[0];
+    // 更新付款方式與備註
+    await Responses.doc(doc.id).update({
+      paymentMethod,
+      paymentNotes: paymentNotes || null,
+      paymentStatus: paymentMethod === "現金支付" ? "待現場付款" : "轉帳待確認"
+    });
+    res.json({ success: true, message: "付款資料已儲存" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to save payment notes", detail: err.message });
   }
 });
 

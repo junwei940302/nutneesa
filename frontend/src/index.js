@@ -69,12 +69,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 先取得會員狀態
         let memberStatus = null;
         try {
-            const meRes = await fetch(`${API_URL}/api/me`, { credentials: 'include' });
+            const user = await getCurrentUserAsync();
+            const idToken = await user.getIdToken();
+            const meRes = await fetch(`${API_URL}/api/me`, {
+                headers: { Authorization: 'Bearer ' + idToken }
+            });
             const meData = await meRes.json();
             if (meData.loggedIn && meData.user) {
-                memberStatus = meData.user.status;
+                memberStatus = meData.user.isActive;
             }
-        } catch {}
+        } catch (err){
+            console.log('Failed to verify identity:' + err);
+        }
         // 取得最新消息
         const res = await fetch(`${API_URL}/api/news`);
         let newsList = await res.json();

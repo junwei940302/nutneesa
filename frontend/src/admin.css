@@ -63,9 +63,9 @@
     font-weight: bolder;
 }
 
-.panel ul li div{
+.panel ul li > div:not(.event-preview) {
     display: block;
-    margin: 10px;
+    margin: 10px 0 10px 0;
 }
 
 table {
@@ -90,4 +90,182 @@ table th {
     width: 100%;
     overflow-x: auto;
     max-width: 100vw;
+}
+
+.event-thumb {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+}
+.toggle-content-btn {
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+/* 活動預覽樣式（複製自 services.css） */
+.event-preview{
+    width: 90%;
+}
+
+.activityItem {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    height: 240px;
+    overflow: hidden;
+    background: #fff;
+    border: 1.5px solid #645038;
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(100, 80, 56, 0.10);
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+.activityItem:hover {
+    box-shadow: 0 8px 32px rgba(100, 80, 56, 0.18);
+    transform: translateY(-4px) scale(1.02);
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+.activityItem img {
+    width: 70%;
+    height: 240px;
+    object-fit: cover;
+    border-radius: 20px 0 0 20px;
+    filter: brightness(0.7);
+    mask-image: linear-gradient(to right, black 0%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 0%, transparent 100%);
+    z-index: 1;
+}
+.textZone {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    background: rgba(255,255,255,0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1.2em 2em;
+    box-sizing: border-box;
+    overflow: hidden;
+    padding-left: 30%;
+    margin: 0;
+}
+.textZone > h2,
+.textZone > .activityHashtag,
+.textZone > .activityContent {
+    width: 100%;
+    box-sizing: border-box;
+}
+.textZone h2 {
+    color: #645038;
+    font-family: 'SoukouMincho', serif;
+    position: relative;
+    overflow: hidden;
+    font-size: 18px;
+    margin: 10px 0 10px 0;
+}
+.activityContent{
+    width: 100%;
+}
+.activityContent p {
+    height: 60px;
+    overflow-y: auto;
+}
+.activityHashtag {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.activityHashtag::-webkit-scrollbar {
+    display: none;
+}
+.hashtag {
+    display: inline-block;
+    background: #645038;
+    color: #fff;
+    border-radius: 8px;
+    padding: 0.1em 0.8em;
+    font-size: 0.95em;
+    margin-bottom: 0.1em;
+    white-space: nowrap;
+    min-width: -webkit-fill-available;
+    min-width: -moz-fit-content;
+    min-width: fit-content;
+}
+.hashtag.event {
+    display: flex;
+    align-items: center;
+}
+.btnZone{
+    display: flex;
+    gap: 5px;
+}
+.activityPrice h3{
+    color: #645038;
+    font-size: 1.1em;
+    margin-bottom: 0.8em;
+    width: 100%;
+}
+.enrollBtn {
+    background: #645038;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6em 1.5em;
+    border: 1px solid #645038;
+    font-size: 1em;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(100, 80, 56, 0.08);
+    cursor: pointer;
+}
+.enrollBtn:hover {
+    background: #fff;
+    color: #645038;
+    border: 1px solid #645038;
+}
+.readMore {
+    background: #fff;
+    color: #645038;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6em 1.5em;
+    border: 1px solid #645038;
+    font-size: 1em;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(100, 80, 56, 0.08);
+    cursor: pointer;
+}
+
+/* 活動預覽外層樣式（複製自 services.css） */
+.activityPanels {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    width: calc(100% - 2.4em);
+    margin: 0 auto;
+    background: none;
+    box-sizing: border-box;
+    padding: 0;
+    justify-content: center;
+}
+@media (max-width: 800px) {
+    .activityPanels {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    .activityItem {
+        max-width: 98vw;
+    }
 }

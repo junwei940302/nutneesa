@@ -1,10 +1,27 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // 檢查登入狀態
     try {
-        const loginRes = await fetch(`${API_URL}/api/me`, { credentials: 'include' });
-        const loginData = await loginRes.json();
-        
-        if (!loginData.loggedIn) {
+        let user = null;
+        let idToken = null;
+        if (typeof getCurrentUserAsync === 'function') {
+            user = await getCurrentUserAsync();
+        } else if (window.getCurrentUserAsync) {
+            user = await window.getCurrentUserAsync();
+        }
+        if (user) {
+            await user.reload();
+            idToken = await user.getIdToken();
+        }
+        let loginData = null;
+        if (idToken) {
+            const loginRes = await fetch(`${API_URL}/api/me`, {
+                headers: {
+                    'Authorization': 'Bearer ' + idToken,
+                },
+            });
+            loginData = await loginRes.json();
+        }
+        if (!loginData || !loginData.loggedIn) {
             alert('請先登入後再填寫表單');
             window.location.href = 'login.html';
             return;
@@ -52,8 +69,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         const form = await formRes.json();
         
         // 檢查是否已經提交過表單
+        let user = null;
+        let idToken = null;
+        if (typeof getCurrentUserAsync === 'function') {
+            user = await getCurrentUserAsync();
+        } else if (window.getCurrentUserAsync) {
+            user = await window.getCurrentUserAsync();
+        }
+        if (user) {
+            await user.reload();
+            idToken = await user.getIdToken();
+        }
+        if (!idToken) {
+            alert('請先登入後再填寫表單');
+            window.location.href = 'login.html';
+            return;
+        }
         const checkRes = await fetch(`${API_URL}/api/responses/check/${eventId}/${event.formId}`, {
-            credentials: 'include'
+            headers: {
+                'Authorization': 'Bearer ' + idToken,
+            }
         });
         const checkResult = await checkRes.json();
         
@@ -217,12 +252,28 @@ async function submitForm(formId, eventId) {
         const formSnapshot = await formRes.json();
 
         // 送出回應
+        let user = null;
+        let idToken = null;
+        if (typeof getCurrentUserAsync === 'function') {
+            user = await getCurrentUserAsync();
+        } else if (window.getCurrentUserAsync) {
+            user = await window.getCurrentUserAsync();
+        }
+        if (user) {
+            await user.reload();
+            idToken = await user.getIdToken();
+        }
+        if (!idToken) {
+            alert('請先登入再提交表單');
+            window.location.href = 'login.html';
+            return;
+        }
         const response = await fetch(`${API_URL}/api/responses`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + idToken,
             },
-            credentials: 'include',
             body: JSON.stringify({
                 activityId: eventId,
                 formId: formId,
@@ -232,15 +283,17 @@ async function submitForm(formId, eventId) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
+            let errorData = {};
+            try {
+                errorData = await response.json();
+            } catch (e) {}
+            console.error('Server error detail:', errorData);
             if (response.status === 409) {
-                // 重複提交錯誤
                 alert(errorData.error);
-                // 重新載入頁面顯示已提交訊息
                 window.location.reload();
                 return;
             }
-            throw new Error('表單提交失敗！');
+            throw new Error('表單提交失敗！' + (errorData.error ? '\n' + errorData.error : ''));
         }
 
         alert('表單已送出！！');
