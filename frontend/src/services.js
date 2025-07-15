@@ -1,7 +1,6 @@
 const serviceSelector = document.querySelector('.serviceSelector');
 const infoCards = {
     '新生專區': document.querySelector('.infoCard[data-freshman]'),
-    '會員相關服務': document.querySelector('.infoCard[data-memberServices]'),
     '活動報名': document.querySelector('.infoCard[data-enroll]'),
     '活動相簿': document.querySelector('.infoCard[data-photo]'),
     '大府城美食地圖': document.querySelector('.infoCard[data-map]'),
@@ -112,15 +111,15 @@ async function fetchAndRenderEvents() {
                 if (memberPrice === 0) {
                     priceText = '免費參與';
                 } else if (memberPrice === nonMemberPrice) {
-                    priceText = `新台幣 ${memberPrice} 元整`;
+                    priceText = `新台幣 ${memberPrice} 元`;
                 } else {
-                    priceText = `新台幣 ${memberPrice} 元整（已套用會員優惠）`;
+                    priceText = `新台幣 ${memberPrice} 元（已套用會員優惠）`;
                 }
             } else {
                 if (nonMemberPrice === 0) {
                     priceText = '免費參與';
                 } else {
-                    priceText = `新台幣 ${nonMemberPrice} 元整`;
+                    priceText = `新台幣 ${nonMemberPrice} 元`;
                 }
             }
             // 卡片
@@ -267,7 +266,7 @@ async function loadUserEnrollmentHistory() {
 
 // 恢復：自動檢查登入，若已登入則自動切換到會員相關服務並載入資料
 (async function autoSelectMemberServiceIfLoggedIn() {
-    if (serviceSelector.value === '會員相關服務' && await checkLogin()) {
+    if (serviceSelector.value === '新生專區' && await checkLogin()) {
         // 觸發 change 事件以載入會員資料與顯示卡片
         const event = new Event('change', { bubbles: true });
         serviceSelector.dispatchEvent(event);
@@ -286,9 +285,10 @@ async function checkLogin() {
         if (!user) {
             return false;
         }
+        await user.reload();
         const idToken = await user.getIdToken();
-        const res = await fetch(`${API_URL}/api/me`, {
-            headers: { Authorization: 'Bearer ' + idToken }
+        const res = await fetch('/api/me', {
+            headers: { 'Authorization': `Bearer ${idToken}` }
         });
         const data = await res.json();
         return data.loggedIn;

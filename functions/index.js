@@ -16,13 +16,6 @@ const {onRequest} = require("firebase-functions/v2/https");
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const News = require("./models/news");
-const History = require("./models/history");
-const Members = require("./models/members");
-// const Flows = require("./models/flows");
-const Events = require("./models/events");
-const Forms = require("./models/forms");
-const Responses = require("./models/responses");
 const { adminRouter } = require("./adminServer");
 const { userRouter } = require("./userServer");
 const { firebaseAuthMiddleware } = require("./utils");
@@ -58,14 +51,14 @@ app.use("/api/admin", firebaseAuthMiddleware, adminRouter);
 app.use("/api", userRouter);
 
 exports.api = onRequest(
-    {
-      invoker: "public",
-      cors: true, // 啟用 CORS 支援
-      region: "us-central1",
-      memory: "512MiB",
-      timeoutSeconds: 60,
-      maxInstances: 3,
-      minInstances: 0,
-    },
-    app
+  {
+    invoker: "public",
+    cors: true, // 啟用 CORS 支持
+    region: "us-central1",
+    memory: "512MiB",
+    timeoutSeconds: 60,
+    maxInstances: 3,
+    minInstances: 0,
+  },
+  app,
 );

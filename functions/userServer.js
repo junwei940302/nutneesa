@@ -5,7 +5,6 @@ const Events = require("./models/events");
 const Forms = require("./models/forms");
 const Responses = require("./models/responses");
 const { sha256 } = require("./utils");
-const db = require("./firestore"); // 如果在 models 目錄下，請用 ../firestore
 const admin = require("firebase-admin");
 if (!admin.apps.length) admin.initializeApp();
 const FieldValue = admin.firestore.FieldValue;
@@ -49,7 +48,7 @@ userRouter.get("/news", async (req, res) => {
 });
 
 userRouter.post("/register", async (req, res) => {
-  const {email, password, memberName, studentId, gender, departmentYear, phone} = req.body;
+  const {email, password, studentId, gender, departmentYear} = req.body;
   if (!email || !password) {
     return res.json({success: false, message: "請填寫所有欄位 / Please fill all fields."});
   }
@@ -138,7 +137,7 @@ userRouter.get("/me", verifyFirebaseToken, async (req, res) => {
         metadata: member.metadata,
         cumulativeConsumption: member.cumulativeConsumption,
         isActive: member.isActive,
-        lastOnline: member.metadata ? member.metadata.lastSignInTime : null
+        lastOnline: member.metadata ? member.metadata.lastSignInTime : null,
       },
     });
   } catch (err) {
@@ -262,7 +261,7 @@ userRouter.post("/responses", verifyFirebaseToken, async (req, res) => {
     // 更新活動人數
     const eventRef = Events.doc(activityId);
     await eventRef.update({
-      enrollQuantity: FieldValue ? FieldValue.increment(1) : (await eventRef.get()).data().enrollQuantity + 1
+      enrollQuantity: FieldValue ? FieldValue.increment(1) : (await eventRef.get()).data().enrollQuantity + 1,
     });
     res.status(201).json({
       _id: newDoc.id,
@@ -305,7 +304,7 @@ userRouter.get("/responses/user", verifyFirebaseToken, async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    console.error('Error in /responses/user:', err);
+    console.error("Error in /responses/user:", err);
     res.status(500).json({error: "Failed to fetch user responses", detail: err.message});
   }
 });
@@ -356,7 +355,7 @@ userRouter.post("/payments/notes", verifyFirebaseToken, async (req, res) => {
     await Responses.doc(doc.id).update({
       paymentMethod,
       paymentNotes: paymentNotes || null,
-      paymentStatus: paymentMethod === "現金支付" ? "待現場付款" : "轉帳待確認"
+      paymentStatus: paymentMethod === "現金支付" ? "待現場付款" : "轉帳待確認",
     });
     res.json({ success: true, message: "付款資料已儲存" });
   } catch (err) {

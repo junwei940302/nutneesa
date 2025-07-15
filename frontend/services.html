@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="./src/services.css">
     <link rel="stylesheet" href="./src/global.css">
     <script src="./src/env.js" defer></script>
-    <script src="./src/global.js" defer></script>
     <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -26,52 +25,27 @@
       }
     </script>
     <script src="./src/utils.js"></script>
+    <script>
+      loadHtmlFragment('global/navBar.html', '#nav-placeholder', function() {
+        // 動態載入 global.js
+        const script = document.createElement('script');
+        script.src = './src/global.js';
+        document.body.appendChild(script);
+      });
+      loadHtmlFragment('global/toTop.html', '#toTop-placeholder');
+    </script>
     <script src="./src/services.js" defer></script>
     <title>電機系系學會EESA｜國立臺南大學NUTN</title>
 </head>
 <body>
-    <div class="toTop" hidden>
-        <button class="getToTop" title="getToTop">
-            <i class="fa-solid fa-chevron-up"></i>
-        </button>
-    </div>
-    <div class="navBar">
-        <a class="navTitle" href="index.html">
-            <h3>國立臺南大學電機系系學會</h3>
-            <p>National University of Tainan Department of Electrical Engineering Student Association</p>
-        </a>
-        <div class="navIcon" hidden>  
-            <i class="fa-solid fa-bars"></i>
-        </div>
-        <div class="navItems">
-            <ul>
-                <li><a href="index.html">最新消息</a></li>
-                <li><a href="services.html">系會服務</a></li>
-                <li><a href="contact.html">接洽管道</a></li>
-                <li><a href="about.html">關於系會</a></li>
-            </ul>
-        </div>
-        <div class="mobileMenu" style="display: none;">
-            <ul>
-                <li><a href="index.html">最新消息</a></li>
-                <li><a href="services.html">系會服務</a></li>
-                <li><a href="contact.html">接洽管道</a></li>
-                <li><a href="about.html">關於系會</a></li>
-                <li>
-                    <a href="https://www.instagram.com/nutn_ee_116/?utm_source=ig_web_button_share_sheet" target="_blank" rel="noopener">
-                        <img src="./assets/images/Instagram_icon.png">
-                    </a>
-                    <a href="https://linktr.ee/NUTNEESA" target="_blank" rel="noopener">
-                        <img src="./assets/images/images.png">
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
+    <div id="toTop-placeholder"></div>
+    <div id="nav-placeholder"></div>
+    <script>
+      loadHtmlFragment('global/navBar.html', '#nav-placeholder');
+    </script>
     <div class="content">
         <select class="serviceSelector" title="選擇服務">
             <option>新生專區</option>
-            <option>會員相關服務</option>
             <option>活動報名</option>
             <option>活動相簿</option>
             <option>大府城美食地圖</option>
@@ -267,76 +241,6 @@
             </div>
             <div>
                 <h2>常見Q&A</h2>
-            </div>
-        </div>
-        <div class="infoCard" data-memberServices>
-            <div class="personalInfo">
-                <h2>個人資料</h2>
-                <img src="#" title="個人QRCode">
-                <p>QRCode含敏感身份資料，請謹慎保管</p>
-                <table>
-                    <tbody>
-                        <tr>
-                            <td>會員編號</td>
-                            <td>載入中</td>
-                        </tr>
-                        <tr>
-                            <td>名稱</td>
-                            <td>載入中</td>
-                        </tr>
-                        <tr>
-                            <td>學號</td>
-                            <td>載入中</td>
-                        </tr>
-                        <tr>
-                            <td>性別</td>
-                            <td>載入中</td>
-                        </tr>
-                        <tr>
-                            <td>系級</td>
-                            <td>載入中</td>
-                        </tr>
-                        <tr>
-                            <td>電子郵件</td>
-                            <td>載入中</td>
-                        </tr>
-                        <tr>
-                            <td>電話</td>
-                            <td>載入中</td>
-                        </tr>
-                        <tr>
-                            <td>會員狀態</td>
-                            <td>載入中</td>
-                        </tr>
-                        <tr>
-                            <td>驗證狀態</td>
-                            <td>載入中</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <button class="revokeMember" title="申請注銷帳號">申請注銷帳號</button>
-                <button class="hrefAdmin" title="進入控制中心">進入控制中心</button>
-                <button class="logoutBtn" title="登出">登出</button>
-            </div>
-            <div class="enrollmentHistory">
-                <h2>報名列表</h2>
-                <div class="enrollmentTableContainer">
-                    <table class="enrollment-table">
-                        <thead>
-                            <tr>
-                                <th>序號</th>
-                                <th>活動名稱</th>
-                                <th>表單填寫狀態</th>
-                                <th>金額</th>
-                                <th>付款方式</th>
-                                <th>付款狀態</th>
-                            </tr>
-                        </thead>
-                        <tbody class="enrollmentTableBody">
-                            <!-- 動態載入報名記錄 -->
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>
         <div class="infoCard" data-enroll>

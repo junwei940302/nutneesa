@@ -120,3 +120,12 @@ if (createFormBtn) {
         window.open("buildForms.html", "_blank");
     });
 }
+
+const logoutBtn = document.querySelector(".logoutBtn");
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", function() {
+        firebase.auth().signOut().then(() => {
+            window.location.href = "login.html";
+        });
+    });
+}

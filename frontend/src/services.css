@@ -304,7 +304,7 @@
     }
 }
 
-.revokeMember, .logoutBtn, .verifyEmail, .hrefAdmin{
+.revokeMember, .logoutBtn, .verifyEmail, .hrefAdmin {
     display: inline-block;
     margin: 0.5em 0.5em 0 0;
     padding: 0.6em 1.5em;
@@ -315,6 +315,7 @@
     cursor: pointer;
     transition: background 0.2s, color 0.2s, box-shadow 0.2s;
     box-shadow: 0 2px 8px rgba(230, 126, 34, 0.08);
+    height: 44px; /* or min-height: 44px; adjust as needed */
 }
 .revokeMember, .verifyEmail, .hrefAdmin{
     background: #fff;

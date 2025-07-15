@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="./src/buildForms.css">
     <link rel="stylesheet" href="./src/global.css">
     <script src="./src/env.js" defer></script>
-    <script src="./src/global.js" defer></script>
     <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -31,44 +30,8 @@
     <title>電機系系學會EESA｜國立臺南大學NUTN</title>
 </head>
 <body>
-    <div class="toTop hidden">
-        <button class="getToTop" title="getToTop">
-            <i class="fa-solid fa-chevron-up"></i>
-        </button>
-    </div>
-    <div class="navBar">
-        <a class="navTitle" href="index.html">
-            <h3>國立臺南大學電機系系學會</h3>
-            <p>National University of Tainan Department of Electrical Engineering Student Association</p>
-        </a>
-        <div class="navIcon" hidden>  
-            <i class="fa-solid fa-bars"></i>
-        </div>
-        <div class="navItems">
-            <ul>
-                <li><a href="index.html">最新消息</a></li>
-                <li><a href="services.html">系會服務</a></li>
-                <li><a href="contact.html">接洽管道</a></li>
-                <li><a href="about.html">關於系會</a></li>
-            </ul>
-        </div>
-        <div class="mobileMenu" style="display: none;">
-            <ul>
-                <li><a href="index.html">最新消息</a></li>
-                <li><a href="services.html">系會服務</a></li>
-                <li><a href="contact.html">接洽管道</a></li>
-                <li><a href="about.html">關於系會</a></li>
-                <li>
-                    <a href="https://www.instagram.com/nutn_ee_116/?utm_source=ig_web_button_share_sheet">
-                        <img src="./assets/images/Instagram_icon.png">
-                    </a>
-                    <a href="https://linktr.ee/NUTNEESA">
-                        <img src="./assets/images/images.png">
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
+    <div id="toTop-placeholder"></div>
+    <div id="nav-placeholder"></div>
     <div class="content">
         <div class="form-builder-panel">
             <div class="form-meta">
@@ -89,5 +52,13 @@
             </div>
         </div>
     </div>
+    <script>
+      loadHtmlFragment('global/navBar.html', '#nav-placeholder', function() {
+        const script = document.createElement('script');
+        script.src = './src/global.js';
+        document.body.appendChild(script);
+      });
+      loadHtmlFragment('global/toTop.html', '#toTop-placeholder');
+    </script>
 </body>
 </html>

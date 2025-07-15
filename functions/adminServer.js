@@ -6,7 +6,6 @@ const Events = require("./models/events");
 const Forms = require("./models/forms");
 const Responses = require("./models/responses");
 const { logHistory } = require("./utils");
-const db = require("./firestore"); // 如果在 models 目錄下，請用 ../firestore
 
 const adminRouter = express.Router();
 
@@ -454,7 +453,7 @@ adminRouter.patch("/events/:id", async (req, res) => {
       visibility, imgUrl, title, hashtag, status, content,
       nonMemberPrice, memberPrice, eventDate, enrollQuantity,
       restrictDepartment, restrictYear, restrictMember, restrictQuantity,
-      location, startEnrollDate, endEnrollDate
+      location, startEnrollDate, endEnrollDate,
     } = req.body;
 
     const updateData = {};
@@ -558,7 +557,7 @@ adminRouter.post("/forms", async (req, res) => {
         ...formDoc.data(),
         createdAt: safeToISOString(formDoc.data().createdAt),
       },
-      event: eventUpdate
+      event: eventUpdate,
     });
   } catch (err) {
     res.status(500).json({error: "Failed to create form", detail: err.message});

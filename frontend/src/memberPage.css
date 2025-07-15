@@ -1,0 +1,208 @@
+.content{
+    position: relative;
+    width: calc(100% - 10vw);
+    max-width: 100vw;
+    overflow-x: hidden;
+    top: 75px;
+    height: fit-content;
+    display: grid;
+    padding: 0 5vw 0 5vw;
+}
+/* 會員相關服務樣式 */
+.infoCard[data-memberServices] {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    padding: 2.5em 2em 2em 2em;
+    margin: 2em auto 2em auto;
+    min-width: 260px;
+    display: flex;
+    flex-direction: row;
+    gap: 2.5em;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+}
+.personalInfo, .enrollmentHistory {
+    flex: 1 1 0;
+    min-width: 320px;
+    max-width: 100%;
+}
+.personalInfo h2 {
+    font-size: 1.6em;
+    margin-bottom: 0.5em;
+    color: #645038;
+    border-left: 5px solid #645038;
+    padding-left: 0.5em;
+    font-family: 'SoukouMincho', serif;
+}
+.personalInfo img {
+    display: block;
+    margin: 1em auto 0.5em auto;
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.10);
+    background: #fff7e6;
+}
+.personalInfo p {
+    text-align: center;
+    color: #645038;
+    font-size: 0.95em;
+    margin-bottom: 1em;
+}
+.personalInfo table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.5em;
+    margin-bottom: 1.5em;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(230, 126, 34, 0.06);
+}
+.personalInfo td {
+    padding: 0.5em 0.8em;
+    font-size: 1em;
+    color: black;
+}
+.personalInfo tr:nth-child(even) td {
+    background: #F2F2F0;
+}
+.personalInfo tr:nth-child(odd) td {
+    background: #fff;
+}
+.personalInfo td:first-child {
+    color: #645038;
+}
+.enrollmentHistory {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+.enrollmentHistory h2 {
+    font-size: 1.6em;
+    margin-bottom: 1em;
+    color: #645038;
+    border-left: 5px solid #645038;
+    padding-left: 0.5em;
+    font-family: 'SoukouMincho', serif;
+}
+.enrollmentTableContainer {
+    overflow-x: auto;
+    margin-top: 1rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.enrollment-table {
+    width: 100%;
+    max-width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(230, 126, 34, 0.06);
+    box-sizing: border-box;
+}
+.enrollment-table th,
+.enrollment-table td {
+    padding: 0.8em;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 0.9em;
+}
+.enrollment-table th {
+    background-color: #f8f8f8;
+    color: #645038;
+    font-weight: bold;
+    font-size: 0.95em;
+}
+.enrollment-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+.enrollment-table tr:nth-child(odd) {
+    background-color: #fff;
+}
+.enrollment-table tr:hover {
+    background-color: inherit;
+}
+.enrollment-table td:first-child {
+    text-align: center;
+    font-weight: bold;
+    color: #645038;
+}
+.enrollment-table td:nth-child(4) {
+    text-align: center;
+    font-weight: bold;
+}
+.enrollment-table td:nth-child(5),
+.enrollment-table td:nth-child(6) {
+    text-align: center;
+}
+@media (max-width: 800px) {
+    .infoCard[data-memberServices] {
+        flex-direction: column;
+        gap: 1.5em;
+        padding: 1.2em 0.5em 1.5em 0.5em;
+        max-width: 98vw;
+    }
+    .personalInfo, .enrollmentHistory {
+        min-width: 0;
+    }
+    .enrollment-table {
+        min-width: 500px;
+    }
+}
+.revokeMember, .logoutBtn, .verifyEmail, .hrefAdmin {
+    display: inline-block;
+    margin: 0.5em 0.5em 0 0;
+    padding: 0.6em 1.5em;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(230, 126, 34, 0.08);
+    height: 44px;
+}
+.revokeMember, .verifyEmail, .hrefAdmin{
+    background: #fff;
+    color: #645038;
+    border: 1.5px solid #645038;
+}
+.revokeMember:hover, .verifyEmail:hover, .hrefAdmin:hover{
+    background: #E0C588;
+}
+.logoutBtn {
+    background: #645038;
+    color: #fff;
+    border: 1.5px solid #645038;
+}
+.logoutBtn:hover {
+    background: #E0C588;
+    color: #645038;
+}
+@media (max-width: 600px) {
+    .personalInfo h2 {
+        font-size: 1.2em;
+    }
+    .personalInfo img {
+        width: 150px;
+        height: 150px;
+    }
+    .personalInfo td {
+        font-size: 0.95em;
+    }
+    .revokeMember, .logoutBtn {
+        font-size: 0.95em;
+        padding: 0.5em 1em;
+    }
+}
+.personalInfo {
+    margin-left: auto;
+    margin-right: auto;
+}
