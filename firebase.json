@@ -30,7 +30,7 @@
       "api": {
         "region": "us-central1",
         "ingress": "ALLOW_ALL",
-        "timeoutSeconds": 60,
+        "timeoutSeconds": 300,
         "maxInstances": 3,
         "minInstances": 0,
         "concurrency": 80,

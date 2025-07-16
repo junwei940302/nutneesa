@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./src/global.css">
     <script src="./src/env.js" defer></script>
     <script src="./src/about.js" defer></script>
+    <script src="./src/contact.js" defer></script>
     <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
     <title>電機系系學會EESA｜國立臺南大學NUTN</title>
 </head>
@@ -14,6 +15,47 @@
     <div id="toTop-placeholder"></div>
     <div id="nav-placeholder"></div>
     <div class="content">
+        <!-- contact.html 內容開始 -->
+        <div class="section">
+            <h2>系會位置</h2>
+            <div class="mapContainer">
+                <!-- 這裡可加地圖或圖片 -->
+            </div>
+        </div>
+        <div class="section">
+            <h2>系會聯絡方式</h2>
+            <div class="contactContainer" id="contactContainer">
+                <a href="https://www.instagram.com/nutn_ee_116/?utm_source=ig_web_button_share_sheet" class="contact-link" target="_blank" rel="noopener">
+                    <div>
+                        <i class="fa-brands fa-instagram"></i>
+                        <h3>Instagram</h3>
+                        <span>@nutn_ee_116</span>
+                    </div>
+                </a>
+                <a href="mailto:nutneesa116@gmail.com" class="contact-link">
+                    <div>
+                        <i class="fa-solid fa-envelope"></i>
+                        <h3>電子郵件</h3>
+                        <span>nutneesa116@gmail.com</span>
+                    </div>
+                </a>
+                <a href="#webPhonograph" class="contact-link" rel="noopener">
+                    <div>
+                        <i class="fa-solid fa-inbox"></i>
+                        <h3>網頁留聲機</h3>
+                        <span>Web Phonograph</span>
+                    </div>
+                </a>
+                <a href="#" class="contact-link" rel="noopener">
+                    <div>
+                        <i class="fa-solid fa-comment-dots"></i>
+                        <h3>陸續新增</h3>
+                        <span>Web Phonograph</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+        <!-- contact.html 內容結束 -->
         <div class="saMembers" id="saMembers">
             <h2>系會成員</h2>
             <div class="memberWall">
@@ -74,7 +116,7 @@
                 </li>
                 <li>
                     <p>我是否可以要求查閱系學會收支紀錄？</p>
-                    <p>根據組織章程第三章第一節第一條，會員有權監督系學會之運作，系學會之收支紀錄大綱請參閱「<a href="services.html">系會服務/系會收支紀錄</a>」。礙於詳細收支涉及會員隱私之事項，平台所呈現為大綱數據，實際紀錄請透過<a href="contact.html">接洽管道</a>申請。</p>
+                    <p>根據組織章程第三章第一節第一條，會員有權監督系學會之運作，系學會之收支紀錄大綱請參閱「<a href="services.html">系會服務/系會收支紀錄</a>」。礙於詳細收支涉及會員隱私之事項，平台所呈現為大綱數據，實際紀錄請透過<a href="#contactContainer">系會聯絡方式</a>申請。</p>
                 </li>
                 <li>
                     <p>我是否可以加入系學會幹部？</p>
@@ -146,7 +188,7 @@
                     <ul>
                         <li>採用適當之資訊安全技術與程序，防止未經授權之存取、洩漏、竄改或損毀。</li>
                         <li>只有經授權人員才能接觸您的個人資料。</li>
-                        <li>您的密碼皆經過加密處理，即使為授權人員亦無法存取。</li>
+                        <li>相關資料已由Google.Inc代理驗證、儲存，請放心使用。</li>
                     </ul>
                 </li>
                 <li>
@@ -173,7 +215,7 @@
                         <li>請求停止蒐集、處理或利用</li>
                         <li>請求刪除</li>
                     </ul>
-                    <p>如欲行使上述權利，請透過<a href="contact.html">接洽管道</a>與我們聯繫。</p>
+                    <p>如欲行使上述權利，請透過<a href="#contactContainer">系會聯絡方式</a>與我們聯繫。</p>
                 </li>
                 <li>
                     <p>隱私權政策之修改</p>
@@ -185,9 +227,13 @@
                 </li>
                 <li>
                     <p>聯絡我們</p>
-                    <p>請參閱<a href="contact.html">接洽管道</a>。</p>
+                    <p>請參閱<a href="#contactContainer">系會聯絡方式</a>。</p>
                 </li>
             </ol>
+        </div>
+        <div class="section" id="webPhonograph">
+            <h2>網頁留聲機</h2>
+            <!-- 留聲機內容 -->
         </div>
         <div class="copyright" id="copyright">
             <h2>版權聲明</h2>

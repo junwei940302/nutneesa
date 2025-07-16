@@ -1,13 +1,19 @@
 const express = require("express");
-const News = require("./models/news"); // Firestore collection 物件
-const Members = require("./models/members");
-const Events = require("./models/events");
-const Forms = require("./models/forms");
-const Responses = require("./models/responses");
 const { sha256 } = require("./utils");
 const admin = require("firebase-admin");
-if (!admin.apps.length) admin.initializeApp();
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+    databaseURL: "https://nutneesa.firebaseio.com"
+  });
+}
 const FieldValue = admin.firestore.FieldValue;
+
+const Members = admin.firestore().collection("members");
+const Events = admin.firestore().collection("events");
+const Forms = admin.firestore().collection("forms");
+const Responses = admin.firestore().collection("responses");
+const News = admin.firestore().collection("news");
 
 async function verifyFirebaseToken(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -108,37 +114,78 @@ userRouter.get("/me", verifyFirebaseToken, async (req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   const uid = req.user.uid;
   if (!uid) return res.json({loggedIn: false});
+  
   try {
-    // Firestore: 以 uid 查詢
-    const memberDoc = await Members.doc(uid).get();
+    console.time('FirestoreMemberQuery');
+    let memberDoc;
+    try {
+      // Add retry logic for Firestore operation
+      const maxRetries = 3;
+      let lastError;
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          memberDoc = await Members.doc(uid).get();
+          break;
+        } catch (err) {
+          lastError = err;
+          if (i < maxRetries - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+          }
+        }
+      }
+      if (!memberDoc) throw lastError;
+    } finally {
+      console.timeEnd('FirestoreMemberQuery');
+    }
+    
     if (!memberDoc.exists) return res.json({loggedIn: false});
+    
+    console.time('AuthUserQuery');
+    let adminUser;
+    try {
+      // Add retry logic for auth operation
+      const maxRetries = 3;
+      let lastError;
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          adminUser = await admin.auth().getUser(uid);
+          break;
+        } catch (err) {
+          lastError = err;
+          if (i < maxRetries - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+          }
+        }
+      }
+      if (!adminUser) throw lastError;
+    } finally {
+      console.timeEnd('AuthUserQuery');
+    }
+
+    if (!memberDoc.exists) return res.json({loggedIn: false});
+    
     const member = memberDoc.data();
-    // 從 Firebase Auth 取得最新 emailVerified 狀態
-    const adminUser = await require("firebase-admin").auth().getUser(uid);
-    const latestEmailVerified = adminUser.emailVerified;
-    // 若 Firestore 尚未同步，則自動更新
-    if (latestEmailVerified && !member.emailVerified) {
+    const needsEmailUpdate = adminUser.emailVerified && !member.emailVerified;
+    
+    if (needsEmailUpdate) {
       await Members.doc(uid).update({ emailVerified: true });
       member.emailVerified = true;
     }
+
     res.json({
       loggedIn: true,
       user: {
         memberId: memberDoc.id,
         displayName: member.displayName,
-        studentId: member.studentId,
-        gender: member.gender,
-        departmentYear: member.departmentYear,
         email: member.email,
-        phoneNumber: member.phoneNumber,
         emailVerified: member.emailVerified,
         role: member.role,
-        disabled: member.disabled,
-        metadata: member.metadata,
-        cumulativeConsumption: member.cumulativeConsumption,
         isActive: member.isActive,
-        lastOnline: member.metadata ? member.metadata.lastSignInTime : null,
-      },
+        studentId: member.studentId || '',
+        gender: member.gender || '',
+        departmentYear: member.departmentYear || '',
+        phoneNumber: member.phoneNumber || ''
+      }
     });
   } catch (err) {
     res.status(500).json({loggedIn: false, error: "Server error"});
@@ -276,32 +323,42 @@ userRouter.post("/responses", verifyFirebaseToken, async (req, res) => {
 userRouter.get("/responses/user", verifyFirebaseToken, async (req, res) => {
   try {
     const uid = req.user.uid;
-    const snap = await Responses.where("userId", "==", uid).orderBy("createdAt", "desc").get();
-    const responses = snap.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
-    const [eventsSnap, formsSnap] = await Promise.all([
+    const { limit = 20, offset = 0 } = req.query;
+    
+    // Get paginated responses
+    const responsesQuery = Responses
+      .where("userId", "==", uid)
+      .orderBy("createdAt", "desc")
+      .limit(Number(limit))
+      .offset(Number(offset));
+    
+    const [responsesSnap, eventsSnap, formsSnap] = await Promise.all([
+      responsesQuery.get(),
       Events.get(),
       Forms.get(),
     ]);
+
+    const responses = responsesSnap.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
     const events = eventsSnap.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
     const forms = formsSnap.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
+
     const eventMap = Object.fromEntries(events.map(e => [e._id, e]));
     const formMap = Object.fromEntries(forms.map(f => [f._id, f]));
-    const result = responses.map(response => {
-      const event = eventMap[response.activityId] || {};
-      const form = formMap[response.formId] || {};
-      return {
-        _id: response._id,
-        eventTitle: event.title || "未知活動",
-        eventId: response.activityId || "",
-        formTitle: form.title || "未知表單",
-        formId: response.formId || "",
-        submittedAt: safeToISOString(response.createdAt),
-        answers: response.answers,
-        paymentStatus: response.paymentStatus || "待確認",
-        paymentMethod: response.paymentMethod || "未指定",
-        amount: event ? (event.memberPrice || event.nonMemberPrice || 0) : 0,
-      };
-    });
+
+    const result = responses.map(response => ({
+      _id: response._id,
+      eventTitle: eventMap[response.activityId]?.title || "未知活動",
+      eventId: response.activityId || "",
+      formTitle: formMap[response.formId]?.title || "未知表單",
+      formId: response.formId || "",
+      submittedAt: safeToISOString(response.createdAt),
+      answers: response.answers,
+      paymentStatus: response.paymentStatus || "待確認",
+      paymentMethod: response.paymentMethod || "未指定",
+      amount: eventMap[response.activityId]?.memberPrice || 
+              eventMap[response.activityId]?.nonMemberPrice || 0,
+    }));
+
     res.json(result);
   } catch (err) {
     console.error("Error in /responses/user:", err);
@@ -363,4 +420,4 @@ userRouter.post("/payments/notes", verifyFirebaseToken, async (req, res) => {
   }
 });
 
-module.exports = { userRouter }; 
+module.exports = { userRouter };

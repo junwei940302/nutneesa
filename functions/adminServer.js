@@ -1,11 +1,14 @@
 const express = require("express");
-const Members = require("./models/members");
-const News = require("./models/news");
-const History = require("./models/history");
-const Events = require("./models/events");
-const Forms = require("./models/forms");
-const Responses = require("./models/responses");
 const { logHistory } = require("./utils");
+const admin = require("firebase-admin");
+if (!admin.apps.length) admin.initializeApp();
+
+const Members = admin.firestore().collection("members");
+const Events = admin.firestore().collection("events"); 
+const Forms = admin.firestore().collection("forms");
+const Responses = admin.firestore().collection("responses");
+const News = admin.firestore().collection("news");
+const History = admin.firestore().collection("history");
 
 const adminRouter = express.Router();
 
@@ -695,4 +698,4 @@ adminRouter.patch("/enrollments/:id", async (req, res) => {
   }
 });
 
-module.exports = { adminRouter, logHistory }; 
+module.exports = { adminRouter, logHistory };

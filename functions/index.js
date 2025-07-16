@@ -13,6 +13,7 @@
  */
 
 const {onRequest} = require("firebase-functions/v2/https");
+const {onInit} = require("firebase-functions/v2");
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -50,6 +51,7 @@ app.get("/", (req, res) => {
 app.use("/api/admin", firebaseAuthMiddleware, adminRouter);
 app.use("/api", userRouter);
 
+// --- export function as usual ---
 exports.api = onRequest(
   {
     invoker: "public",

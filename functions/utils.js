@@ -1,6 +1,4 @@
 const crypto = require("crypto");
-const Members = require("./models/members");
-const History = require("./models/history");
 const admin = require("firebase-admin");
 
 function sha256(password) {
