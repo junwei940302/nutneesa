@@ -1,19 +1,20 @@
 const express = require("express");
 const { sha256 } = require("./utils");
 const admin = require("firebase-admin");
+
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.applicationDefault(),
-    databaseURL: "https://nutneesa.firebaseio.com"
+    databaseURL: "https://nutneesa.firebaseio.com",
   });
 }
-const FieldValue = admin.firestore.FieldValue;
 
 const Members = admin.firestore().collection("members");
 const Events = admin.firestore().collection("events");
 const Forms = admin.firestore().collection("forms");
 const Responses = admin.firestore().collection("responses");
 const News = admin.firestore().collection("news");
+const { sendVerificationEmail } = require("./utils");
 
 async function verifyFirebaseToken(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -116,7 +117,7 @@ userRouter.get("/me", verifyFirebaseToken, async (req, res) => {
   if (!uid) return res.json({loggedIn: false});
   
   try {
-    console.time('FirestoreMemberQuery');
+    console.time("FirestoreMemberQuery");
     let memberDoc;
     try {
       // Add retry logic for Firestore operation
@@ -135,12 +136,12 @@ userRouter.get("/me", verifyFirebaseToken, async (req, res) => {
       }
       if (!memberDoc) throw lastError;
     } finally {
-      console.timeEnd('FirestoreMemberQuery');
+      console.timeEnd("FirestoreMemberQuery");
     }
     
     if (!memberDoc.exists) return res.json({loggedIn: false});
     
-    console.time('AuthUserQuery');
+    console.time("AuthUserQuery");
     let adminUser;
     try {
       // Add retry logic for auth operation
@@ -159,7 +160,7 @@ userRouter.get("/me", verifyFirebaseToken, async (req, res) => {
       }
       if (!adminUser) throw lastError;
     } finally {
-      console.timeEnd('AuthUserQuery');
+      console.timeEnd("AuthUserQuery");
     }
 
     if (!memberDoc.exists) return res.json({loggedIn: false});
@@ -181,11 +182,11 @@ userRouter.get("/me", verifyFirebaseToken, async (req, res) => {
         emailVerified: member.emailVerified,
         role: member.role,
         isActive: member.isActive,
-        studentId: member.studentId || '',
-        gender: member.gender || '',
-        departmentYear: member.departmentYear || '',
-        phoneNumber: member.phoneNumber || ''
-      }
+        studentId: member.studentId || "",
+        gender: member.gender || "",
+        departmentYear: member.departmentYear || "",
+        phoneNumber: member.phoneNumber || "",
+      },
     });
   } catch (err) {
     res.status(500).json({loggedIn: false, error: "Server error"});
@@ -308,7 +309,7 @@ userRouter.post("/responses", verifyFirebaseToken, async (req, res) => {
     // 更新活動人數
     const eventRef = Events.doc(activityId);
     await eventRef.update({
-      enrollQuantity: FieldValue ? FieldValue.increment(1) : (await eventRef.get()).data().enrollQuantity + 1,
+      enrollQuantity: (await eventRef.get()).data().enrollQuantity + 1,
     });
     res.status(201).json({
       _id: newDoc.id,
@@ -417,6 +418,66 @@ userRouter.post("/payments/notes", verifyFirebaseToken, async (req, res) => {
     res.json({ success: true, message: "付款資料已儲存" });
   } catch (err) {
     res.status(500).json({ error: "Failed to save payment notes", detail: err.message });
+  }
+});
+
+// 產生六位數驗證碼
+function generate6DigitCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// 發送驗證碼 API
+userRouter.post("/verify/send-code", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "Missing email" });
+  try {
+    // 查找會員
+    const snap = await Members.where("email", "==", email).get();
+    if (snap.empty) return res.status(404).json({ error: "User not found" });
+    const doc = snap.docs[0];
+    const member = doc.data();
+    const code = generate6DigitCode();
+    const expireAt = Date.now() + 10 * 60 * 1000; // 10 分鐘
+    // 存入驗證碼與過期時間
+    await Members.doc(doc.id).update({ verifyCode: code, verifyCodeExpire: expireAt });
+    // 準備信件內容
+    const name = member.displayName || member.name || "會員";
+    const link = `https://nutneesa.online/verify?email=${encodeURIComponent(email)}&code=${code}`;
+    const templateId = "d-a6fb3a20b25a4131851861f97a334676"; // TODO: 請換成你的 template id
+    await sendVerificationEmail({ to: email, name, code, link, templateId });
+    res.json({ success: true, message: "驗證碼已寄出 / Verification code sent." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to send verification code", detail: err.message });
+  }
+});
+
+// 驗證驗證碼 API
+userRouter.post("/verify/confirm", async (req, res) => {
+  const { email, code } = req.body;
+  if (!email || !code) return res.status(400).json({ error: "Missing email or code" });
+  try {
+    const snap = await Members.where("email", "==", email).get();
+    if (snap.empty) return res.status(404).json({ error: "User not found" });
+    const doc = snap.docs[0];
+    const member = doc.data();
+    if (!member.verifyCode || !member.verifyCodeExpire) {
+      return res.status(400).json({ error: "No verification code found" });
+    }
+    if (Date.now() > member.verifyCodeExpire) {
+      return res.status(400).json({ error: "驗證碼已過期 / Code expired" });
+    }
+    if (member.verifyCode !== code) {
+      return res.status(400).json({ error: "驗證碼錯誤 / Invalid code" });
+    }
+    await Members.doc(doc.id).update({ 
+      emailVerified: true, 
+      verifyCode: "completed", 
+    });
+    // 同步 Auth 狀態
+    await admin.auth().updateUser(doc.id, { emailVerified: true });
+    res.json({ success: true, message: "驗證成功 / Verification success!" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to verify code", detail: err.message });
   }
 });
 

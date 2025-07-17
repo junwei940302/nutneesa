@@ -22,6 +22,17 @@ function getCurrentUserAsync() {
 
 async function loginMemberSwitcher(){
     const user = await getCurrentUserAsync();
+    if (!user) {
+        // 沒登入，直接顯示登入按鈕、隱藏會員按鈕
+        document.querySelectorAll('.loginBtnSwitcher, .memberBtnSwitcher').forEach((element) => {
+            if (element.classList.contains('loginBtnSwitcher')) {
+                element.style.display = '';
+            } else if (element.classList.contains('memberBtnSwitcher')) {
+                element.style.display = 'none';
+            }
+        });
+        return;
+    }
     await user.reload();
     const idToken = await user.getIdToken();
     const res = await fetch(`${API_URL}/api/me`, {

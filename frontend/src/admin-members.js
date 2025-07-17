@@ -79,9 +79,15 @@ function populateMembersTable(members) {
             if (confirm("確定要註銷該會員資格嗎？")) {
                 button.disabled = true;
                 try {
+                    const user = await getCurrentUserAsync();
+                    await user.reload();
+                    const idToken = await user.getIdToken();
                     const response = await fetch(`${API_URL}/api/admin/members/${memberId}`, {
                         method: "DELETE",
-                        credentials :"include"
+                        credentials :"include",
+                        headers: {
+                            "Authorization": "Bearer " + idToken,
+                        },
                     });
                     if (response.status === 404) {
                         alert("會員已不存在，畫面將自動刷新");

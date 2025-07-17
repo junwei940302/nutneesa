@@ -57,9 +57,11 @@
     border: 1px solid #bbb;
     border-radius: 6px;
     font-size: 1rem;
-    margin-bottom: 8px;
     outline: none;
     transition: border 0.2s;
+}
+.form-panel input:not(.verify-code-input) {
+    margin-bottom: 8px;
 }
 .form-panel input:focus {
     border: 1.5px solid #645038;
@@ -76,6 +78,7 @@
     font-weight: bold;
     transition: background 0.2s;
 }
+
 .form-panel button[type="submit"]:hover {
     background: #1a4e9b;
 }
@@ -112,4 +115,67 @@
 #gender:focus, #gender:hover {
     border: 1.5px solid #bdbdbd;
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+/* 驗證碼格子區塊 */
+.verify-code-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 350px;
+    margin: 0 auto 12px auto;
+    box-sizing: border-box;
+}
+.verify-code-input {
+    width: 2.5em;
+    height: 2.5em;
+    text-align: center;
+    font-size: 1.5em;
+    border: 1.5px solid #cfc2b0;
+    border-radius: 6px;
+    color: #645038;
+    font-weight: bold;
+    outline: none;
+    transition: border 0.2s;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    padding: 0;
+    background: #fff;
+}
+.verify-code-input:focus {
+    border: 2px solid #645038;
+}
+.verify-arrow-btn {
+    background: #645038;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 2.5em;
+    height: 2.5em;
+    min-width: 2.5em;
+    min-height: 2.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3em;
+    margin-left: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    vertical-align: middle;
+    line-height: 2.5em;
+    box-sizing: border-box;
+    padding: 0;
+}
+.verify-arrow-btn:hover {
+    background: #fff;
+    color: #645038;
+    border-radius: 10px;
+    width: 3.5em;
+    border: 1px solid #645038;
+    transition: all 0.2s ease-in-out;
 }

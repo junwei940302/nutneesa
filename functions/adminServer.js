@@ -275,6 +275,17 @@ adminRouter.delete("/members/:id", async (req, res) => {
       return res.status(404).json({error: "Member not found"});
     }
     await Members.doc(id).delete();
+    // 同步刪除 Firebase Auth 使用者
+    try {
+      await admin.auth().deleteUser(id);
+    } catch (authErr) {
+      // 如果 Auth 沒有該用戶，忽略錯誤
+      if (authErr.code !== "auth/user-not-found") {
+        console.error("Failed to delete Auth user:", authErr);
+        // 這裡不 return，繼續流程
+      }
+    }
+    
     await logHistory(req, `Delete member: ${id}`);
     res.status(204).send();
   } catch (err) {

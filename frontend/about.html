@@ -6,9 +6,26 @@
     <link rel="stylesheet" href="./src/about.css">
     <link rel="stylesheet" href="./src/global.css">
     <script src="./src/env.js" defer></script>
+    <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDzHVViQRq4F9oXBSU1i_5oEmoOqpe58MA",
+        authDomain: "nutneesa-b8ea5.firebaseapp.com",
+        projectId: "nutneesa-b8ea5",
+        storageBucket: "nutneesa-b8ea5.firebasestorage.app",
+        messagingSenderId: "375506095597",
+        appId: "1:375506095597:web:78278d3f10b65ff8a52be4",
+        measurementId: "G-HR7RQ51WVE"
+      };
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
     <script src="./src/about.js" defer></script>
     <script src="./src/contact.js" defer></script>
-    <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
     <title>電機系系學會EESA｜國立臺南大學NUTN</title>
 </head>
 <body>
@@ -50,7 +67,7 @@
                     <div>
                         <i class="fa-solid fa-comment-dots"></i>
                         <h3>陸續新增</h3>
-                        <span>Web Phonograph</span>
+                        <span>More</span>
                     </div>
                 </a>
             </div>
@@ -96,7 +113,7 @@
             <ol>
                 <li>
                     <p>如何成為會員，在本平台註冊是否為會員？</p>
-                    <p>根據組織章程第二章第一條，凡國立臺南大學電機工程學系之在校學生且有繳交系會費者，方為本會會員。在本平台所註冊之會員身份僅供平台使用，實際會員狀態請參見「<a href="services.html">系會服務/會員相關服務/會員狀態</a>」，若為生效中即為系學會會員。</p>
+                    <p>根據組織章程第二章第一條，凡國立臺南大學電機工程學系之在校學生且有繳交系會費者，方為本會會員。在本平台所註冊之會員身份僅供平台使用，實際會員狀態請參見「<a href="memberPage.html">會員中心</a>」，若會員狀態為生效中即為系學會會員。</p>
                 </li>
                 <li>
                     <p>我是非電機系學生，是否可以在本平台註冊會員？</p>

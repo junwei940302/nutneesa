@@ -77,6 +77,14 @@
                 <button type="submit">註冊 Register</button>
                 <div class="form-message" id="registerMessage"></div>
             </form>
+            <form id="verifyPanel" class="form-panel" style="display:none;">
+                <label for="verifyEmail">電子郵件</label>
+                <input type="email" id="verifyEmail" placeholder="電子郵件｜Email" required>
+                <label for="verifyCode">驗證碼</label>
+                <input type="text" id="verifyCode" placeholder="請輸入 6 位數驗證碼" maxlength="6" required pattern="\\d{6}">
+                <button type="submit">驗證信箱 / Verify Email</button>
+                <div class="form-message" id="verifyMessage"></div>
+            </form>
         </div>
     </div>
     <script src="./src/utils.js"></script>

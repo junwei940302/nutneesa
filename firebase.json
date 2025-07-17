@@ -25,21 +25,7 @@
     ],
     "predeploy": [
       "npm --prefix \"$RESOURCE_DIR\" run lint"
-    ],
-    "endpoints": {
-      "api": {
-        "region": "us-central1",
-        "ingress": "ALLOW_ALL",
-        "timeoutSeconds": 300,
-        "maxInstances": 3,
-        "minInstances": 0,
-        "concurrency": 80,
-        "labels": {
-          "env": "production"
-        },
-        "httpsTrigger": {}
-      }
-    }
+    ]
   },
   "emulators": {
     "functions": {
