@@ -41,6 +41,7 @@ if (activitySearcher) {
 
 // 動態載入活動報名卡片（加上篩選功能）
 async function fetchAndRenderEvents() {
+    window.showLoading();
     try {
         const res = await fetch(`${API_URL}/api/events`);
         let events = await res.json();
@@ -160,12 +161,292 @@ async function fetchAndRenderEvents() {
         }
     } catch (err) {
         console.error('活動載入失敗', err);
+    } finally {
+        window.hideLoading();
     }
 }
 
 
+// 載入地圖輪播數據
+async function loadMapCarousel() {
+    window.showLoading();
+    try {
+        const res = await fetch(`${API_URL}/api/maps`);
+        
+        if (!res.ok) {
+            console.error('API request failed:', res.status, res.statusText);
+            return;
+        }
+        
+        const maps = await res.json();
+        
+        // 檢查maps是否為數組
+        if (!Array.isArray(maps)) {
+            console.error('Maps data is not an array:', maps);
+            return;
+        }
+        
+        if (maps.length === 0) {
+            console.log('No map data available');
+            window.hideLoading();
+            return;
+        }
+        
+        // 過濾出有image或imgUrl的地圖
+        const mapsWithImages = maps.filter(map => map.image || map.imgUrl);
+        
+        if (mapsWithImages.length === 0) {
+            // 使用默認圖片作為備用
+            const defaultImages = [
+                'https://via.placeholder.com/200x120/645038/ffffff?text=美食地圖1',
+                'https://via.placeholder.com/200x120/8B4513/ffffff?text=美食地圖2',
+                'https://via.placeholder.com/200x120/CD853F/ffffff?text=美食地圖3',
+                'https://via.placeholder.com/200x120/D2691E/ffffff?text=美食地圖4',
+                'https://via.placeholder.com/200x120/FF8C00/ffffff?text=美食地圖5'
+            ];
+            
+            const defaultMaps = defaultImages.map((url, index) => ({
+                imgUrl: url,
+                name: `美食地圖 ${index + 1}`
+            }));
+            
+            const shuffledMaps = [...defaultMaps].sort(() => Math.random() - 0.5);
+            
+            // 為每個輪播行創建圖片
+            const rows = document.querySelectorAll('.carousel-track');
+            let imgCount = 0, loadedCount = 0;
+            rows.forEach((track, rowIndex) => {
+                track.innerHTML = '';
+                for (let i = 0; i < 3; i++) {
+                    shuffledMaps.forEach((map) => {
+                        const item = document.createElement('div');
+                        item.className = 'carousel-item';
+                        const img = document.createElement('img');
+                        img.src = map.imgUrl;
+                        img.alt = map.name;
+                        img.title = map.name;
+                        imgCount++;
+                        img.onload = img.onerror = function() {
+                            loadedCount++;
+                            if (loadedCount === imgCount) {
+                                window.hideLoading();
+                            }
+                        };
+                        item.appendChild(img);
+                        track.appendChild(item);
+                    });
+                }
+            });
+            // 若沒有圖片，直接 hideLoading
+            if (imgCount === 0) window.hideLoading();
+            return;
+        }
+        
+        // 為每個輪播行創建圖片
+        const rows = document.querySelectorAll('.carousel-track');
+        let imgCount = 0, loadedCount = 0;
+        // 創建兩個不同的隨機順序，並錯開起始位置
+        const shuffledMaps1 = [...mapsWithImages].sort(() => Math.random() - 0.5);
+        const shuffledMaps2 = [...mapsWithImages].sort(() => Math.random() - 0.5);
+        const offset = Math.floor(mapsWithImages.length / 2);
+        const shiftedMaps2 = [
+            ...shuffledMaps2.slice(offset),
+            ...shuffledMaps2.slice(0, offset)
+        ];
+        rows.forEach((track, rowIndex) => {
+            track.innerHTML = '';
+            const shuffledMaps = rowIndex === 0 ? shuffledMaps1 : shiftedMaps2;
+            for (let i = 0; i < 3; i++) {
+                const cycleOffset = Math.floor(Math.random() * shuffledMaps.length);
+                const cycledMaps = [
+                    ...shuffledMaps.slice(cycleOffset),
+                    ...shuffledMaps.slice(0, cycleOffset)
+                ];
+                cycledMaps.forEach((map, mapIndex) => {
+                    const item = document.createElement('div');
+                    item.className = 'carousel-item';
+                    const img = document.createElement('img');
+                    const imageUrl = map.image || map.imgUrl;
+                    img.src = imageUrl;
+                    img.alt = map.name || '地圖圖片';
+                    img.title = map.name || '地圖圖片';
+                    imgCount++;
+                    img.onload = img.onerror = function() {
+                        loadedCount++;
+                        if (loadedCount === imgCount) {
+                            window.hideLoading();
+                        }
+                    };
+                    item.appendChild(img);
+                    track.appendChild(item);
+                });
+            }
+        });
+        // 若沒有圖片，直接 hideLoading
+        if (imgCount === 0) window.hideLoading();
+        
+    } catch (err) {
+        console.error('地圖輪播載入失敗', err);
+        window.hideLoading();
+    }
+}
+
+// 數字動畫函數
+function animateNumber(element, start, end, duration = 1000) {
+    const startTime = performance.now();
+    const difference = end - start;
+    
+    // 添加動畫類
+    element.classList.add('animating');
+    
+    function updateNumber(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // 使用 easeOutQuart 緩動函數
+        const easeProgress = 1 - Math.pow(1 - progress, 4);
+        const currentNumber = Math.floor(start + (difference * easeProgress));
+        
+        element.textContent = currentNumber;
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateNumber);
+        } else {
+            // 動畫結束，移除動畫類
+            setTimeout(() => {
+                element.classList.remove('animating');
+            }, 300);
+        }
+    }
+    
+    requestAnimationFrame(updateNumber);
+}
+
+// 載入地圖分類數量並更新顯示
+async function loadMapCategoryCounts() {
+    window.showLoading();
+    try {
+        const res = await fetch(`${API_URL}/api/maps`);
+        
+        if (!res.ok) {
+            console.error('API request failed:', res.status, res.statusText);
+            return;
+        }
+        
+        const maps = await res.json();
+        
+        // 檢查maps是否為數組
+        if (!Array.isArray(maps)) {
+            console.error('Maps data is not an array:', maps);
+            return;
+        }
+        
+        // 過濾出可見的地圖
+        const visibleMaps = maps.filter(map => map.visibility !== false);
+        
+        // 統計各分類數量
+        const categoryCounts = {
+            'A級美食嘉年華': visibleMaps.filter(map => map.category === 'A級美食嘉年華').length,
+            'B級美食嘉年華': visibleMaps.filter(map => map.category === 'B級美食嘉年華').length,
+            '咖啡廳及甜點店': visibleMaps.filter(map => map.category === '咖啡廳及甜點店').length,
+            'total': visibleMaps.length
+        };
+        
+        console.log('Category counts:', categoryCounts);
+        
+        // 設置滾動監聽，當元素進入視窗時才開始動畫
+        setupScrollAnimation(categoryCounts);
+        
+    } catch (err) {
+        console.error('載入地圖分類數量失敗', err);
+    } finally {
+        window.hideLoading();
+    }
+}
+
+// 設置滾動動畫
+function setupScrollAnimation(categoryCounts) {
+    const mapContents = document.querySelectorAll('.mapContent');
+    
+    // 重置所有元素的動畫狀態
+    mapContents.forEach(element => {
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(20px)';
+        const span = element.querySelector('span');
+        if (span) {
+            span.textContent = '0';
+            span.classList.remove('animating');
+        }
+    });
+    
+    const animatedElements = new Set(); // 記錄已經動畫過的元素
+    
+    // 開始動畫
+    function startAnimation(element, count) {
+        if (animatedElements.has(element)) return; // 避免重複動畫
+        
+        animatedElements.add(element);
+        
+        // 添加淡入效果
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(20px)';
+        element.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+        
+        // 延遲一下再開始淡入
+        setTimeout(() => {
+            element.style.opacity = '1';
+            element.style.transform = 'translateY(0)';
+            
+            // 淡入完成後開始數字動畫
+            setTimeout(() => {
+                const span = element.querySelector('span');
+                if (span) {
+                    animateNumber(span, 0, count, 1500);
+                }
+            }, 800);
+        }, 100);
+    }
+    
+    // 使用 Intersection Observer API 提高性能
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !animatedElements.has(entry.target)) {
+                let count = 0;
+                const element = entry.target;
+                
+                // 根據元素類別決定顯示的數量
+                if (element.classList.contains('allItem')) {
+                    count = categoryCounts.total;
+                } else if (element.classList.contains('AClass')) {
+                    count = categoryCounts['A級美食嘉年華'];
+                } else if (element.classList.contains('BClass')) {
+                    count = categoryCounts['B級美食嘉年華'];
+                } else if (element.classList.contains('Cafe')) {
+                    count = categoryCounts['咖啡廳及甜點店'];
+                }
+                
+                startAnimation(element, count);
+            }
+        });
+    }, {
+        threshold: 0.3, // 當元素 30% 可見時觸發
+        rootMargin: '0px 0px -50px 0px' // 提前 50px 觸發
+    });
+    
+    // 觀察所有 mapContent 元素
+    mapContents.forEach(element => {
+        observer.observe(element);
+    });
+}
+
 // 監聽 serviceSelector 變更時才載入對應資料
 serviceSelector.addEventListener('change', async function() {
+    // 當選擇大府城美食地圖時載入輪播和分類數量
+    if (this.value === '大府城美食地圖') {
+        loadMapCarousel();
+        loadMapCategoryCounts();
+    }
+    
     if (this.value === '會員相關服務') {
         const user = await getCurrentUserAsync();
         if (!user) {
@@ -224,6 +505,7 @@ serviceSelector.addEventListener('change', async function() {
 
 // 載入用戶報名記錄
 async function loadUserEnrollmentHistory() {
+    window.showLoading();
     try {
         const user = await getCurrentUserAsync();
         if (!user) {
@@ -261,6 +543,8 @@ async function loadUserEnrollmentHistory() {
         });
     } catch (err) {
         console.error('Error loading enrollment history:', err);
+    } finally {
+        window.hideLoading();
     }
 }
 
@@ -301,6 +585,9 @@ async function checkLogin() {
 (async function initPanel() {
     if (serviceSelector.value === '活動報名') {
         await fetchAndRenderEvents();
+    } else if (serviceSelector.value === '大府城美食地圖') {
+        loadMapCarousel();
+        loadMapCategoryCounts();
     }
 })();
 
@@ -320,3 +607,26 @@ if (hrefAdminBtn) {
         window.location.href = 'admin.html';
     });
 }
+
+// Hash <-> serviceSelector sync
+function setSelectorByHash() {
+    const hash = decodeURIComponent(window.location.hash.replace('#', ''));
+    if (!hash) return;
+    const options = Array.from(serviceSelector.options).map(o => o.text);
+    if (options.includes(hash)) {
+        serviceSelector.value = hash;
+        // 觸發 change 事件
+        serviceSelector.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+window.addEventListener('hashchange', setSelectorByHash);
+
+document.addEventListener('DOMContentLoaded', () => {
+    setSelectorByHash();
+});
+
+// select 變動時自動更新 hash
+serviceSelector.addEventListener('change', function() {
+    window.location.hash = encodeURIComponent(this.value);
+});

@@ -535,15 +535,31 @@
                                 <input type="text" class="restaurantDescription" placeholder="餐廳描述" required>
                             </div>
                             <div>
-                                Google map連結
-                                <input type="text" class="restaurantGoogleMapUrl" placeholder="Google map連結" required>
+                                Place ID
+                                <input type="text" class="restaurantPlaceId" placeholder="Google Place ID" required disabled>
+                            </div>
+                            <div>
+                                封面照片
+                                <input type="url" class="restaurantImage" placeholder="封面照片" required>
                             </div>
                             <div>
                                 菜單連結
-                                <input type="url" class="restaurantMenuUrl" placeholder="菜單連結（非必填）">
+                                <input type="text" class="restaurantMenuUrl" placeholder="菜單連結（可輸入多個，以空白鍵分隔）">
                             </div>
                             <div>
                                 <button class="addRestaurant">新增餐廳</button>
+                            </div>
+                        </div>
+                        <hr>
+                        <div style="margin-top:24px;">
+                            <h4>Google Place ID 查詢工具</h4>
+                            <input id="pac-input" class="controls" type="text" placeholder="搜尋地點..." style="margin-bottom:8px;width:300px;">
+                            <div id="map" style="height:300px;width:100%;"></div>
+                            <div style="margin-top:12px;">
+                                <p><strong>選定位置資訊：</strong></p>
+                                <p><strong>名稱：</strong><span id="place-name">尚未選擇</span></p>
+                                <p><strong>Place ID：</strong><span id="place-id">尚未選擇</span></p>
+                                <p><strong>地址：</strong><span id="place-address">尚未選擇</span></p>
                             </div>
                         </div>
                     </div>
@@ -567,11 +583,13 @@
                                             <th>緯度</th>
                                             <th>網址</th>
                                             <th>圖片</th>
+                                            <th>菜單連結</th>
                                             <th>刪除</th>
                                         </tr>
                                     </thead>
                                     <tbody class="mapitems-table-body">
                                         <tr>
+                                            <td>載入中</td>
                                             <td>載入中</td>
                                             <td>載入中</td>
                                             <td>載入中</td>
@@ -621,4 +639,6 @@
         </div>
     </div>
 </body>
+<!-- Google Maps JS API (Place Autocomplete) -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDeOzMvp4EWuR7G1_niSjLOZRnOJrN59zY&libraries=places&callback=initMap" async defer></script>
 </html>

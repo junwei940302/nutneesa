@@ -43,3 +43,10 @@ if (getToTopBtn) {
 }
 
 // 請確保 .toTop 元素在 HTML 初始有 'hidden' class，例如：<div class="toTop hidden">...</div>
+
+window.showLoading = function() {
+    document.querySelector('.loading-overlay').style.display = 'flex';
+};
+window.hideLoading = function() {
+    document.querySelector('.loading-overlay').style.display = 'none';
+};

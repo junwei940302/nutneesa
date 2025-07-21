@@ -171,3 +171,13 @@
     border: 1.5px solid #C49A6C;
     font-weight: bold;
 }
+
+.mainTitle {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.mainTitle.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

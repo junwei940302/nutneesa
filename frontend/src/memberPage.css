@@ -48,7 +48,7 @@
 }
 .personalInfo p {
     text-align: center;
-    color: #645038;
+    color: #c12a0c;
     font-size: 0.95em;
     margin-bottom: 1em;
 }
@@ -175,7 +175,8 @@
     border: 1.5px solid #645038;
 }
 .revokeMember:hover, .verifyEmail:hover, .hrefAdmin:hover{
-    background: #E0C588;
+    color: #c12a0c;
+    border: 1.5px solid #c12a0c;
 }
 .logoutBtn {
     background: #645038;
@@ -183,8 +184,8 @@
     border: 1.5px solid #645038;
 }
 .logoutBtn:hover {
-    background: #E0C588;
-    color: #645038;
+    background: #c12a0c;
+    border: 1.5px solid #c12a0c;
 }
 @media (max-width: 600px) {
     .personalInfo h2 {
@@ -205,4 +206,35 @@
 .personalInfo {
     margin-left: auto;
     margin-right: auto;
+}
+
+.member-loading-overlay {
+  position: fixed;
+  z-index: 9999;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s;
+}
+.loading-spinner {
+  border: 6px solid #eee;
+  border-top: 6px solid #b17326;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg);}
+  100% { transform: rotate(360deg);}
+}
+.loading-text {
+  color: #645038;
+  font-size: 1.2em;
+  font-family: 'SoukouMincho', serif;
+  letter-spacing: 2px;
 }

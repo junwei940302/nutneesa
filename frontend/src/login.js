@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
           });
           const data = await res.json();
           message.textContent = '登入成功 / Login success!';
-          window.location.href = 'services.html';
+          window.location.href = 'memberPage.html';
       } catch (err) {
           console.error('Login error:', err);
           message.textContent = err.message || '登入失敗 / Login failed.';

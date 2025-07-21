@@ -9,6 +9,11 @@
     padding: 0 5vw 0 5vw;
 }
 
+.content a{
+    color: #c12a0c;
+    text-decoration: none;
+}
+
 .content div h2{
     color: #645038;
     border-left: 5px solid #645038;
@@ -143,4 +148,14 @@
 }
 .contact-link:hover {
   background: #f0f0f0; /* 可選，鼠標懸停高亮 */
+}
+
+.mainTitle {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.mainTitle.visible {
+  opacity: 1;
+  transform: translateY(0);
 }

@@ -14,6 +14,7 @@ const Events = admin.firestore().collection("events");
 const Forms = admin.firestore().collection("forms");
 const Responses = admin.firestore().collection("responses");
 const News = admin.firestore().collection("news");
+const Maps = admin.firestore().collection("maps");
 const { sendVerificationEmail } = require("./utils");
 
 async function verifyFirebaseToken(req, res, next) {
@@ -190,6 +191,30 @@ userRouter.get("/me", verifyFirebaseToken, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({loggedIn: false, error: "Server error"});
+  }
+});
+
+userRouter.get("/maps", async (req, res) => {
+  try {
+    // 先嘗試獲取所有地圖，然後在代碼中過濾
+    const snapshot = await Maps.get();
+    const mapsList = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        _id: doc.id,
+        ...data,
+        createDate: data.createDate && data.createDate.toDate ? data.createDate.toDate().toISOString() : null,
+        updateDate: data.updateDate && data.updateDate.toDate ? data.updateDate.toDate().toISOString() : null,
+      };
+    });
+    
+    // 過濾出可見的地圖
+    const visibleMaps = mapsList.filter(map => map.visibility !== false);
+    
+    res.json(visibleMaps);
+  } catch (err) {
+    console.error("Error in /maps:", err);
+    res.status(500).json({error: "Failed to fetch maps", detail: err.message});
   }
 });
 
@@ -442,9 +467,9 @@ userRouter.post("/verify/send-code", async (req, res) => {
     await Members.doc(doc.id).update({ verifyCode: code, verifyCodeExpire: expireAt });
     // 準備信件內容
     const name = member.displayName || member.name || "會員";
-    const link = `https://nutneesa.online/verify?email=${encodeURIComponent(email)}&code=${code}`;
+    const authlink = `https://nutneesa.online/verify?email=${encodeURIComponent(email)}&code=${code}`;
     const templateId = "d-a6fb3a20b25a4131851861f97a334676"; // TODO: 請換成你的 template id
-    await sendVerificationEmail({ to: email, name, code, link, templateId });
+    await sendVerificationEmail({ to: email, name, code, authlink, templateId });
     res.json({ success: true, message: "驗證碼已寄出 / Verification code sent." });
   } catch (err) {
     res.status(500).json({ error: "Failed to send verification code", detail: err.message });

@@ -2,6 +2,7 @@ const express = require("express");
 const { logHistory } = require("./utils");
 const admin = require("firebase-admin");
 if (!admin.apps.length) admin.initializeApp();
+const fetch = require("node-fetch");
 
 const Members = admin.firestore().collection("members");
 const Events = admin.firestore().collection("events"); 
@@ -9,6 +10,7 @@ const Forms = admin.firestore().collection("forms");
 const Responses = admin.firestore().collection("responses");
 const News = admin.firestore().collection("news");
 const History = admin.firestore().collection("history");
+const Maps = admin.firestore().collection("maps");
 
 const adminRouter = express.Router();
 
@@ -706,6 +708,138 @@ adminRouter.patch("/enrollments/:id", async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({error: "Failed to update enrollment"});
+  }
+});
+
+// MAPS
+adminRouter.get("/maps", async (req, res) => {
+  try {
+    const snapshot = await Maps.orderBy("category").get();
+    const mapsList = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        _id: doc.id,
+        ...data,
+        createDate: data.createDate ? safeToISOString(data.createDate) : null,
+        updateDate: data.updateDate ? safeToISOString(data.updateDate) : null,
+      };
+    });
+    res.json(mapsList);
+  } catch (err) {
+    res.status(500).json({error: "Failed to fetch maps"});
+  }
+});
+
+adminRouter.post("/maps", async (req, res) => {
+  try {
+    const {name, category, description, placeId, menuUrl, openingHours, phone, longitude, latitude, website, image, formattedAddress} = req.body;
+    if (!category || !description || !placeId) {
+      return res.status(400).json({error: "category, description, and placeId are required"});
+    }
+    const newMapData = {
+      name: name || "",
+      category,
+      description,
+      placeId,
+      formattedAddress: formattedAddress || "",
+      menuUrl: menuUrl || "",
+      openingHours: openingHours || "",
+      phone: phone || "",
+      longitude: longitude || null,
+      latitude: latitude || null,
+      website: website || "",
+      image: image || "",
+      createDate: new Date(),
+      updateDate: new Date(),
+    };
+    const newDocRef = await Maps.add(newMapData);
+    const newDoc = await newDocRef.get();
+    const newMap = newDoc.data();
+    res.status(201).json({
+      _id: newDoc.id,
+      ...newMap,
+      createDate: safeToISOString(newMap.createDate),
+      updateDate: safeToISOString(newMap.updateDate),
+    });
+  } catch (err) {
+    res.status(500).json({error: "Failed to create map item"});
+  }
+});
+
+adminRouter.patch("/maps/:id", async (req, res) => {
+  try {
+    const {id} = req.params;
+    const updateDataRaw = req.body;
+    const updateData = {};
+    if (updateDataRaw.name !== undefined) updateData.name = updateDataRaw.name;
+    if (updateDataRaw.category) updateData.category = updateDataRaw.category;
+    if (updateDataRaw.description) updateData.description = updateDataRaw.description;
+    if (updateDataRaw.formattedAddress !== undefined) updateData.formattedAddress = updateDataRaw.formattedAddress;
+    if (updateDataRaw.googleMapUrl) updateData.googleMapUrl = updateDataRaw.googleMapUrl;
+    if (updateDataRaw.menuUrl !== undefined) updateData.menuUrl = updateDataRaw.menuUrl;
+    if (updateDataRaw.photoUrl !== undefined) updateData.photoUrl = updateDataRaw.photoUrl;
+    if (updateDataRaw.openingHours !== undefined) updateData.openingHours = updateDataRaw.openingHours;
+    if (updateDataRaw.phone !== undefined) updateData.phone = updateDataRaw.phone;
+    if (updateDataRaw.longitude !== undefined) updateData.longitude = updateDataRaw.longitude;
+    if (updateDataRaw.latitude !== undefined) updateData.latitude = updateDataRaw.latitude;
+    if (updateDataRaw.website !== undefined) updateData.website = updateDataRaw.website;
+    if (updateDataRaw.image !== undefined) updateData.image = updateDataRaw.image;
+    updateData.updateDate = new Date();
+    if (Object.keys(updateData).length === 1) { // only updateDate
+      return res.status(400).json({error: "No valid fields to update"});
+    }
+    const doc = await Maps.doc(id).get();
+    if (!doc.exists) {
+      return res.status(404).json({error: "Map item not found"});
+    }
+    await Maps.doc(id).update(updateData);
+    const updatedDoc = await Maps.doc(id).get();
+    const updatedData = updatedDoc.data();
+    res.json({
+      _id: updatedDoc.id,
+      ...updatedData,
+      createDate: safeToISOString(updatedData.createDate),
+      updateDate: safeToISOString(updatedData.updateDate),
+    });
+  } catch (err) {
+    res.status(500).json({error: "Failed to update map item"});
+  }
+});
+
+adminRouter.delete("/maps/:id", async (req, res) => {
+  try {
+    const {id} = req.params;
+    const doc = await Maps.doc(id).get();
+    if (!doc.exists) {
+      return res.status(404).json({error: "Map item not found"});
+    }
+    await Maps.doc(id).delete();
+    await logHistory(req, `Delete map item: ${id}`);
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({error: "Failed to delete map item"});
+  }
+});
+
+// Google Places API 代理
+adminRouter.get("/google-place-details", async (req, res) => {
+  const { place_id } = req.query;
+  if (!place_id) return res.status(400).json({ error: "place_id required" });
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_API_KEY || "AIzaSyDeOzMvp4EWuR7G1_niSjLOZRnOJrN59zY";
+  const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(place_id)}&key=${apiKey}&language=zh-TW`;
+  try {
+    const response = await fetch(url);
+    const text = await response.text();
+    console.log("Google Places API raw response:", text); // <--- 新增這行
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      return res.status(500).json({ error: "Google Places API 回傳非 JSON", raw: text });
+    }
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: "Google Places API error" });
   }
 });
 

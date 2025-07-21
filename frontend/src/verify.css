@@ -5,4 +5,32 @@
     height: fit-content;
     display: flex;
     justify-content: center;
+    align-items: center;
+    height: calc(100vh - 155px);
+}
+
+.verificationContainer{
+    width: fit-content;
+    height: fit-content;
+    background-color: #fff;
+    box-shadow: 25px #645038;
+    padding: 40px 80px 40px 80px;
+    border-radius: 16px;
+}
+
+.verificationContainer div{
+    display: grid;
+    justify-content: center;
+}
+
+.verificationContainer h3, p, a{
+    text-align: center;
+}
+
+.verificationContainer h3, a, span{
+    color: #645038;
+}
+
+.verificationContainer span{
+    font-weight: bolder;
 }

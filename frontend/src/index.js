@@ -33,6 +33,21 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', playVideoOnUserInteraction);
 });
 
+// 大標題滑入動畫
+window.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    const mainTitles = document.querySelectorAll('.mainTitle');
+    const observer = new window.IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.3 });
+    mainTitles.forEach(el => observer.observe(el));
+  }, 100);
+});
+
 function getTypeClass(type) {
     switch(type) {
         case '重要通知':

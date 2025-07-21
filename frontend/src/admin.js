@@ -44,39 +44,43 @@ const panels = {
 };
 
 function showPanel(selected) {
+    window.showLoading();
     Object.keys(panels).forEach(key => {
         if (key === selected) {
             panels[key].style.display = "";
             // 根據 panel 名稱呼叫對應 fetch
             switch (key) {
                 case "控制中心｜Dashboard":
-                    fetchNews();
+                    fetchNews().finally(window.hideLoading);
                     break;
                 case "會員管理｜Members":
-                    fetchMembers();
+                    fetchMembers().finally(window.hideLoading);
                     break;
                 case "歷史紀錄｜History":
-                    fetchHistory();
+                    fetchHistory().finally(window.hideLoading);
                     break;
                 case "活動管理｜Events":
-                    fetchEvents();
+                    fetchEvents().finally(window.hideLoading);
                     break;
                 case "表單管理｜Forms":
-                    fetchForms();
+                    fetchForms().finally(window.hideLoading);
                     break;
                 case "資源申請｜Apply":
-                    fetchEnrollments();
+                    fetchEnrollments().finally(window.hideLoading);
                     break;
                 case "美食地圖｜Maps":
-                    fetchMapItems();
+                    fetchMapItems().finally(window.hideLoading);
                     break;
                 case "金流管理｜Flow":
-                    // 若有需要可加 fetchFlow();
+                    // 若有需要可加 fetchFlow().finally(window.hideLoading);
+                    window.hideLoading();
                     break;
                 case "偏好設定｜Settings":
-                    // 若有需要可加 fetchSettings();
+                    // 若有需要可加 fetchSettings().finally(window.hideLoading);
+                    window.hideLoading();
                     break;
                 default:
+                    window.hideLoading();
                     break;
             }
         } else {

@@ -86,6 +86,70 @@ table th {
     background-color: #f2f2f2;
 }
 
+/* 美食地圖表格樣式 */
+.mapitem-description-btn,
+.mapitem-image-btn,
+.mapitem-menu-btn {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 14px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    color: #333;
+    font-family: inherit;
+}
+
+.mapitem-description-btn:hover,
+.mapitem-image-btn:hover,
+.mapitem-menu-btn:hover {
+    background-color: #e8f5e8;
+    border-color: #645038;
+}
+
+.mapitem-description-btn:active,
+.mapitem-image-btn:active,
+.mapitem-menu-btn:active {
+    background-color: #d4edda;
+    transform: translateY(1px);
+}
+
+.mapitem-image-btn {
+    font-size: 12px;
+}
+
+.mapitem-menu-btn {
+    font-size: 12px;
+}
+
+/* 表格內容換行 */
+table td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 200px;
+}
+
+/* 特定欄位寬度限制 */
+table td:nth-child(4) { /* 描述欄位 */
+    max-width: 150px;
+}
+
+table td:nth-child(7) { /* 營業時間欄位 */
+    max-width: 200px;
+}
+
+table td:nth-child(11) { /* 圖片欄位 */
+    max-width: 200px;
+}
+
+table td:nth-child(12) { /* 菜單連結欄位 */
+    max-width: 200px;
+}
+
 .table-scroll {
     width: 100%;
     overflow-x: auto;
