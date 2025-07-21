@@ -1,3 +1,24 @@
+function onRecaptchaSuccess(token) {
+  // 前端 token 驗證，送到後端
+  fetch(`${API_URL}/api/recaptcha`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      document.getElementById('recaptcha-overlay').style.display = 'none';
+    } else {
+      alert('reCAPTCHA 驗證失敗，請重試！');
+      grecaptcha.reset();
+    }
+  })
+  .catch(() => {
+    alert('伺服器錯誤，請稍後再試！');
+    grecaptcha.reset();
+  });
+}
 const serviceSelector = document.querySelector('.serviceSelector');
 const infoCards = {
     '新生專區': document.querySelector('.infoCard[data-freshman]'),
@@ -622,8 +643,60 @@ function setSelectorByHash() {
 
 window.addEventListener('hashchange', setSelectorByHash);
 
-document.addEventListener('DOMContentLoaded', () => {
-    setSelectorByHash();
+document.addEventListener('DOMContentLoaded', function() {
+  const selector = document.querySelector('.serviceSelector');
+  const overlay = document.getElementById('recaptcha-overlay');
+  const recaptchaContainer = document.getElementById('recaptcha-container');
+  let recaptchaVerified = false;
+  let recaptchaWidgetId = null;
+
+  function showRecaptchaOverlay() {
+    overlay.style.display = 'flex';
+    if (window.grecaptcha) {
+      if (recaptchaWidgetId === null) {
+        recaptchaWidgetId = grecaptcha.render(recaptchaContainer, {
+          sitekey: '6LdrKYorAAAAADafKsfVXcPlK5kGaVhfrbAVexKA',
+          callback: onRecaptchaSuccess
+        });
+      } else {
+        grecaptcha.reset(recaptchaWidgetId);
+      }
+    }
+  }
+
+  if (selector) {
+    selector.addEventListener('change', function() {
+      if (selector.value === '活動相簿') {
+        if (!recaptchaVerified) {
+          showRecaptchaOverlay();
+        }
+      } else {
+        overlay.style.display = 'none';
+      }
+    });
+  }
+
+  window.onRecaptchaSuccess = function(token) {
+    fetch(`${window.API_URL}/api/recaptcha`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        overlay.style.display = 'none';
+        recaptchaVerified = true;
+      } else {
+        alert('reCAPTCHA 驗證失敗，請重試！');
+        if (window.grecaptcha && recaptchaWidgetId !== null) grecaptcha.reset(recaptchaWidgetId);
+      }
+    })
+    .catch(() => {
+      alert('伺服器錯誤，請稍後再試！');
+      if (window.grecaptcha && recaptchaWidgetId !== null) grecaptcha.reset(recaptchaWidgetId);
+    });
+  };
 });
 
 // select 變動時自動更新 hash

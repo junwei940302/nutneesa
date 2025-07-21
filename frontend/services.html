@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="./icon/favicon.ico">
     <link rel="stylesheet" href="./src/services.css">
     <link rel="stylesheet" href="./src/global.css">
-    <script src="./src/env.js" defer></script>
+    
     <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -24,6 +25,7 @@
         firebase.initializeApp(firebaseConfig);
       }
     </script>
+    <script src="./src/env.js" defer></script>
     <script src="./src/utils.js"></script>
     <script>
       loadHtmlFragment('global/navBar.html', '#nav-placeholder', function() {
@@ -36,8 +38,15 @@
     </script>
     <script src="./src/services.js" defer></script>
     <title>電機系系學會EESA｜國立臺南大學NUTN</title>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
+<div id="recaptcha-overlay" style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:#fff;flex-direction:column;align-items:center;justify-content:center;">
+  <div>
+    <div id="recaptcha-container" class="g-recaptcha" data-sitekey="6LdrKYorAAAAADafKsfVXcPlK5kGaVhfrbAVexKA" data-callback="onRecaptchaSuccess"></div>
+    <p style="margin-top:16px;">請先通過驗證才能進入活動相簿</p>
+  </div>
+</div>
     <div id="toTop-placeholder"></div>
     <div id="nav-placeholder"></div>
     <script>
@@ -309,11 +318,11 @@
                 <div class="mapContent">
                     <h3>流暢直覺的操作模式</h3>
                     <p>開與合，你說的算</p>
-                    <video src="./assets/media/mapsFoldUnfold.mov" autoplay loop muted playsinline></video>
+                    <video id="mapsFoldUnfold-video" autoplay loop muted playsinline></video>
                     <p>少一點查詢，多一點效率</p>
-                    <video src="./assets/media/mapsMenu.mov" autoplay loop muted playsinline></video>
+                    <video id="mapsMenu-video" autoplay loop muted playsinline></video>
                     <p>讓命運支配你的胃</p>
-                    <video src="./assets/media/mapsRandom.mov" autoplay loop muted playsinline></video>
+                    <video id="mapsRandom-video" autoplay loop muted playsinline></video>
                 </div>
                 <div class="mapContent">
                     <h3>更多權益，敬請期待</h3>
@@ -366,5 +375,23 @@
       <div class="loading-spinner"></div>
       <div class="loading-text">載入中…</div>
     </div>
+    <script type="module" src="./src/services.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mapsFoldUnfoldVideo = document.getElementById('mapsFoldUnfold-video');
+            const mapsMenuVideo = document.getElementById('mapsMenu-video');
+            const mapsRandomVideo = document.getElementById('mapsRandom-video');
+
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                mapsFoldUnfoldVideo.src = './assets/media/mapsFoldUnfold.mov';
+                mapsMenuVideo.src = './assets/media/mapsMenu.mov';
+                mapsRandomVideo.src = './assets/media/mapsRandom.mov';
+            } else {
+                mapsFoldUnfoldVideo.src = 'https://nutneesa-b8ea5.web.app/assets/media/mapsFoldUnfold.mov';
+                mapsMenuVideo.src = 'https://nutneesa-b8ea5.web.app/assets/media/mapsMenu.mov';
+                mapsRandomVideo.src = 'https://nutneesa-b8ea5.web.app/assets/media/mapsRandom.mov';
+            }
+        });
+    </script>
 </body>
 </html>

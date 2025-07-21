@@ -23,7 +23,11 @@ const { firebaseAuthMiddleware } = require("./utils");
 
 // 只在本地開發時載入 dotenv
 if (process.env.FUNCTIONS_EMULATOR || process.env.NODE_ENV !== "production") {
-  require("dotenv").config();
+  require("dotenv").config({ path: require("path").resolve(__dirname, ".env") });
+  console.log("[dev] .env loaded");
+} else {
+  // Firebase v2 正式環境自動注入 process.env
+  console.log("[prod] Using Firebase environment variables");
 }
 
 const app = express();

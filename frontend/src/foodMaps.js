@@ -563,3 +563,24 @@ function showRestaurantDetails(docId, shouldScroll) {
     window.scrollTo({top: y, behavior: 'smooth'});
   }
 }
+
+function onRecaptchaSuccess(token) {
+  fetch(`${API_URL}/api/recaptcha`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      document.getElementById('recaptcha-overlay').style.display = 'none';
+    } else {
+      alert('reCAPTCHA 驗證失敗，請重試！');
+      grecaptcha.reset();
+    }
+  })
+  .catch(() => {
+    alert('伺服器錯誤，請稍後再試！');
+    grecaptcha.reset();
+  });
+}

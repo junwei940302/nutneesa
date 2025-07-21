@@ -1,6 +1,7 @@
 const express = require("express");
 const { sha256 } = require("./utils");
 const admin = require("firebase-admin");
+const fetch = require("node-fetch");
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -503,6 +504,29 @@ userRouter.post("/verify/confirm", async (req, res) => {
     res.json({ success: true, message: "驗證成功 / Verification success!" });
   } catch (err) {
     res.status(500).json({ error: "Failed to verify code", detail: err.message });
+  }
+});
+
+userRouter.post("/recaptcha", async (req, res) => {
+  const token = req.body.token;
+  if (!token) {
+    return res.status(400).json({ success: false, message: "No token provided" });
+  }
+  const secret = process.env.RECAPTCHA_SERVER_SECRET;
+  if (!secret) {
+    return res.status(500).json({ success: false, message: "Server misconfiguration: missing RECAPTCHA_SERVER_SECRET" });
+  }
+  try {
+    const verificationUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${token}`;
+    const response = await fetch(verificationUrl, { method: "POST" });
+    const data = await response.json();
+    if (data.success) {
+      res.json({ success: true });
+    } else {
+      res.status(400).json({ success: false, error: data["error-codes"] });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: "reCAPTCHA verification failed", error: err.message });
   }
 });
 
