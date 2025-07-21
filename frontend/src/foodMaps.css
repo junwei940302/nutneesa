@@ -1,0 +1,339 @@
+.content{
+    position: relative;
+    width: 100%;
+    top: 75px;
+    height: fit-content;
+}
+
+#map{
+    width: 100%;
+    height: 40vh;
+    z-index: 800;
+    transition: all 0.3s ease-in-out;
+}
+
+.controller {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin: 0 18px 20px 18px;
+}
+
+.controller select,
+#randomRestaurantBtn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  background: #fff;
+  height: 40px;
+}
+
+#randomRestaurantBtn {
+  cursor: pointer;
+  background-color: #645038;
+  color: #fff;
+  border-color: #645038;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+#randomRestaurantBtn:hover {
+  background-color: #8B4513;
+}
+#randomRestaurantBtn:active {
+    transform: scale(0.95);
+}
+
+.controller select {
+    width: 200px;
+    min-width: 120px;
+    height: 44px;
+    padding: 0 1.5em 0 1em;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 12px;
+    background: #fff;
+    color: #222;
+    font-size: 1.05rem;
+    font-family: inherit;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    appearance: none;
+    outline: none;
+    transition: border 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 20 20' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7.293 7.293a1 1 0 011.414 0L10 8.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 1em center;
+    background-size: 1.2em;
+    margin-right: 8px;
+}
+.controller select:focus, .controller select:hover {
+    border: 1.5px solid #bdbdbd;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.controller button.randomRestaurant {
+    padding: 0.7em 2em;
+    height: 44px;
+    width: 200px;
+    min-width: 120px;
+    border: none;
+    border-radius: 12px;
+    background-color: #645038;
+    color: #fff;
+    font-size: 1.08em;
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    outline: none;
+    margin-left: 8px;
+}
+.controller button.randomRestaurant:hover, .controller button.randomRestaurant:focus {
+    background-color: #c12a0c;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(193, 42, 12, 0.6);
+    transition: all 0.3s ease-in-out;
+}
+
+.controller > * {
+  flex: 0 0 auto;
+}
+
+/* Hide .controller scrollbar but allow scroll */
+.controller {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+.controller::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* 橫向滾動列表 Horizontal scroll list */
+.foodMapList {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  padding: 20px 0;
+  scroll-snap-type: x mandatory;
+  margin-left: 18px;
+  padding-left: 18px;
+}
+.listItem {
+  min-width: 250px;
+  max-width: 300px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(100, 80, 56, 0.10);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  scroll-snap-align: start;
+}
+.listItem img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 16px 16px 0 0;
+}
+.itemsContent {
+  padding: 1em;
+}
+.hashtagList {
+  display: flex;
+  gap: 8px;
+  margin: 0.5em 0;
+}
+.hashtagList p {
+  background: #645038;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.1em 0.8em;
+  font-size: 0.95em;
+  margin: 0;
+  display: inline-block;
+}
+.hashtagList p.open {
+  background: #225c2a;
+}
+.hashtagList p.closed {
+  background: #c12a0c;
+}
+.hashtagList p.other {
+  background: #888;
+}
+.description p {
+  color: #645038;
+  font-size: 1em;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+    .controller {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .controller select, .controller button.randomRestaurant {
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+    }
+    #map{
+        height: 40vh;
+        transition: all 0.3s ease-in-out;
+    }
+}
+
+#toggleMapBtn {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: -20px auto 10px auto; /* Overlap the map slightly */
+  position: relative;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: transform 0.3s, background-color 0.3s;
+}
+
+#toggleMapBtn:hover {
+  background: #f0f0f0;
+}
+
+#toggleMapBtn i {
+  transition: transform 0.3s ease-in-out;
+  color: #555;
+}
+
+#toggleMapBtn.expanded i {
+  transform: rotate(180deg);
+}
+
+.listItem.highlighted {
+  border: 2px solid #c12a0c;
+  transform: scale(1.02);
+}
+
+#restaurantDetailContainer {
+  margin: 18px;
+  padding: 25px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  position: relative;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+#restaurantDetailContainer[style*="block"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#closeDetailBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 30px;
+  height: 30px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: pointer;
+  color: #888;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#closeDetailBtn:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+#detailContent {
+  display: flex;
+  gap: 20px;
+}
+#detailImage {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+#detailText h2 {
+  margin: 0 0 10px;
+}
+#detailText p {
+  margin: 0 0 8px;
+}
+#detailText a {
+  color: #c12a0c;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+@media (max-width: 600px) {
+  #detailContent {
+    flex-direction: column;
+  }
+  #detailImage {
+    width: 100%;
+    height: 180px;
+  }
+}
+
+.custom-marker-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid #888;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.custom-marker-image:hover {
+  transform: scale(1.1);
+}
+
+@media (max-width: 500px) {
+  .foodMapList {
+    gap: 12px;
+    padding: 10px 0;
+  }
+  .listItem {
+    min-width: 85vw;
+    max-width: 90vw;
+    height: auto;
+    border-radius: 12px;
+  }
+  .listItem img {
+    height: 160px;
+    border-radius: 12px 12px 0 0;
+  }
+  .itemsContent {
+    padding: 0.7em;
+  }
+  .itemsContent h3 {
+    font-size: 1.1em;
+  }
+  .hashtagList p {
+    font-size: 0.85em;
+    padding: 0.1em 0.5em;
+  }
+  .description p {
+    font-size: 0.95em;
+  }
+}

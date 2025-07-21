@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./src/foodMaps.css">
+    <link rel="stylesheet" href="./src/global.css">
+    <script src="./src/env.js" defer></script>
+    <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDzHVViQRq4F9oXBSU1i_5oEmoOqpe58MA",
+        authDomain: "nutneesa-b8ea5.firebaseapp.com",
+        projectId: "nutneesa-b8ea5",
+        storageBucket: "nutneesa-b8ea5.firebasestorage.app",
+        messagingSenderId: "375506095597",
+        appId: "1:375506095597:web:78278d3f10b65ff8a52be4",
+        measurementId: "G-HR7RQ51WVE"
+      };
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
+    <script src="./src/utils.js"></script>
+    <script src="./src/foodMaps.js" defer></script>
+    <title>電機系系學會EESA｜國立臺南大學NUTN</title>
+</head>
+<body>
+    <div id="toTop-placeholder"></div>
+    <div id="nav-placeholder"></div>
+    <div class="content">
+        <div id="map"></div>
+        <button id="toggleMapBtn" title="展開/折疊地圖"><i class="fa-solid fa-chevron-down"></i></button>
+        <div class="panel">
+          <div class="controller">
+            <select id="categoryFilter" title="分類篩選">
+              <option value="all">全部分類</option>
+              <option value="A級美食嘉年華">A級美食嘉年華</option>
+              <option value="B級美食嘉年華">B級美食嘉年華</option>
+              <option value="咖啡廳及甜點店">咖啡廳及甜點店</option>
+            </select>
+            <select id="statusFilter" title="狀態篩選">
+              <option value="all">全部狀態</option>
+              <option value="營業中">營業中</option>
+              <option value="休息中">休息中</option>
+            </select>
+            <button id="randomRestaurantBtn">把食慾交給命運</button>
+          </div>
+          <div class="foodMapList"></div>
+
+          <div id="restaurantDetailContainer" style="display: none;">
+            <button id="closeDetailBtn" title="關閉詳情">&times;</button>
+            <div id="detailContent">
+              <img id="detailImage" src="" alt="Restaurant Image">
+              <div id="detailText">
+                <h2 id="detailName"></h2>
+                <p id="detailAddress"></p>
+                <p id="detailDescription"></p>
+                <p id="detailOpeningHours"></p>
+                <a id="detailWebsite" href="#" target="_blank" rel="noopener">店家網站<i class="fa-solid fa-circle-arrow-right"></i></a>
+              </div>
+            </div>
+            <img id="detailMenu" src="" alt="Menu" style="width:100%; margin-top:15px; border-radius:8px;">
+          </div>
+
+        </div>
+    </div>
+    <script>
+      loadHtmlFragment('global/navBar.html', '#nav-placeholder', function() {
+        const script = document.createElement('script');
+        script.src = './src/global.js';
+        document.body.appendChild(script);
+      });
+      loadHtmlFragment('global/toTop.html', '#toTop-placeholder');
+    </script>
+</body>
+</html>

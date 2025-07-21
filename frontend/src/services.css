@@ -801,10 +801,32 @@
 .mapContent p{
     font-size: 1em;
     color: #645038;
-    text-align: start;
+    text-align: center;
     font-weight: bold;
     position: relative;
     letter-spacing: 5px;
+}
+
+.mapContent > div {
+    display: flex;
+    gap: 10px; /* Adjust gap as needed */
+    justify-content: center;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.mapContent img,
+.mapContent video {
+    width: 80vw; /* Adjust max-width as needed */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 10px; /* Optional: adds rounded corners */
+    margin-bottom: 50px;
+}
+
+.mapContent video{
+    border: 1px solid #A1A1A0;
+    transform: scale(0.93);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.9);
+    margin-bottom: 80px;
 }
 
 /* 數字動畫樣式 */
