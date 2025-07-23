@@ -35,7 +35,7 @@
     <div class="content">
         <div class="nextActivity mainTitle">
             <video class="bg-video" autoplay muted loop playsinline>
-                <source id="yoruni-source" src="" type="video/mp4">
+                <source id="title-source" src="" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
             <div class="countdown">
@@ -66,12 +66,15 @@
         document.body.appendChild(script);
       });
       loadHtmlFragment('global/toTop.html', '#toTop-placeholder');
-      const yoruniSource = document.getElementById('yoruni-source');
+      const yoruniSource = document.getElementById('title-source');
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        yoruniSource.src = './assets/media/yoruni.mp4';
+        yoruniSource.src = './assets/media/title.mp4';
       } else {
-        yoruniSource.src = 'https://nutneesa-b8ea5.web.app/assets/media/yoruni.mp4';
+        yoruniSource.src = 'https://nutneesa-b8ea5.web.app/assets/media/title.mp4';
       }
+      // 設定影片播放速度為 0.8 倍
+      const video = document.querySelector('.bg-video');
+      video.playbackRate = 0.8;
     </script>
 </body>
 </html>

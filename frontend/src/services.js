@@ -703,3 +703,4 @@ document.addEventListener('DOMContentLoaded', function() {
 serviceSelector.addEventListener('change', function() {
     window.location.hash = encodeURIComponent(this.value);
 });
+
