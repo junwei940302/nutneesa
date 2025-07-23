@@ -287,7 +287,7 @@ async function loadMapCarousel() {
                     const item = document.createElement('div');
                     item.className = 'carousel-item';
                     const img = document.createElement('img');
-                    const imageUrl = map.image || map.imgUrl;
+                    const imageUrl = map.image;
                     img.src = imageUrl;
                     img.alt = map.name || '地圖圖片';
                     img.title = map.name || '地圖圖片';
@@ -699,8 +699,59 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 });
 
+// 載入會議記錄
+async function loadConferenceRecordsForUsers() {
+    window.showLoading();
+    try {
+        const res = await fetch(`${API_URL}/api/conference-records`);
+        if (!res.ok) {
+            throw new Error('Failed to fetch conference records');
+        }
+        const records = await res.json();
+        
+        const tableBody = document.querySelector('.conference-records-table-body');
+        if (!tableBody) return;
+
+        if (records.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #666;">暫無會議記錄</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = records.map((record, index) => `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${record.fileName}</td>
+                <td>${record.category}</td>
+                <td>${new Date(record.uploadDate).toLocaleDateString('zh-TW')}</td>
+                <td><button class="download-btn" data-url="${record.downloadUrl}">下載</button></td>
+            </tr>
+        `).join('');
+
+        // 添加下載事件監聽器
+        tableBody.addEventListener('click', (e) => {
+            if (e.target.classList.contains('download-btn')) {
+                const url = e.target.dataset.url;
+                window.open(url, '_blank');
+            }
+        });
+    } catch (err) {
+        console.error('載入會議記錄失敗:', err);
+        const tableBody = document.querySelector('.conference-records-table-body');
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #666;">載入失敗，請重試</td></tr>';
+        }
+    } finally {
+        window.hideLoading();
+    }
+}
+
 // select 變動時自動更新 hash
 serviceSelector.addEventListener('change', function() {
     window.location.hash = encodeURIComponent(this.value);
+    
+    // 當選擇系會會議記錄時載入資料
+    if (this.value === '系會會議記錄') {
+        loadConferenceRecordsForUsers();
+    }
 });
 

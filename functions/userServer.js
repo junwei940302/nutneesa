@@ -16,22 +16,9 @@ const Forms = admin.firestore().collection("forms");
 const Responses = admin.firestore().collection("responses");
 const News = admin.firestore().collection("news");
 const Maps = admin.firestore().collection("maps");
+const ConferenceRecords = admin.firestore().collection("conferenceRecords");
 const { sendVerificationEmail } = require("./utils");
-
-async function verifyFirebaseToken(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "No token" });
-  }
-  const idToken = authHeader.split(" ")[1];
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    req.user = decodedToken;
-    next();
-  } catch (err) {
-    return res.status(401).json({ error: "Invalid token" });
-  }
-}
+const { verifyFirebaseToken } = require("./utils");
 
 const userRouter = express.Router();
 
@@ -216,6 +203,20 @@ userRouter.get("/maps", async (req, res) => {
   } catch (err) {
     console.error("Error in /maps:", err);
     res.status(500).json({error: "Failed to fetch maps", detail: err.message});
+  }
+});
+
+userRouter.get('/proxy-image', async (req, res) => {
+  const imageUrl = req.query.url;
+
+  try {
+    const response = await fetch(imageUrl);
+    const contentType = response.headers.get('content-type');
+
+    res.set('Content-Type', contentType);
+    response.body.pipe(res);
+  } catch (error) {
+    res.status(500).send('Error fetching image');
   }
 });
 
@@ -527,6 +528,35 @@ userRouter.post("/recaptcha", async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ success: false, message: "reCAPTCHA verification failed", error: err.message });
+  }
+});
+
+// Conference Records API
+// Get all conference records (public access)
+userRouter.get("/conference-records", async (req, res) => {
+  try {
+    const snapshot = await ConferenceRecords
+      .where("visibility", "==", true)
+      .orderBy("uploadDate", "desc")
+      .get();
+    
+    const records = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      records.push({
+        id: doc.id,
+        fileName: data.fileName,
+        category: data.category,
+        uploadDate: safeToISOString(data.uploadDate),
+        downloadUrl: data.downloadUrl,
+        fileSize: data.fileSize
+      });
+    });
+    
+    res.json(records);
+  } catch (err) {
+    console.error("Error fetching conference records:", err);
+    res.status(500).json({ error: "Failed to fetch conference records" });
   }
 });
 

@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
     <script>
       const firebaseConfig = {
         apiKey: "AIzaSyDzHVViQRq4F9oXBSU1i_5oEmoOqpe58MA",
@@ -42,6 +43,7 @@
     <script src="./src/admin-apply.js"></script>
     <script src="./src/admin-flow.js"></script>
     <script src="./src/admin-maps.js"></script>
+    <script src="./src/admin-conference.js"></script>
     <script src="./src/admin.js" defer></script>
     <title>Admin Center｜NUTNEESA</title>
 </head>
@@ -62,6 +64,7 @@
                 <option>金流管理｜Flow</option>
                 <option>資源申請｜Apply</option>
                 <option>美食地圖｜Maps</option>
+                <option>會議記錄｜Conference</option>
                 <option>偏好設定｜Settings</option>
             </select>
             <button class="logoutBtn" title="logoutBtn" style="color: red;">登出管理系統</button>
@@ -521,6 +524,15 @@
                 <li>
                     <h3>美食地圖控制項</h3>
                     <div>
+                         <!-- 在控制項最上方添加遷移按鈕 -->
+                        <div style="margin-bottom: 20px;">
+                            <button class="migrateImagesBtn" style="background-color: #645038; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;" disabled>
+                                遷移至Firebase Storage（已禁用）
+                            </button>
+                            <p style="font-size: 12px; color: #666; margin-top: 4px;">
+                                * 此操作將把所有現有的圖片URL轉換為Firebase Storage存儲
+                            </p>
+                        </div>
                         <div>
                             <p>新增地標</p>
                             <div>
@@ -541,11 +553,11 @@
                             </div>
                             <div>
                                 封面照片
-                                <input type="url" class="restaurantImage" placeholder="封面照片" required>
+                                <input type="file" class="restaurantImage" accept="image/*" title="上傳餐廳封面" required >
                             </div>
                             <div>
                                 菜單連結
-                                <input type="text" class="restaurantMenuUrl" placeholder="菜單連結（可輸入多個，以空白鍵分隔）">
+                                <input type="file" class="restaurantMenuUrl" accept="image/*" title="上傳餐廳菜單" multiple>
                             </div>
                             <div>
                                 <button class="addRestaurant">新增餐廳</button>
@@ -615,6 +627,68 @@
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="panel" data-conference>
+            <ul>
+                <li>
+                    <h3>會議記錄上傳</h3>
+                    <div>
+                        <div>
+                            <p>上傳會議記錄檔案</p>
+                            <div style="margin-bottom: 10px;">
+                                檔案名稱
+                                <input type="text" class="recordFileName" placeholder="檔案名稱" required>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                類別
+                                <select class="recordCategory" title="分類">
+                                    <option>會議記錄</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                選擇檔案
+                                <input type="file" class="recordFileInput" accept=".pdf,.doc,.docx,.txt" title="檔案上傳">
+                            </div>
+                            <div>
+                                <button class="uploadRecordBtn">上傳檔案</button>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                <li>
+                    <h3>會議記錄列表</h3>
+                    <div>
+                        <div class="table-scroll">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>序號</th>
+                                        <th>檔案名稱</th>
+                                        <th>類別</th>
+                                        <th>上傳日期</th>
+                                        <th>檔案大小</th>
+                                        <th>下載</th>
+                                        <th>編輯</th>
+                                        <th>刪除</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="conference-admin-table-body">
+                                    <tr>
+                                        <td>載入中</td>
+                                        <td>載入中</td>
+                                        <td>載入中</td>
+                                        <td>載入中</td>
+                                        <td>載入中</td>
+                                        <td>載入中</td>
+                                        <td>載入中</td>
+                                        <td>載入中</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </li>

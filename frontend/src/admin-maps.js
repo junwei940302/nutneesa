@@ -95,32 +95,42 @@ function populateMapItemsTable(items) {
   // 圖片按鈕
   document.querySelectorAll(".mapitem-image-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
-      const id = btn.dataset.id;
-      const currentValue = btn.dataset.value;
-      showEditModal("圖片URL", currentValue, (newValue) => {
-        updateMapItemField(id, "image", newValue);
-        btn.dataset.value = newValue;
-        btn.textContent = newValue ? "點擊編輯圖片" : "點擊添加圖片";
-      });
+        const id = btn.dataset.id;
+        const currentValue = btn.dataset.value;
+        const placeId = items.find(item => item._id === id)?.placeId; // 獲取 placeId
+        
+        if (!placeId) {
+            alert("無法獲取餐廳ID");
+            return;
+        }
+
+        showEditModal("圖片URL", currentValue, async (newValue) => {
+            updateMapItemField(id, "image", newValue);
+            btn.dataset.value = newValue;
+            btn.textContent = newValue ? "點擊編輯圖片" : "點擊添加圖片";
+        }, placeId); // 傳入 placeId
     });
-  });
+});
   
   // 菜單連結按鈕
   document.querySelectorAll(".mapitem-menu-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
-      const id = btn.dataset.id;
-      const currentValue = btn.dataset.value;
-      showEditModal("菜單連結（可多個，以空白分隔）", currentValue, (newValue) => {
-        if (newValue && !validateMenuUrls(newValue)) {
-          alert("菜單連結格式不正確，請檢查 URL 格式");
-          return;
+        const id = btn.dataset.id;
+        const currentValue = btn.dataset.value;
+        const placeId = items.find(item => item._id === id)?.placeId; // 獲取 placeId
+        
+        if (!placeId) {
+            alert("無法獲取餐廳ID");
+            return;
         }
-        updateMapItemField(id, "menuUrl", newValue);
-        btn.dataset.value = newValue;
-        btn.textContent = newValue ? "點擊編輯菜單連結" : "點擊添加菜單連結";
-      });
+
+        showEditModal("菜單連結", currentValue, async (newValue) => {
+            updateMapItemField(id, "menuUrl", newValue);
+            btn.dataset.value = newValue;
+            btn.textContent = newValue ? "點擊編輯菜單連結" : "點擊添加菜單連結";
+        }, placeId); // 傳入 placeId
     });
-  });
+});
   
   document.querySelectorAll(".delete-mapitem-btn").forEach(btn => {
     btn.addEventListener("click", async (e) => {
@@ -189,21 +199,13 @@ document.addEventListener("DOMContentLoaded", function() {
       const category = document.querySelector(".restaurantType").value;
       const description = document.querySelector(".restaurantDescription").value;
       const placeId = document.querySelector(".restaurantPlaceId").value;
-      const menuUrl = document.querySelector(".restaurantMenuUrl").value;
-      const imageUrl = document.querySelector(".restaurantImage").value;
+      const imageFile = document.querySelector(".restaurantImage").files[0];
+      const menuFiles = document.querySelector(".restaurantMenuUrl").files;
 
-      if (!category || !description || !placeId) {
+      if (!category || !description || !placeId || !imageFile) {
         alert("請填寫所有必填欄位");
         return;
       }
-
-      // 驗證菜單連結格式
-      if (menuUrl && !validateMenuUrls(menuUrl)) {
-        alert("菜單連結格式不正確，請檢查 URL 格式");
-        return;
-      }
-
-      // placeId 已直接由輸入欄取得，無需再解析
 
       let placeData;
       try {
@@ -213,53 +215,132 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
       }
 
-      const body = {
-        name: placeData.name,
-        category,
-        formattedAddress: placeData.formatted_address,
-        description,
-        phone: placeData.formatted_phone_number || "",
-        openingHours: (placeData.opening_hours && placeData.opening_hours.weekday_text) ? placeData.opening_hours.weekday_text.join("; ") : "",
-        longitude: placeData.geometry?.location?.lng,
-        latitude: placeData.geometry?.location?.lat,
-        website: placeData.website || "",
-        image: imageUrl || (placeData.photos ? getGooglePhotoUrl(placeData.photos[0].photo_reference) : ""),
-        placeId,
-        menuUrl: menuUrl.trim(), // 保留原始格式，包含空白鍵
-        isActive: true
-      };
-
       try {
-        const user = await getCurrentUserAsync();
-        if (!user) {
-          alert("請先登入！");
+        window.showLoading();
+        addRestaurantBtn.disabled = true;
+        addRestaurantBtn.textContent = "上傳中...";
+
+        // 上傳封面圖片
+        let imageUrl;
+        try {
+          const storage = firebase.storage();
+          const coverRef = storage.ref(`sa_foodmaps/cover/${placeId}`);
+          
+          // 創建上傳任務
+          const uploadTask = coverRef.put(imageFile);
+          
+          // 監聽上傳進度
+          uploadTask.on('state_changed', 
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              addRestaurantBtn.textContent = `封面上傳中 ${Math.round(progress)}%`;
+            },
+            (error) => {
+              console.error("封面上傳失敗", error);
+              throw error;
+            }
+          );
+
+          // 等待上傳完成
+          await uploadTask;
+          imageUrl = await coverRef.getDownloadURL();
+        } catch (err) {
+          alert("封面圖片上傳失敗");
           return;
         }
-        const idToken = await user.getIdToken();
 
-        const res = await fetch(`${API_URL}/api/admin/maps`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + idToken
-          },
-          body: JSON.stringify(body),
-          credentials: "include"
-        });
-        if (!res.ok) throw new Error("新增失敗");
-        alert("新增成功");
-        document.querySelector(".restaurantType").value = "";
-        document.querySelector(".restaurantDescription").value = "";
-        document.querySelector(".restaurantPlaceId").value = "";
-        document.querySelector(".restaurantMenuUrl").value = "";
-        document.querySelector(".restaurantImage").value = "";
-        fetchMapItems();
-      } catch (err) {
+        // 上傳菜單圖片
+        let menuUrls = [];
+        try {
+          const totalFiles = menuFiles.length;
+          for (let i = 0; i < menuFiles.length; i++) {
+            const menuRef = storage.ref(`sa_foodmaps/menu/${placeId}_${i}`);
+            
+            // 創建上傳任務
+            const uploadTask = menuRef.put(menuFiles[i]);
+            
+            // 監聽上傳進度
+            uploadTask.on('state_changed', 
+              (snapshot) => {
+                const fileProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                const totalProgress = ((i * 100) + fileProgress) / totalFiles;
+                addRestaurantBtn.textContent = `菜單上傳中 ${Math.round(totalProgress)}%`;
+              },
+              (error) => {
+                console.error(`菜單圖片 ${i + 1} 上傳失敗`, error);
+                throw error;
+              }
+            );
+
+            // 等待當前文件上傳完成
+            await uploadTask;
+            const menuUrl = await menuRef.getDownloadURL();
+            menuUrls.push(menuUrl);
+          }
+        } catch (err) {
+          alert("菜單圖片上傳失敗");
+          return;
+        }
+        
+        const body = {
+          name: placeData.name,
+          category,
+          formattedAddress: placeData.formatted_address,
+          description,
+          phone: placeData.formatted_phone_number || "",
+          openingHours: (placeData.opening_hours && placeData.opening_hours.weekday_text) ? placeData.opening_hours.weekday_text.join("; ") : "",
+          longitude: placeData.geometry?.location?.lng,
+          latitude: placeData.geometry?.location?.lat,
+          website: placeData.website || "",
+          image: imageUrl,
+          placeId,
+          menuUrl: menuUrls.join(" "), // 保持原有的空格分隔格式
+          isActive: true
+        };
+
+        try {
+          const user = await getCurrentUserAsync();
+          if (!user) {
+            alert("請先登入！");
+            return;
+          }
+          const idToken = await user.getIdToken();
+
+          const res = await fetch(`${API_URL}/api/admin/maps`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer " + idToken
+            },
+            body: JSON.stringify(body),
+            credentials: "include"
+          });
+          if (!res.ok) throw new Error("新增失敗");
+          alert("新增成功");
+          // 清空表单
+          document.querySelector(".restaurantType").value = "";
+          document.querySelector(".restaurantDescription").value = "";
+          document.querySelector(".restaurantPlaceId").value = "";
+          document.querySelector(".restaurantImage").value = "";
+          document.querySelector(".restaurantMenuUrl").value = "";
+          fetchMapItems();
+        } catch (err) {
+          console.error("新增失敗", err);
+          alert("新增失敗");
+        } 
+      }catch (err) {
+        console.error("新增失敗", err);
         alert("新增失敗");
+      } finally {
+        window.hideLoading();
+        addRestaurantBtn.disabled = false;
+        addRestaurantBtn.textContent = "新增餐廳";
       }
     });
   }
 });
+
+
 
 // 取出 place_id，只允許正確格式
 async function extractPlaceIdFromUrl(url) {
@@ -384,7 +465,7 @@ function validateMenuUrls(menuUrl) {
 }
 
 // 顯示編輯模態框
-function showEditModal(title, currentValue, onConfirm) {
+function showEditModal(title, currentValue, onConfirm, placeId) {
   // 移除現有的模態框
   const existingModal = document.getElementById('editModal');
   if (existingModal) {
@@ -417,14 +498,27 @@ function showEditModal(title, currentValue, onConfirm) {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   `;
   
-  modalContent.innerHTML = `
-    <h3 style="margin: 0 0 15px 0; color: #645038;">編輯${title}</h3>
-    <textarea id="editInput" style="width: 100%; height: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-family: inherit;">${currentValue}</textarea>
-    <div style="margin-top: 15px; text-align: right;">
-      <button id="cancelBtn" style="margin-right: 10px; padding: 8px 16px; border: 1px solid #ddd; background: #f5f5f5; border-radius: 4px; cursor: pointer;">取消</button>
-      <button id="confirmBtn" style="padding: 8px 16px; border: 1px solid #645038; background: #645038; color: white; border-radius: 4px; cursor: pointer;">確認</button>
-    </div>
-  `;
+  // 如果是编辑图片或菜单，使用文件上传
+  if (title.includes("圖片") || title.includes("菜單")) {
+    modalContent.innerHTML = `
+      <h3 style="margin: 0 0 15px 0; color: #645038;">編輯${title}</h3>
+      <input type="file" id="editInput" ${title.includes("菜單") ? "multiple" : ""} accept="image/*" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+      <div style="margin-top: 15px; text-align: right;">
+          <button id="cancelBtn" style="margin-right: 10px; padding: 8px 16px; border: 1px solid #ddd; background: #f5f5f5; border-radius: 4px; cursor: pointer;">取消</button>
+          <button id="confirmBtn" style="padding: 8px 16px; border: 1px solid #645038; background: #645038; color: white; border-radius: 4px; cursor: pointer;">確認</button>
+      </div>
+    `;
+  } else {
+    // 保持原有的文本编辑模式
+    modalContent.innerHTML = `
+      <h3 style="margin: 0 0 15px 0; color: #645038;">編輯${title}</h3>
+      <textarea id="editInput" style="width: 100%; height: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-family: inherit;">${currentValue}</textarea>
+      <div style="margin-top: 15px; text-align: right;">
+        <button id="cancelBtn" style="margin-right: 10px; padding: 8px 16px; border: 1px solid #ddd; background: #f5f5f5; border-radius: 4px; cursor: pointer;">取消</button>
+        <button id="confirmBtn" style="padding: 8px 16px; border: 1px solid #645038; background: #645038; color: white; border-radius: 4px; cursor: pointer;">確認</button>
+      </div>
+    `;
+  }
   
   modal.appendChild(modalContent);
   document.body.appendChild(modal);
@@ -439,10 +533,94 @@ function showEditModal(title, currentValue, onConfirm) {
     modal.remove();
   });
   
-  document.getElementById('confirmBtn').addEventListener('click', () => {
-    const newValue = input.value.trim();
-    onConfirm(newValue);
-    modal.remove();
+  document.getElementById('confirmBtn').addEventListener('click', async () => {
+    const input = document.getElementById('editInput');
+    if (title.includes("圖片") || title.includes("菜單")) {
+      const files = input.files;
+      if (!files.length) {
+        alert("請選擇檔案");
+        return;
+      }
+      
+      try {
+        // 顯示 loading
+        window.showLoading();
+        // 禁用確認和取消按鈕
+        const confirmBtn = document.getElementById('confirmBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        confirmBtn.disabled = true;
+        cancelBtn.disabled = true;
+
+        const storage = firebase.storage();
+        let urls = [];
+        
+        if (title.includes("圖片")) {
+          // 上傳單個封面圖片
+          const file = files[0];
+          const coverRef = storage.ref(`sa_foodmaps/cover/${placeId}`);
+          
+          // 創建上傳任務
+          const uploadTask = coverRef.put(file);
+          
+          // 監聽上傳進度
+          uploadTask.on('state_changed', 
+              (snapshot) => {
+                  const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                  confirmBtn.textContent = `上傳中 ${Math.round(progress)}%`;
+              },
+              (error) => {
+                  console.error("上傳失敗", error);
+                  alert("檔案上傳失敗");
+              }
+          );
+
+          // 等待上傳完成
+          await uploadTask;
+          const url = await coverRef.getDownloadURL();
+          urls.push(url);
+        } else {
+          // 上傳多個菜單圖片
+          const totalFiles = files.length;
+          for (let i = 0; i < files.length; i++) {
+              const menuRef = storage.ref(`sa_foodmaps/menu/${placeId}_${i}`);
+              
+              // 創建上傳任務
+              const uploadTask = menuRef.put(files[i]);
+              
+              // 監聽上傳進度
+              uploadTask.on('state_changed', 
+                  (snapshot) => {
+                      const fileProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                      const totalProgress = ((i * 100) + fileProgress) / totalFiles;
+                      confirmBtn.textContent = `上傳中 ${Math.round(totalProgress)}%`;
+                  },
+                  (error) => {
+                      console.error(`菜單圖片 ${i + 1} 上傳失敗`, error);
+                  }
+              );
+
+              // 等待當前文件上傳完成
+              await uploadTask;
+              const url = await menuRef.getDownloadURL();
+              urls.push(url);
+          }
+        }
+        
+        onConfirm(urls.join(" "));
+        modal.remove();
+      } catch (err) {
+        console.error("檔案上傳失敗", err);
+        alert("檔案上傳失敗");
+      } finally {
+          // 隱藏 loading
+          window.hideLoading();
+      }
+    } else {
+      // 原有的文本编辑逻辑
+      const newValue = input.value.trim();
+      onConfirm(newValue);
+      modal.remove();
+    }
   });
   
   // 按 ESC 鍵關閉
@@ -547,3 +725,126 @@ window.initMap = function initMap() {
     }
   });
 }; 
+
+// 添加遷移功能
+document.addEventListener("DOMContentLoaded", function() {
+  const migrateBtn = document.querySelector(".migrateImagesBtn");
+  if (migrateBtn) {
+      migrateBtn.addEventListener("click", async function() {
+          if (!confirm("確定要開始遷移圖片嗎？此操作可能需要一些時間。")) {
+              return;
+          }
+
+          try {
+              migrateBtn.disabled = true;
+              migrateBtn.textContent = "遷移中...";
+              
+              const user = await getCurrentUserAsync();
+              if (!user) {
+                  alert("請先登入！");
+                  return;
+              }
+              const idToken = await user.getIdToken();
+
+              // 獲取所有餐廳數據
+              const res = await fetch(`${API_URL}/api/admin/maps`, {
+                  credentials: "include",
+                  headers: {
+                      "Authorization": "Bearer " + idToken,
+                  },
+              });
+              if (!res.ok) throw new Error("無法取得地標列表");
+              const items = await res.json();
+
+              // 開始遷移
+              let successCount = 0;
+              let failCount = 0;
+              const storage = firebase.storage();
+
+              for (const item of items) {
+                  try {
+                      // 遷移封面圖片
+                      if (item.image && !item.image.includes("firebasestorage.googleapis.com")) {
+                          const coverResponse = await fetch(item.image);
+                          if (!coverResponse.ok) throw new Error("無法下載封面圖片");
+                          const coverBlob = await coverResponse.blob();
+                          
+                          const coverRef = storage.ref(`sa_foodmaps/cover/${item.placeId}`);
+                          await coverRef.put(coverBlob);
+                          const newCoverUrl = await coverRef.getDownloadURL();
+
+                          // 更新數據庫中的圖片URL
+                          const updateRes = await fetch(`${API_URL}/api/admin/maps/${item._id}`, {
+                              method: "PATCH",
+                              headers: {
+                                  "Content-Type": "application/json",
+                                  "Authorization": "Bearer " + idToken
+                              },
+                              body: JSON.stringify({ image: newCoverUrl }),
+                              credentials: "include",
+                          });
+                          if (!updateRes.ok) throw new Error("更新封面圖片URL失敗");
+                      }
+
+                      // 遷移菜單圖片
+                      if (item.menuUrl) {
+                          const menuUrls = item.menuUrl.split(/\s+/).filter(url => url && !url.includes("firebasestorage.googleapis.com"));
+                          const newMenuUrls = [];
+
+                          for (let i = 0; i < menuUrls.length; i++) {
+                              const menuResponse = await fetch(menuUrls[i]);
+                              if (!menuResponse.ok) throw new Error(`無法下載菜單圖片 ${i + 1}`);
+                              const menuBlob = await menuResponse.blob();
+
+                              const menuRef = storage.ref(`sa_foodmaps/menu/${item.placeId}_${i}`);
+                              await menuRef.put(menuBlob);
+                              const newMenuUrl = await menuRef.getDownloadURL();
+                              newMenuUrls.push(newMenuUrl);
+                          }
+
+                          if (newMenuUrls.length > 0) {
+                              // 合併新舊菜單URL（保留已經在Firebase Storage的URL）
+                              const existingFirebaseUrls = item.menuUrl.split(/\s+/).filter(url => url && url.includes("firebasestorage.googleapis.com"));
+                              const allMenuUrls = [...existingFirebaseUrls, ...newMenuUrls].join(" ");
+
+                              const updateRes = await fetch(`${API_URL}/api/admin/maps/${item._id}`, {
+                                  method: "PATCH",
+                                  headers: {
+                                      "Content-Type": "application/json",
+                                      "Authorization": "Bearer " + idToken
+                                  },
+                                  body: JSON.stringify({ menuUrl: allMenuUrls }),
+                                  credentials: "include",
+                              });
+                              if (!updateRes.ok) throw new Error("更新菜單URL失敗");
+                          }
+                      }
+
+                      successCount++;
+                  } catch (err) {
+                      console.error(`遷移餐廳 ${item.name} 的圖片失敗:`, err);
+                      failCount++;
+                  }
+
+                  // 更新進度顯示
+                  migrateBtn.textContent = `遷移中... (${successCount}/${items.length})`;
+              }
+
+              alert(`遷移完成！\n成功: ${successCount}\n失敗: ${failCount}`);
+          } catch (err) {
+              console.error("遷移過程發生錯誤:", err);
+              alert("遷移過程發生錯誤，請查看控制台了解詳情");
+          } finally {
+              migrateBtn.disabled = false;
+              migrateBtn.textContent = "遷移現有圖片到新存儲系統";
+              // 重新載入列表以顯示更新後的數據
+              fetchMapItems();
+          }
+      });
+  }
+});
+
+// 添加輔助函數：檢查URL是否為Firebase Storage URL
+function isFirebaseStorageUrl(url) {
+  return url && url.includes("firebasestorage.googleapis.com");
+}

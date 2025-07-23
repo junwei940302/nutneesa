@@ -9,6 +9,21 @@ function sha256(password) {
   return crypto.createHash("sha256").update(password).digest("hex");
 }
 
+async function verifyFirebaseToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "No token" });
+  }
+  const idToken = authHeader.split(" ")[1];
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    req.user = decodedToken;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid token" });
+  }
+}
+
 // Firestore 版 logHistory
 async function logHistory(req, operation) {
   let executerName = "Unknown";
@@ -86,4 +101,4 @@ async function sendVerificationEmail({ to, name, code, authlink, templateId }) {
   await sgMail.send(msg);
 }
 
-module.exports = { sha256, logHistory, firebaseAuthMiddleware, sendVerificationEmail }; 
+module.exports = { sha256, logHistory, firebaseAuthMiddleware, sendVerificationEmail, verifyFirebaseToken }; 

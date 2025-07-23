@@ -282,6 +282,9 @@
   text-decoration: none;
   font-weight: bold;
 }
+#detailMenu{
+  max-width: 500px;
+}
 
 @media (max-width: 600px) {
   #detailContent {

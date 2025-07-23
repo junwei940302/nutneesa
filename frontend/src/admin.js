@@ -40,6 +40,7 @@ const panels = {
     "金流管理｜Flow": document.querySelector(".panel[data-flow]"),
     "資源申請｜Apply": document.querySelector(".panel[data-apply]"),
     "美食地圖｜Maps": document.querySelector(".panel[data-maps]"),
+    "會議記錄｜Conference": document.querySelector(".panel[data-conference]"),
     "偏好設定｜Settings": document.querySelector(".panel[data-settings]"),
 };
 
@@ -70,6 +71,10 @@ function showPanel(selected) {
                     break;
                 case "美食地圖｜Maps":
                     fetchMapItems().finally(window.hideLoading);
+                    break;
+                case "會議記錄｜Conference":
+                    initConferenceRecords();
+                    window.hideLoading();
                     break;
                 case "金流管理｜Flow":
                     // 若有需要可加 fetchFlow().finally(window.hideLoading);

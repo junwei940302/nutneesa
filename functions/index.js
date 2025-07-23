@@ -21,6 +21,7 @@ const { adminRouter } = require("./adminServer");
 const { userRouter } = require("./userServer");
 const { firebaseAuthMiddleware } = require("./utils");
 
+
 // 只在本地開發時載入 dotenv
 if (process.env.FUNCTIONS_EMULATOR || process.env.NODE_ENV !== "production") {
   require("dotenv").config({ path: require("path").resolve(__dirname, ".env") });

@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
     <script>
       const firebaseConfig = {
         apiKey: "AIzaSyDzHVViQRq4F9oXBSU1i_5oEmoOqpe58MA",
@@ -368,7 +369,31 @@
             </div>
         </div>
         <div class="infoCard" data-conferenceHistory>
-            
+            <div class="conferenceRecords">
+                <h3>系會會議記錄</h3>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>序號</th>
+                                <th>檔案名稱</th>
+                                <th>類別</th>
+                                <th>上傳日期</th>
+                                <th>下載</th>
+                            </tr>
+                        </thead>
+                        <tbody class="conference-records-table-body">
+                            <tr>
+                                <td>載入中</td>
+                                <td>載入中</td>
+                                <td>載入中</td>
+                                <td>載入中</td>
+                                <td>載入中</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
     <div class="loading-overlay" style="display:none;">

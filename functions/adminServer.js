@@ -1,5 +1,6 @@
 const express = require("express");
 const { logHistory } = require("./utils");
+const { verifyFirebaseToken } = require("./utils");
 const admin = require("firebase-admin");
 if (!admin.apps.length) admin.initializeApp();
 const fetch = require("node-fetch");
@@ -11,6 +12,7 @@ const Responses = admin.firestore().collection("responses");
 const News = admin.firestore().collection("news");
 const History = admin.firestore().collection("history");
 const Maps = admin.firestore().collection("maps");
+const ConferenceRecords = admin.firestore().collection("conferenceRecords");
 
 const adminRouter = express.Router();
 
@@ -821,6 +823,7 @@ adminRouter.delete("/maps/:id", async (req, res) => {
   }
 });
 
+
 // Google Places API 代理
 adminRouter.get("/google-place-details", async (req, res) => {
   const { place_id } = req.query;
@@ -841,6 +844,265 @@ adminRouter.get("/google-place-details", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Google Places API error" });
   }
+});
+
+// Conference Records API
+// Get all conference records (public access)
+adminRouter.get("/conference-records", async (req, res) => {
+  try {
+    const snapshot = await ConferenceRecords
+      .where("visibility", "==", true)
+      .orderBy("uploadDate", "desc")
+      .get();
+    
+    const records = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      records.push({
+        id: doc.id,
+        fileName: data.fileName,
+        category: data.category,
+        uploadDate: safeToISOString(data.uploadDate),
+        downloadUrl: data.downloadUrl,
+        fileSize: data.fileSize,
+      });
+    });
+    
+    res.json(records);
+  } catch (err) {
+    console.error("Error fetching conference records:", err);
+    res.status(500).json({ error: "Failed to fetch conference records" });
+  }
+});
+
+// Create conference record (admin only)
+adminRouter.post("/conference-records", verifyFirebaseToken, async (req, res) => {
+  try {
+    const { fileName, category, originalFileName, fileSize, storagePath, downloadUrl } = req.body;
+    
+    if (!fileName || !category || !downloadUrl) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    
+    const recordData = {
+      fileName,
+      category,
+      originalFileName: originalFileName || fileName,
+      fileSize: fileSize || 0,
+      storagePath,
+      downloadUrl,
+      uploadDate: new Date(),
+      uploadedBy: req.user.uid,
+      visibility: true,
+    };
+    
+    const docRef = await ConferenceRecords.add(recordData);
+    
+    res.json({ 
+      success: true, 
+      id: docRef.id,
+      message: "Conference record created successfully" ,
+    });
+  } catch (err) {
+    console.error("Error creating conference record:", err);
+    res.status(500).json({ error: "Failed to create conference record" });
+  }
+});
+
+// Update conference record (admin only)
+adminRouter.put("/conference-records/:id", verifyFirebaseToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fileName, category } = req.body;
+    
+    if (!fileName || !category) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    
+    const updateData = {
+      fileName,
+      category,
+      updatedAt: new Date(),
+      updatedBy: req.user.uid,
+    };
+    
+    await ConferenceRecords.doc(id).update(updateData);
+    
+    res.json({ 
+      success: true, 
+      message: "Conference record updated successfully" 
+    });
+  } catch (err) {
+    console.error("Error updating conference record:", err);
+    res.status(500).json({ error: "Failed to update conference record" });
+  }
+});
+
+// Delete conference record (admin only)
+adminRouter.delete("/conference-records/:id", verifyFirebaseToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get the record to delete the file from storage
+    const recordDoc = await ConferenceRecords.doc(id).get();
+    if (!recordDoc.exists) {
+      return res.status(404).json({ error: "Conference record not found" });
+    }
+    
+    const recordData = recordDoc.data();
+    
+    // Delete file from Firebase Storage if storagePath exists
+    if (recordData.storagePath) {
+      try {
+        const bucket = admin.storage().bucket();
+        await bucket.file(recordData.storagePath).delete();
+      } catch (storageErr) {
+        console.warn("Failed to delete file from storage:", storageErr);
+        // Continue with database deletion even if storage deletion fails
+      }
+    }
+    
+    // Delete record from database
+    await ConferenceRecords.doc(id).delete();
+    
+    res.json({ 
+      success: true, 
+      message: "Conference record deleted successfully" 
+    });
+  } catch (err) {
+    console.error("Error deleting conference record:", err);
+    res.status(500).json({ error: "Failed to delete conference record" });
+  }
+});
+
+const { Readable } = require('stream');
+const path = require('path');
+
+// 輔助函數：從URL下載文件並存儲到Firebase Storage
+async function downloadAndStoreFile(url, storagePath) {
+    try {
+        // 下載文件
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`下載失敗: ${response.statusText}`);
+
+        // 獲取文件類型
+        const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+        // 創建可讀流
+        const buffer = await response.buffer();
+        const stream = Readable.from(buffer);
+
+        // 上傳到Firebase Storage
+        const bucket = admin.storage().bucket();
+        const file = bucket.file(storagePath);
+
+        return new Promise((resolve, reject) => {
+            stream
+                .pipe(file.createWriteStream({
+                    metadata: {
+                        contentType: contentType
+                    }
+                }))
+                .on('error', reject)
+                .on('finish', async () => {
+                    // 獲取公開URL
+                    try {
+                        await file.makePublic();
+                        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+                        resolve(publicUrl);
+                    } catch (err) {
+                        reject(err);
+                    }
+                });
+        });
+    } catch (error) {
+        console.error(`文件處理失敗 (${url}):`, error);
+        throw error;
+    }
+}
+
+// 添加遷移API端點
+adminRouter.post('/migrate-images', async (req, res) => {
+    try {
+        // 驗證管理員權限
+        const user = req.user;
+        if (!user || !user.admin) {
+            return res.status(403).json({ error: '權限不足' });
+        }
+
+        const db = admin.firestore();
+        const mapsRef = db.collection('maps');
+        const snapshot = await mapsRef.get();
+
+        const results = {
+            total: snapshot.size,
+            success: 0,
+            failed: 0,
+            details: []
+        };
+
+        // 遍歷所有餐廳數據
+        for (const doc of snapshot.docs) {
+            const data = doc.data();
+            const placeId = data.placeId;
+            const updates = {};
+
+            try {
+                // 處理封面圖片
+                if (data.image && !data.image.includes('storage.googleapis.com')) {
+                    const coverPath = `sa_foodmaps/cover/${placeId}`;
+                    updates.image = await downloadAndStoreFile(data.image, coverPath);
+                }
+
+                // 處理菜單圖片
+                if (data.menuUrl) {
+                    const menuUrls = data.menuUrl.split(/\s+/).filter(url => url);
+                    const newMenuUrls = [];
+
+                    for (let i = 0; i < menuUrls.length; i++) {
+                        const url = menuUrls[i];
+                        if (!url.includes('storage.googleapis.com')) {
+                            const menuPath = `sa_foodmaps/menu/${placeId}_${i}`;
+                            const newUrl = await downloadAndStoreFile(url, menuPath);
+                            newMenuUrls.push(newUrl);
+                        } else {
+                            newMenuUrls.push(url); // 保留已經在Storage的URL
+                        }
+                    }
+
+                    if (newMenuUrls.length > 0) {
+                        updates.menuUrl = newMenuUrls.join(' ');
+                    }
+                }
+
+                // 如果有更新，寫入數據庫
+                if (Object.keys(updates).length > 0) {
+                    await mapsRef.doc(doc.id).update(updates);
+                }
+
+                results.success++;
+                results.details.push({
+                    placeId,
+                    name: data.name,
+                    status: 'success'
+                });
+            } catch (error) {
+                results.failed++;
+                results.details.push({
+                    placeId,
+                    name: data.name,
+                    status: 'failed',
+                    error: error.message
+                });
+                console.error(`遷移失敗 (${data.name}):`, error);
+            }
+        }
+
+        res.json(results);
+    } catch (error) {
+        console.error('遷移過程發生錯誤:', error);
+        res.status(500).json({ error: '遷移過程發生錯誤' });
+    }
 });
 
 module.exports = { adminRouter, logHistory };
