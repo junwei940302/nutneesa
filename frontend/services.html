@@ -12,6 +12,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script>
       const firebaseConfig = {
         apiKey: "AIzaSyDzHVViQRq4F9oXBSU1i_5oEmoOqpe58MA",
@@ -274,21 +276,18 @@
             <div class="activityPanels"></div>
         </div>
         <div class="infoCard" data-photo>
-            
+            <div class="photoListContainer">
+                <p style="text-align: center;" id="statusP">載入中</p>
+            </div>
         </div>
         <div class="infoCard" data-map>
             <div class="mapIntro">
-                <div class="carouselContainer">
-                    <div class="carousel-row carousel-row-1">
-                        <div class="carousel-track"></div>
-                    </div>
+                <div class="tunnelCanvasWrapper">
+                    <canvas id="tunnelCanvas" touch-action="none"></canvas>
                     <h3>
                         大府城美食地圖
                     </h3>
                     <a href="foodMaps.html">前往美食地圖<i class="fa-solid fa-circle-arrow-right"></i></a>
-                    <div class="carousel-row carousel-row-2">
-                        <div class="carousel-track"></div>
-                    </div>
                 </div>
             </div>
             <div class="mapInterview">

@@ -930,7 +930,7 @@ adminRouter.put("/conference-records/:id", verifyFirebaseToken, async (req, res)
     
     res.json({ 
       success: true, 
-      message: "Conference record updated successfully" 
+      message: "Conference record updated successfully", 
     });
   } catch (err) {
     console.error("Error updating conference record:", err);
@@ -967,7 +967,7 @@ adminRouter.delete("/conference-records/:id", verifyFirebaseToken, async (req, r
     
     res.json({ 
       success: true, 
-      message: "Conference record deleted successfully" 
+      message: "Conference record deleted successfully", 
     });
   } catch (err) {
     console.error("Error deleting conference record:", err);
@@ -975,134 +975,133 @@ adminRouter.delete("/conference-records/:id", verifyFirebaseToken, async (req, r
   }
 });
 
-const { Readable } = require('stream');
-const path = require('path');
+const { Readable } = require("stream");
 
 // 輔助函數：從URL下載文件並存儲到Firebase Storage
 async function downloadAndStoreFile(url, storagePath) {
-    try {
-        // 下載文件
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`下載失敗: ${response.statusText}`);
+  try {
+    // 下載文件
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`下載失敗: ${response.statusText}`);
 
-        // 獲取文件類型
-        const contentType = response.headers.get('content-type') || 'image/jpeg';
+    // 獲取文件類型
+    const contentType = response.headers.get("content-type") || "image/jpeg";
 
-        // 創建可讀流
-        const buffer = await response.buffer();
-        const stream = Readable.from(buffer);
+    // 創建可讀流
+    const buffer = await response.buffer();
+    const stream = Readable.from(buffer);
 
-        // 上傳到Firebase Storage
-        const bucket = admin.storage().bucket();
-        const file = bucket.file(storagePath);
+    // 上傳到Firebase Storage
+    const bucket = admin.storage().bucket();
+    const file = bucket.file(storagePath);
 
-        return new Promise((resolve, reject) => {
-            stream
-                .pipe(file.createWriteStream({
-                    metadata: {
-                        contentType: contentType
-                    }
-                }))
-                .on('error', reject)
-                .on('finish', async () => {
-                    // 獲取公開URL
-                    try {
-                        await file.makePublic();
-                        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
-                        resolve(publicUrl);
-                    } catch (err) {
-                        reject(err);
-                    }
-                });
+    return new Promise((resolve, reject) => {
+      stream
+        .pipe(file.createWriteStream({
+          metadata: {
+            contentType: contentType,
+          },
+        }))
+        .on("error", reject)
+        .on("finish", async () => {
+          // 獲取公開URL
+          try {
+            await file.makePublic();
+            const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+            resolve(publicUrl);
+          } catch (err) {
+            reject(err);
+          }
         });
-    } catch (error) {
-        console.error(`文件處理失敗 (${url}):`, error);
-        throw error;
-    }
+    });
+  } catch (error) {
+    console.error(`文件處理失敗 (${url}):`, error);
+    throw error;
+  }
 }
 
 // 添加遷移API端點
-adminRouter.post('/migrate-images', async (req, res) => {
-    try {
-        // 驗證管理員權限
-        const user = req.user;
-        if (!user || !user.admin) {
-            return res.status(403).json({ error: '權限不足' });
-        }
-
-        const db = admin.firestore();
-        const mapsRef = db.collection('maps');
-        const snapshot = await mapsRef.get();
-
-        const results = {
-            total: snapshot.size,
-            success: 0,
-            failed: 0,
-            details: []
-        };
-
-        // 遍歷所有餐廳數據
-        for (const doc of snapshot.docs) {
-            const data = doc.data();
-            const placeId = data.placeId;
-            const updates = {};
-
-            try {
-                // 處理封面圖片
-                if (data.image && !data.image.includes('storage.googleapis.com')) {
-                    const coverPath = `sa_foodmaps/cover/${placeId}`;
-                    updates.image = await downloadAndStoreFile(data.image, coverPath);
-                }
-
-                // 處理菜單圖片
-                if (data.menuUrl) {
-                    const menuUrls = data.menuUrl.split(/\s+/).filter(url => url);
-                    const newMenuUrls = [];
-
-                    for (let i = 0; i < menuUrls.length; i++) {
-                        const url = menuUrls[i];
-                        if (!url.includes('storage.googleapis.com')) {
-                            const menuPath = `sa_foodmaps/menu/${placeId}_${i}`;
-                            const newUrl = await downloadAndStoreFile(url, menuPath);
-                            newMenuUrls.push(newUrl);
-                        } else {
-                            newMenuUrls.push(url); // 保留已經在Storage的URL
-                        }
-                    }
-
-                    if (newMenuUrls.length > 0) {
-                        updates.menuUrl = newMenuUrls.join(' ');
-                    }
-                }
-
-                // 如果有更新，寫入數據庫
-                if (Object.keys(updates).length > 0) {
-                    await mapsRef.doc(doc.id).update(updates);
-                }
-
-                results.success++;
-                results.details.push({
-                    placeId,
-                    name: data.name,
-                    status: 'success'
-                });
-            } catch (error) {
-                results.failed++;
-                results.details.push({
-                    placeId,
-                    name: data.name,
-                    status: 'failed',
-                    error: error.message
-                });
-                console.error(`遷移失敗 (${data.name}):`, error);
-            }
-        }
-
-        res.json(results);
-    } catch (error) {
-        console.error('遷移過程發生錯誤:', error);
-        res.status(500).json({ error: '遷移過程發生錯誤' });
+adminRouter.post("/migrate-images", async (req, res) => {
+  try {
+    // 驗證管理員權限
+    const user = req.user;
+    if (!user || !user.admin) {
+      return res.status(403).json({ error: "權限不足" });
     }
+
+    const db = admin.firestore();
+    const mapsRef = db.collection("maps");
+    const snapshot = await mapsRef.get();
+
+    const results = {
+      total: snapshot.size,
+      success: 0,
+      failed: 0,
+      details: [],
+    };
+
+    // 遍歷所有餐廳數據
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      const placeId = data.placeId;
+      const updates = {};
+
+      try {
+        // 處理封面圖片
+        if (data.image && !data.image.includes("storage.googleapis.com")) {
+          const coverPath = `sa_foodmaps/cover/${placeId}`;
+          updates.image = await downloadAndStoreFile(data.image, coverPath);
+        }
+
+        // 處理菜單圖片
+        if (data.menuUrl) {
+          const menuUrls = data.menuUrl.split(/\s+/).filter(url => url);
+          const newMenuUrls = [];
+
+          for (let i = 0; i < menuUrls.length; i++) {
+            const url = menuUrls[i];
+            if (!url.includes("storage.googleapis.com")) {
+              const menuPath = `sa_foodmaps/menu/${placeId}_${i}`;
+              const newUrl = await downloadAndStoreFile(url, menuPath);
+              newMenuUrls.push(newUrl);
+            } else {
+              newMenuUrls.push(url); // 保留已經在Storage的URL
+            }
+          }
+
+          if (newMenuUrls.length > 0) {
+            updates.menuUrl = newMenuUrls.join(" ");
+          }
+        }
+
+        // 如果有更新，寫入數據庫
+        if (Object.keys(updates).length > 0) {
+          await mapsRef.doc(doc.id).update(updates);
+        }
+
+        results.success++;
+        results.details.push({
+          placeId,
+          name: data.name,
+          status: "success",
+        });
+      } catch (error) {
+        results.failed++;
+        results.details.push({
+          placeId,
+          name: data.name,
+          status: "failed",
+          error: error.message,
+        });
+        console.error(`遷移失敗 (${data.name}):`, error);
+      }
+    }
+
+    res.json(results);
+  } catch (error) {
+    console.error("遷移過程發生錯誤:", error);
+    res.status(500).json({ error: "遷移過程發生錯誤" });
+  }
 });
 
 module.exports = { adminRouter, logHistory };

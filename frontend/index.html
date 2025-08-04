@@ -34,10 +34,13 @@
     <div id="nav-placeholder"></div>
     <div class="content">
         <div class="nextActivity mainTitle">
+          <img src="./assets/images/cubeRotation.gif" class="bg-video" title="cubeRotation">
+            <!--
             <video class="bg-video" autoplay muted loop playsinline>
                 <source id="title-source" src="" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
+            -->
             <div class="countdown">
                 <h1>00天00時00分00秒</h1>
             </div>
@@ -66,15 +69,17 @@
         document.body.appendChild(script);
       });
       loadHtmlFragment('global/toTop.html', '#toTop-placeholder');
+      /*
       const yoruniSource = document.getElementById('title-source');
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        yoruniSource.src = './assets/media/title.mp4';
+        yoruniSource.src = './assets/media/cubeRotation.mp4';
       } else {
-        yoruniSource.src = 'https://nutneesa-b8ea5.web.app/assets/media/title.mp4';
+        yoruniSource.src = 'https://nutneesa-b8ea5.web.app/assets/media/cubeRotation.mp4';
       }
       // 設定影片播放速度為 0.8 倍
       const video = document.querySelector('.bg-video');
       video.playbackRate = 0.8;
+      */
     </script>
 </body>
 </html>
