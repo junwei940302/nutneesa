@@ -60,6 +60,23 @@ if (activitySearcher) {
     });
 }
 
+// 監聽 serviceSelector 變更時才載入對應資料
+serviceSelector.addEventListener('change', async function() {
+    // 當選擇大府城美食地圖時載入輪播和分類數量
+    if (this.value === '大府城美食地圖') {
+        loadMapTunnelView();
+        loadMapCategoryCounts();
+    }
+    
+    if (this.value === '活動相簿') {
+        loadPhotoList();
+
+    }if (this.value === '活動報名') {
+        await fetchAndRenderEvents();
+    }
+    showInfoCard(this.value);
+});
+
 // 動態載入活動報名卡片（加上篩選功能）
 async function fetchAndRenderEvents() {
     window.showLoading();
@@ -188,129 +205,140 @@ async function fetchAndRenderEvents() {
 }
 
 
-// 載入地圖輪播數據
-async function loadMapCarousel() {
+async function loadMapTunnelView() {
     window.showLoading();
     try {
         const res = await fetch(`${API_URL}/api/maps`);
-        
+
         if (!res.ok) {
             console.error('API request failed:', res.status, res.statusText);
-            return;
-        }
-        
-        const maps = await res.json();
-        
-        // 檢查maps是否為數組
-        if (!Array.isArray(maps)) {
-            console.error('Maps data is not an array:', maps);
-            return;
-        }
-        
-        if (maps.length === 0) {
-            console.log('No map data available');
             window.hideLoading();
             return;
         }
-        
-        // 過濾出有image或imgUrl的地圖
-        const mapsWithImages = maps.filter(map => map.image || map.imgUrl);
-        
-        if (mapsWithImages.length === 0) {
-            // 使用默認圖片作為備用
-            const defaultImages = [
-                'https://via.placeholder.com/200x120/645038/ffffff?text=美食地圖1',
-                'https://via.placeholder.com/200x120/8B4513/ffffff?text=美食地圖2',
-                'https://via.placeholder.com/200x120/CD853F/ffffff?text=美食地圖3',
-                'https://via.placeholder.com/200x120/D2691E/ffffff?text=美食地圖4',
-                'https://via.placeholder.com/200x120/FF8C00/ffffff?text=美食地圖5'
-            ];
-            
-            const defaultMaps = defaultImages.map((url, index) => ({
-                imgUrl: url,
-                name: `美食地圖 ${index + 1}`
-            }));
-            
-            const shuffledMaps = [...defaultMaps].sort(() => Math.random() - 0.5);
-            
-            // 為每個輪播行創建圖片
-            const rows = document.querySelectorAll('.carousel-track');
-            let imgCount = 0, loadedCount = 0;
-            rows.forEach((track, rowIndex) => {
-                track.innerHTML = '';
-                for (let i = 0; i < 3; i++) {
-                    shuffledMaps.forEach((map) => {
-                        const item = document.createElement('div');
-                        item.className = 'carousel-item';
-                        const img = document.createElement('img');
-                        img.src = map.imgUrl;
-                        img.alt = map.name;
-                        img.title = map.name;
-                        imgCount++;
-                        img.onload = img.onerror = function() {
-                            loadedCount++;
-                            if (loadedCount === imgCount) {
-                                window.hideLoading();
-                            }
-                        };
-                        item.appendChild(img);
-                        track.appendChild(item);
-                    });
-                }
-            });
-            // 若沒有圖片，直接 hideLoading
-            if (imgCount === 0) window.hideLoading();
+
+        const maps = await res.json();
+        if (!Array.isArray(maps)) {
+            console.error('Maps data is not an array:', maps);
+            window.hideLoading();
             return;
         }
-        
-        // 為每個輪播行創建圖片
-        const rows = document.querySelectorAll('.carousel-track');
-        let imgCount = 0, loadedCount = 0;
-        // 創建兩個不同的隨機順序，並錯開起始位置
-        const shuffledMaps1 = [...mapsWithImages].sort(() => Math.random() - 0.5);
-        const shuffledMaps2 = [...mapsWithImages].sort(() => Math.random() - 0.5);
-        const offset = Math.floor(mapsWithImages.length / 2);
-        const shiftedMaps2 = [
-            ...shuffledMaps2.slice(offset),
-            ...shuffledMaps2.slice(0, offset)
-        ];
-        rows.forEach((track, rowIndex) => {
-            track.innerHTML = '';
-            const shuffledMaps = rowIndex === 0 ? shuffledMaps1 : shiftedMaps2;
-            for (let i = 0; i < 3; i++) {
-                const cycleOffset = Math.floor(Math.random() * shuffledMaps.length);
-                const cycledMaps = [
-                    ...shuffledMaps.slice(cycleOffset),
-                    ...shuffledMaps.slice(0, cycleOffset)
-                ];
-                cycledMaps.forEach((map, mapIndex) => {
-                    const item = document.createElement('div');
-                    item.className = 'carousel-item';
-                    const img = document.createElement('img');
-                    const imageUrl = map.image;
-                    img.src = imageUrl;
-                    img.alt = map.name || '地圖圖片';
-                    img.title = map.name || '地圖圖片';
-                    imgCount++;
-                    img.onload = img.onerror = function() {
-                        loadedCount++;
-                        if (loadedCount === imgCount) {
-                            window.hideLoading();
-                        }
-                    };
-                    item.appendChild(img);
-                    track.appendChild(item);
-                });
-            }
+
+        const mapsWithImages = maps.filter(map => {
+            const url = map.image || map.imgUrl;
+            return url && url.startsWith("https://firebasestorage.googleapis.com/");
         });
-        // 若沒有圖片，直接 hideLoading
-        if (imgCount === 0) window.hideLoading();
-        
+        console.log(mapsWithImages);
+        if (mapsWithImages.length === 0) {
+            console.log('No map images available');
+            window.hideLoading();
+            return;
+        }
+
+        const shuffledMaps = [...mapsWithImages].sort(() => Math.random() - 0.5).slice(0,2);
+
+        setupTunnelCanvas(shuffledMaps.map(m => m.image));
     } catch (err) {
-        console.error('地圖輪播載入失敗', err);
+        console.error('地圖隧道載入失敗', err);
         window.hideLoading();
     }
 }
+
+function setupTunnelCanvas(imageUrls) {
+    const canvas = document.getElementById('tunnelCanvas');
+    const engine = new BABYLON.Engine(canvas, true);
+    const scene = new BABYLON.Scene(engine);
+
+    // ✅ 設定背景透明
+    scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+
+    // ✅ 攝影機設定
+    const camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0, 0, 0), scene);
+    camera.setTarget(new BABYLON.Vector3(0, 0, -1));
+
+    // ✅ 環境光源
+    new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+
+    const spacing = 10; // 每張圖片 Z 軸距離
+    const loop = true;
+    const maxOffsetX = 12;
+    const maxOffsetY = 9;
+    const fullImageList = loop ? [...imageUrls, ...imageUrls] : [...imageUrls];
+
+    fullImageList.forEach((url, i) => {
+        const plane = BABYLON.MeshBuilder.CreatePlane(`plane${i}`, {}, scene);
+        plane.position.z = -i * spacing;
+
+        // ✅ XY 平面隨機位置分布
+        plane.position.x = (Math.random() - 0.5) * 2 * maxOffsetX;
+        plane.position.y = (Math.random() - 0.5) * 2 * maxOffsetY;
+
+
+        const mat = new BABYLON.StandardMaterial(`mat${i}`, scene);
+        const texture = new BABYLON.Texture(
+            url,
+            scene,
+            false,
+            false,
+            BABYLON.Texture.TRILINEAR_SAMPLINGMODE,
+            null,
+            null,
+            () => {
+                console.error("圖片讀取失敗：", url);
+            }
+        );
+
+        // ✅ 保留圖片原始大小，並進行最大尺寸限制
+        texture.onLoadObservable.addOnce(() => {
+            const imgWidth = texture.getSize().width;
+            const imgHeight = texture.getSize().height;
+
+            const scaleFactor = 0.01;
+            plane.scaling.x = imgWidth * scaleFactor;
+            plane.scaling.y = imgHeight * scaleFactor;
+
+            const maxWidth = 8, maxHeight = 6;
+            if (plane.scaling.x > maxWidth || plane.scaling.y > maxHeight) {
+                const ratio = Math.min(maxWidth / plane.scaling.x, maxHeight / plane.scaling.y);
+                plane.scaling.x *= ratio;
+                plane.scaling.y *= ratio;
+            }
+
+            // ✅ 每張照片面向攝影機
+            plane.lookAt(new BABYLON.Vector3(plane.position.x, plane.position.y, plane.position.z - 1));
+        });
+
+        mat.diffuseTexture = texture;
+        mat.backFaceCulling = false;
+        mat.specularColor = new BABYLON.Color3(0, 0, 0);
+
+        // ✅ 提高亮度（發光效果）
+        mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
+        plane.material = mat;
+    });
+
+    // ✅ 攝影機自動前進速度為 0.5
+    const cameraSpeed = 0.05;
+    engine.runRenderLoop(() => {
+        camera.position.z -= cameraSpeed;
+
+        if (loop && camera.position.z <= -imageUrls.length * spacing) {
+            camera.position.z = 0; // ✅ 重設回開頭位置
+        }
+        // ✅ 更新每張圖片使其面向攝影機
+        scene.meshes.forEach(mesh => {
+            if (mesh.name.startsWith("plane")) {
+                mesh.lookAt(new BABYLON.Vector3(mesh.position.x, mesh.position.y, mesh.position.z - 1));
+            }
+        });
+
+        scene.render();
+    });
+
+    window.addEventListener("resize", () => engine.resize());
+    window.hideLoading?.();
+}
+
+
 
 // 數字動畫函數
 function animateNumber(element, start, end, duration = 1000) {
@@ -460,70 +488,6 @@ function setupScrollAnimation(categoryCounts) {
     });
 }
 
-// 監聽 serviceSelector 變更時才載入對應資料
-serviceSelector.addEventListener('change', async function() {
-    // 當選擇大府城美食地圖時載入輪播和分類數量
-    if (this.value === '大府城美食地圖') {
-        loadMapCarousel();
-        loadMapCategoryCounts();
-    }
-    
-    if (this.value === '會員相關服務') {
-        const user = await getCurrentUserAsync();
-        if (!user) {
-            alert('本服務需先登入');
-            window.location.href = 'login.html';
-            return;
-        }
-        const idToken = await user.getIdToken();
-        const res = await fetch(`${API_URL}/api/me`, {
-            headers: { Authorization: 'Bearer ' + idToken }
-        });
-        const data = await res.json();
-        if (data.loggedIn && data.user) {
-            const user = data.user;
-            // 依序填入 table
-            const infoTable = document.querySelector('.personalInfo table');
-            if (infoTable) {
-                const tds = infoTable.querySelectorAll('td:nth-child(2)');
-                tds[0].textContent = user.memberId || '載入中';
-                tds[1].textContent = user.displayName || '載入中';
-                tds[2].textContent = user.studentId || '載入中';
-                tds[3].textContent = user.gender || '載入中';
-                tds[4].textContent = user.departmentYear || '載入中';
-                tds[5].textContent = user.email || '載入中';
-                tds[6].textContent = user.phoneNumber || '載入中';
-                // 狀態顯示（isActive: string）
-                let statusText = '載入中';
-                if (user.isActive === '生效中') statusText = '生效中';
-                else if (user.isActive === '待驗證') statusText = '待驗證';
-                else if (user.isActive === '未生效') statusText = '未生效';
-                else if (user.isActive === '已撤銷') statusText = '已撤銷';
-                tds[7].textContent = statusText;
-                tds[8].textContent = user.emailVerified ? '已驗證' : '未驗證';
-            }
-            const qrImg = document.querySelector('.personalInfo img');
-            if (qrImg && user.memberId) {
-                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(user.memberId)}`;
-            }
-            // 檢查是否為管理員或系學會成員，控制 .hrefAdmin 按鈕顯示
-            const hrefAdminBtn = document.querySelector('.hrefAdmin');
-            if (hrefAdminBtn) {
-                if (user.role === '管理員' || user.role === '系學會人員') {
-                    hrefAdminBtn.style.display = '';
-                } else {
-                    hrefAdminBtn.style.display = 'none';
-                }
-            }
-            // 載入用戶報名記錄
-            await loadUserEnrollmentHistory();
-        }
-    } else if (this.value === '活動報名') {
-        await fetchAndRenderEvents();
-    }
-    showInfoCard(this.value);
-});
-
 // 載入用戶報名記錄
 async function loadUserEnrollmentHistory() {
     window.showLoading();
@@ -607,7 +571,7 @@ async function checkLogin() {
     if (serviceSelector.value === '活動報名') {
         await fetchAndRenderEvents();
     } else if (serviceSelector.value === '大府城美食地圖') {
-        loadMapCarousel();
+        loadMapTunnelView();
         loadMapCategoryCounts();
     }
 })();
@@ -643,61 +607,38 @@ function setSelectorByHash() {
 
 window.addEventListener('hashchange', setSelectorByHash);
 
-document.addEventListener('DOMContentLoaded', function() {
-  const selector = document.querySelector('.serviceSelector');
-  const overlay = document.getElementById('recaptcha-overlay');
-  const recaptchaContainer = document.getElementById('recaptcha-container');
-  let recaptchaVerified = false;
-  let recaptchaWidgetId = null;
-
-  function showRecaptchaOverlay() {
-    overlay.style.display = 'flex';
-    if (window.grecaptcha) {
-      if (recaptchaWidgetId === null) {
-        recaptchaWidgetId = grecaptcha.render(recaptchaContainer, {
-          sitekey: '6LdrKYorAAAAADafKsfVXcPlK5kGaVhfrbAVexKA',
-          callback: onRecaptchaSuccess
-        });
-      } else {
-        grecaptcha.reset(recaptchaWidgetId);
-      }
-    }
-  }
-
-  if (selector) {
-    selector.addEventListener('change', function() {
-      if (selector.value === '活動相簿') {
-        if (!recaptchaVerified) {
-          showRecaptchaOverlay();
+async function loadPhotoList() {
+    window.showLoading();
+    const statusP = document.querySelector('#statusP');
+    const photoListContainer = document.querySelector('.photoListContainer');
+    try{
+        const res = await fetch(`${API_URL}/api/photoList`);
+        const data = await res.json();
+        
+        if(data.length === 0){
+            statusP.textContent = '目前沒有任何相簿';
+            return;
         }
-      } else {
-        overlay.style.display = 'none';
-      }
-    });
-  }
 
-  window.onRecaptchaSuccess = function(token) {
-    fetch(`${window.API_URL}/api/recaptcha`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        overlay.style.display = 'none';
-        recaptchaVerified = true;
-      } else {
-        alert('reCAPTCHA 驗證失敗，請重試！');
-        if (window.grecaptcha && recaptchaWidgetId !== null) grecaptcha.reset(recaptchaWidgetId);
-      }
-    })
-    .catch(() => {
-      alert('伺服器錯誤，請稍後再試！');
-      if (window.grecaptcha && recaptchaWidgetId !== null) grecaptcha.reset(recaptchaWidgetId);
-    });
-  };
-});
+        photoListContainer.innerHTML = data.map((data, index) => `
+            <div class="photoListItem">
+                <div>
+                    <h3>${data.name}</h3>
+                    <p>${data.description}</p>
+                    <p><i class="fa-solid fa-image"></i> ${data.quantity}｜<i class="fa-solid fa-eye"></i> ${data.view}｜<i class="fa-solid fa-calendar"></i> ${new Date(data.createdAt._seconds * 1000 + Math.floor(data.createdAt._nanoseconds / 1e6)).toLocaleDateString('zh-TW')}</p>
+                </div>
+                <div>
+                    <a href="photo.html#${data.id}"><i class="fa-solid fa-angle-right"></i></a>
+                </div>
+            </div>
+        `).join('');
+
+        window.hideLoading();
+    }catch(err){
+        console.error('Failed to fetch photo ', err);
+        window.hideLoading();
+    }
+}
 
 // 載入會議記錄
 async function loadConferenceRecordsForUsers() {

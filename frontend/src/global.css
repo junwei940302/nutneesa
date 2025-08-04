@@ -1,5 +1,5 @@
 body{
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: ToronoGlitchMinchoH1, Arial, Helvetica, sans-serif;
     background-color: #F5F5F3;
     margin: 0;
     padding: 0;
@@ -8,7 +8,7 @@ body{
 
 @font-face {
     font-family: 'ToronoGlitchMinchoH1';
-    src: url('../assets/fonts/GlitchSerifH4.otf') format('opentype');
+    src: url('../assets/fonts/LineSeedFont/LINESeedTW/TTF/LINESeedTW_TTF_Rg.ttf') format('opentype');
     font-weight: normal;
     font-style: normal;
 }
