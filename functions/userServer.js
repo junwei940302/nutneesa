@@ -7,10 +7,8 @@ if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.applicationDefault(),
     databaseURL: "https://nutneesa.firebaseio.com",
-    storageBucket: "nutneesa-b8ea5.firebasestorage.com",
   });
 }
-const bucket = admin.storage().bucket();
 
 const Members = admin.firestore().collection("members");
 const Events = admin.firestore().collection("events");
@@ -19,7 +17,6 @@ const Responses = admin.firestore().collection("responses");
 const News = admin.firestore().collection("news");
 const Maps = admin.firestore().collection("maps");
 const ConferenceRecords = admin.firestore().collection("conferenceRecords");
-const PhotoList = admin.firestore().collection("photoList");
 const { sendVerificationEmail } = require("./utils");
 const { verifyFirebaseToken } = require("./utils");
 
@@ -206,6 +203,20 @@ userRouter.get("/maps", async (req, res) => {
   } catch (err) {
     console.error("Error in /maps:", err);
     res.status(500).json({error: "Failed to fetch maps", detail: err.message});
+  }
+});
+
+userRouter.get('/proxy-image', async (req, res) => {
+  const imageUrl = req.query.url;
+
+  try {
+    const response = await fetch(imageUrl);
+    const contentType = response.headers.get('content-type');
+
+    res.set('Content-Type', contentType);
+    response.body.pipe(res);
+  } catch (error) {
+    res.status(500).send('Error fetching image');
   }
 });
 
@@ -520,63 +531,6 @@ userRouter.post("/recaptcha", async (req, res) => {
   }
 });
 
-userRouter.get("/photoList", async (req, res) => {
-  try{
-    const photoList = await PhotoList
-      .where("visibility", "==", true)
-      .orderBy("createdAt", "desc")
-      .get();
-
-    const list = [];
-    photoList.forEach(doc => {
-      const data = doc.data();
-      list.push({
-        id: doc.id,
-        name: data.name,
-        description: data.description,
-        createdAt: data.createdAt,
-        view: data.view,
-        quantity: data.quantity,
-      });
-    });
-    res.json(list);
-  }catch(err){
-    console.error("Error fetching photo list:", err);
-    res.status(500).json({ error: "Failed to fetch photo list" });
-  }
-});
-
-userRouter.get("/album/:albumId", verifyFirebaseToken,  async (req, res) => {
-
-  const { albumId } = req.params;
-  const docSnap = await PhotoList.doc(albumId).get();
-
-  if (!docSnap.exists) {
-    return res.status(404).json({ error: "找不到該相簿" });
-  }
-
-  const albumData = docSnap.data();
-  const albumName = albumData.name;
-
-  const folderPath = `sa_photos/${albumName}/`;
-
-  try {
-    const [files] = await bucket.getFiles({ prefix: folderPath });
-
-    const imageFiles = files.filter(file => !file.name.endsWith("/"));
-
-    const imageUrls = imageFiles.map(file => {
-      const encodedPath = encodeURIComponent(file.name);
-      return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media`;
-    });
-
-    res.json(imageUrls);
-  } catch (error) {
-    console.error("取得圖片列表失敗", error);
-    res.status(500).json({ error: "無法取得圖片" });
-  }
-});
-
 // Conference Records API
 // Get all conference records (public access)
 userRouter.get("/conference-records", async (req, res) => {
@@ -595,7 +549,7 @@ userRouter.get("/conference-records", async (req, res) => {
         category: data.category,
         uploadDate: safeToISOString(data.uploadDate),
         downloadUrl: data.downloadUrl,
-        fileSize: data.fileSize,
+        fileSize: data.fileSize
       });
     });
     
