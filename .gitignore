@@ -70,3 +70,4 @@ node_modules/
 
 # Frontend
 /frontend/node_modules
+functions/sendgrid.env
