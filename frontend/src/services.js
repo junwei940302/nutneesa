@@ -64,7 +64,7 @@ if (activitySearcher) {
 serviceSelector.addEventListener('change', async function() {
     // 當選擇大府城美食地圖時載入輪播和分類數量
     if (this.value === '大府城美食地圖') {
-        loadMapTunnelView();
+        loadMapCarousel();
         loadMapCategoryCounts();
     }
     
@@ -205,137 +205,80 @@ async function fetchAndRenderEvents() {
 }
 
 
-async function loadMapTunnelView() {
+// 載入地圖輪播數據
+async function loadMapCarousel() {
     window.showLoading();
     try {
         const res = await fetch(`${API_URL}/api/maps`);
-
+        
         if (!res.ok) {
             console.error('API request failed:', res.status, res.statusText);
-            window.hideLoading();
             return;
         }
-
+        
         const maps = await res.json();
+        
+        // 檢查maps是否為數組
         if (!Array.isArray(maps)) {
             console.error('Maps data is not an array:', maps);
+            return;
+        }
+        
+        if (maps.length === 0) {
+            console.log('No map data available');
             window.hideLoading();
             return;
         }
-
-        const mapsWithImages = maps.filter(map => {
-            const url = map.image || map.imgUrl;
-            return url && url.startsWith("https://firebasestorage.googleapis.com/");
+        
+        // 過濾出有image或imgUrl的地圖
+        const mapsWithImages = maps.filter(map => map.image || map.imgUrl);
+        
+        // 為每個輪播行創建圖片
+        const rows = document.querySelectorAll('.carousel-track');
+        let imgCount = 0, loadedCount = 0;
+        // 創建兩個不同的隨機順序，並錯開起始位置
+        const shuffledMaps1 = [...mapsWithImages].sort(() => Math.random() - 0.5);
+        const shuffledMaps2 = [...mapsWithImages].sort(() => Math.random() - 0.5);
+        const offset = Math.floor(mapsWithImages.length / 2);
+        const shiftedMaps2 = [
+            ...shuffledMaps2.slice(offset),
+            ...shuffledMaps2.slice(0, offset)
+        ];
+        rows.forEach((track, rowIndex) => {
+            track.innerHTML = '';
+            const shuffledMaps = rowIndex === 0 ? shuffledMaps1 : shiftedMaps2;
+            for (let i = 0; i < 3; i++) {
+                const cycleOffset = Math.floor(Math.random() * shuffledMaps.length);
+                const cycledMaps = [
+                    ...shuffledMaps.slice(cycleOffset),
+                    ...shuffledMaps.slice(0, cycleOffset)
+                ];
+                cycledMaps.forEach((map, mapIndex) => {
+                    const item = document.createElement('div');
+                    item.className = 'carousel-item';
+                    const img = document.createElement('img');
+                    const imageUrl = map.image;
+                    img.src = imageUrl;
+                    img.alt = map.name || '地圖圖片';
+                    img.title = map.name || '地圖圖片';
+                    imgCount++;
+                    img.onload = img.onerror = function() {
+                        loadedCount++;
+                    };
+                    item.appendChild(img);
+                    track.appendChild(item);
+                });
+            }
         });
-        console.log(mapsWithImages);
-        if (mapsWithImages.length === 0) {
-            console.log('No map images available');
-            window.hideLoading();
-            return;
-        }
-
-        const shuffledMaps = [...mapsWithImages].sort(() => Math.random() - 0.5).slice(0,2);
-
-        setupTunnelCanvas(shuffledMaps.map(m => m.image));
+        // 若沒有圖片，直接 hideLoading
+        if (imgCount === 0) window.hideLoading();
+        
     } catch (err) {
-        console.error('地圖隧道載入失敗', err);
+        console.error('地圖輪播載入失敗', err);
         window.hideLoading();
+    }finally{
+        window.hideLoading();;
     }
-}
-
-function setupTunnelCanvas(imageUrls) {
-    const canvas = document.getElementById('tunnelCanvas');
-    const engine = new BABYLON.Engine(canvas, true);
-    const scene = new BABYLON.Scene(engine);
-
-    // ✅ 設定背景透明
-    scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
-
-    // ✅ 攝影機設定
-    const camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0, 0, 0), scene);
-    camera.setTarget(new BABYLON.Vector3(0, 0, -1));
-
-    // ✅ 環境光源
-    new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-
-    const spacing = 10; // 每張圖片 Z 軸距離
-    const loop = true;
-    const maxOffsetX = 12;
-    const maxOffsetY = 9;
-    const fullImageList = loop ? [...imageUrls, ...imageUrls] : [...imageUrls];
-
-    fullImageList.forEach((url, i) => {
-        const plane = BABYLON.MeshBuilder.CreatePlane(`plane${i}`, {}, scene);
-        plane.position.z = -i * spacing;
-
-        // ✅ XY 平面隨機位置分布
-        plane.position.x = (Math.random() - 0.5) * 2 * maxOffsetX;
-        plane.position.y = (Math.random() - 0.5) * 2 * maxOffsetY;
-
-
-        const mat = new BABYLON.StandardMaterial(`mat${i}`, scene);
-        const texture = new BABYLON.Texture(
-            url,
-            scene,
-            false,
-            false,
-            BABYLON.Texture.TRILINEAR_SAMPLINGMODE,
-            null,
-            null,
-            () => {
-                console.error("圖片讀取失敗：", url);
-            }
-        );
-
-        // ✅ 保留圖片原始大小，並進行最大尺寸限制
-        texture.onLoadObservable.addOnce(() => {
-            const imgWidth = texture.getSize().width;
-            const imgHeight = texture.getSize().height;
-
-            const scaleFactor = 0.01;
-            plane.scaling.x = imgWidth * scaleFactor;
-            plane.scaling.y = imgHeight * scaleFactor;
-
-            const maxWidth = 8, maxHeight = 6;
-            if (plane.scaling.x > maxWidth || plane.scaling.y > maxHeight) {
-                const ratio = Math.min(maxWidth / plane.scaling.x, maxHeight / plane.scaling.y);
-                plane.scaling.x *= ratio;
-                plane.scaling.y *= ratio;
-            }
-
-            // ✅ 每張照片面向攝影機
-            plane.lookAt(new BABYLON.Vector3(plane.position.x, plane.position.y, plane.position.z - 1));
-        });
-
-        mat.diffuseTexture = texture;
-        mat.backFaceCulling = false;
-        mat.specularColor = new BABYLON.Color3(0, 0, 0);
-
-        // ✅ 提高亮度（發光效果）
-        mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
-        plane.material = mat;
-    });
-
-    // ✅ 攝影機自動前進速度為 0.5
-    const cameraSpeed = 0.05;
-    engine.runRenderLoop(() => {
-        camera.position.z -= cameraSpeed;
-
-        if (loop && camera.position.z <= -imageUrls.length * spacing) {
-            camera.position.z = 0; // ✅ 重設回開頭位置
-        }
-        // ✅ 更新每張圖片使其面向攝影機
-        scene.meshes.forEach(mesh => {
-            if (mesh.name.startsWith("plane")) {
-                mesh.lookAt(new BABYLON.Vector3(mesh.position.x, mesh.position.y, mesh.position.z - 1));
-            }
-        });
-
-        scene.render();
-    });
-
-    window.addEventListener("resize", () => engine.resize());
-    window.hideLoading?.();
 }
 
 

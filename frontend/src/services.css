@@ -650,33 +650,78 @@
 /* 地圖輪播樣式 */
 .mapIntro {
     width: 100%;
-    height: calc(100vh - 137px);
     overflow: hidden;
 }
 
-.tunnelCanvasWrapper {
+.carouselContainer {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    height: calc(100vh - 137px);
+    height: calc(60vh + 20px); /* 2行 * 30vh + 1個間距 * 20px */
     position: relative;
     overflow: hidden;
 }
 
+.carousel-row {
+    height: 30vh; /* 固定高度為30vh */
+    overflow: hidden;
+    position: relative;
+    /* 添加fade-in-out效果 */
+    mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    /* 確保內容不被切斷 */
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.carousel-track {
+    display: flex;
+    gap: 10px;
+    height: 100%;
+    animation-duration: 60s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    width: max-content;
+    align-items: center;
+    /* 確保軌道有足夠寬度容納所有圖片 */
+    min-width: 300%;
+    padding: 0 50px; /* 添加左右內邊距 */
+}
+
+.carousel-row-1 .carousel-track {
+    animation-name: slideRight;
+}
+
+.carousel-row-2 .carousel-track {
+    animation-name: slideLeft;
+}
+
+/* 軌道z-index設定 */
+.carousel-row-1 {
+    z-index: 2;
+}
+
+.carousel-row-2 {
+    z-index: 3;
+}
+
+/* 移除第三軌道樣式 */
+
 /* 地圖標題樣式 */
-.tunnelCanvasWrapper h3{
+.carouselContainer h3{
     font-size: 2em;
     font-family: 'SoukouMincho', serif;
     color: #645038;
     text-align: center;
+    margin: -10px 0; /* 負邊距讓軌道覆蓋 */
     font-weight: bold;
     position: relative;
     z-index: 10;
     letter-spacing: 10px;
-    top: -25vh;
+    margin: -35px 0 0 0;
 }
 
-.tunnelCanvasWrapper a{
+.carouselContainer a{
     font-family: 'SoukouMincho', serif;
     letter-spacing: 5px;
     color: #b17326;
@@ -685,25 +730,72 @@
     position: relative;
     transition: all 0.3s ease-in-out;
     text-decoration: none;
+    margin: 0 0 -35px 0;
     z-index: 10;
-    top: -25vh;
 }
 
-#tunnelCanvas {
+.carousel-item {
+    flex: 0 0 40vh; /* 固定寬度為40vh */
+    width: 40vh;
+    height: 30vh; /* 固定高度為30vh */
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+}
+
+/* 移除hover效果 */
+
+.carousel-item img {
     width: 100%;
     height: 100%;
-    position: relative;
-    display: block;
-    background-color: transparent;
-    filter: blur(1px);
-    opacity: 70%;
+    object-fit: cover;
+    border-radius: 12px;
+    opacity: 0.2;
+    /* 強制4:3比例，如果圖片不夠大會放大 */
+    object-position: center;
+    min-width: 100%;
+    min-height: 100%;
+    filter: blur(2px);
+}
+
+@keyframes slideRight {
+    0% {
+        transform: translateX(-200%);
+    }
+    100% {
+        transform: translateX(0%);
+    }
+}
+
+@keyframes slideLeft {
+    0% {
+        transform: translateX(0%);
+    }
+    100% {
+        transform: translateX(-200%);
+    }
 }
 
 /* 響應式設計 */
 @media (max-width: 768px) {
-    .tunnelCanvasWrapper {
-        height: calc(100vh - 137px); /* 2行 * 30vh + 1個間距 * 20px */
+    .carouselContainer {
+        height: calc(60vh + 20px); /* 2行 * 30vh + 1個間距 * 20px */
         gap: 20px;
+    }
+    
+    .carousel-row {
+        height: 30vh; /* 固定高度為30vh */
+        margin: 0; /* 移除覆蓋效果 */
+        /* 添加fade-in-out效果 */
+        mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    }
+    
+    .carousel-item {
+        flex: 0 0 40vh; /* 固定寬度為40vh */
+        width: 40vh;
+        height: 30vh; /* 固定高度為30vh */
     }
 }
 

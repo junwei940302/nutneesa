@@ -93,10 +93,6 @@
                                 立即發布消息
                             </div>
                             <div>
-                                排程發布
-                                <input type="datetime-local" class="arrangePublish" title="排程發布" disabled>
-                            </div>
-                            <div>
                                 <button class="addNews" title="addNews">新增消息</button>
                             </div>
                         </div>
@@ -179,8 +175,7 @@
                     <h3>會員列表</h3>
                     <div>
                         <div>
-                            <input type="text" placeholder="搜尋會員">
-                            <button class="advancedSearch" title="advancedSearch">進階搜尋選項</button>
+                            <input type="text" placeholder="搜尋會員（施工中）" disabled>
                         </div>
                         <div class="table-scroll">
                             <table>
@@ -548,15 +543,15 @@
                                 <input type="text" class="restaurantDescription" placeholder="餐廳描述" required>
                             </div>
                             <div>
-                                Place ID
+                                Place ID（自動填入）
                                 <input type="text" class="restaurantPlaceId" placeholder="Google Place ID" required disabled>
                             </div>
                             <div>
-                                封面照片
+                                上傳封面照片
                                 <input type="file" class="restaurantImage" accept="image/*" title="上傳餐廳封面" required >
                             </div>
                             <div>
-                                菜單連結
+                                上傳菜單照片
                                 <input type="file" class="restaurantMenuUrl" accept="image/*" title="上傳餐廳菜單" multiple>
                             </div>
                             <div>

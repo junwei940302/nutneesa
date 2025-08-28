@@ -52,6 +52,25 @@
     transition: box-shadow 0.3s, transform 0.3s;
 }
 
+.memberCard a {
+    font-weight: bold;
+    background: linear-gradient(45deg, #dd2a7b, #8134af);
+    -webkit-background-clip: text;   /* 讓背景裁剪到文字 */
+    -webkit-text-fill-color: transparent; /* 讓文字透明，露出背景 */
+    background-clip: text;
+    color: transparent; /* 確保兼容性 */
+  }
+
+.memberCard img{
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+}
+
+#HJW{
+    filter: brightness(120%) contrast(90%) saturate(120%);
+}
+
 .news-item{
     width: fit-content;
     height: fit-content;
@@ -91,10 +110,10 @@
     position: relative;
 }
 
-.mapContainer{
-    display: grid;
-    justify-content: center;
-    align-items: center;
+.mapContainer iframe{
+    max-width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px 4px #f0f0f0;
 }
 
 .contactContainer{
@@ -143,9 +162,6 @@
   display: block;
   cursor: pointer;
 }
-.contact-link > div {
-  /* 保持原有div樣式 */
-}
 .contact-link:hover {
   background: #f0f0f0; /* 可選，鼠標懸停高亮 */
 }
@@ -158,4 +174,26 @@
 .mainTitle.visible {
   opacity: 1;
   transform: translateY(0);
+}
+#webPhonograph{
+    display: grid;
+    gap: 10px;
+}
+
+#webPhonograph textarea{
+    border: 1px solid #645038;
+    border-radius: 10px;
+    width: calc(100% - 16px);
+    min-height: 100px;
+    padding: 8px;
+    color: #645038;
+}
+
+#webPhonograph input{
+    border: 1px solid #645038;
+    border-radius: 10px;
+    width: 100%;
+    height: 30px;
+    background-color: #645038;
+    color: #fff;
 }

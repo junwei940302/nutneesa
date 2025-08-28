@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const countdownElement = document.querySelector('.countdown h1');
-    const targetTimestamp = 1758189600 * 1000; // Convert to milliseconds
+    const targetDate = new Date("2025-09-08T09:00:00+08:00");
+    const targetTimestamp = targetDate.getTime();
 
     function updateCountdown() {
         const now = Date.now();
