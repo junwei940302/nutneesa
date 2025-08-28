@@ -1,5 +1,4 @@
 const express = require("express");
-const { sha256 } = require("./utils");
 const admin = require("firebase-admin");
 const fetch = require("node-fetch");
 
@@ -20,8 +19,7 @@ const News = admin.firestore().collection("news");
 const Maps = admin.firestore().collection("maps");
 const ConferenceRecords = admin.firestore().collection("conferenceRecords");
 const PhotoList = admin.firestore().collection("photoList");
-const { sendVerificationEmail } = require("./utils");
-const { verifyFirebaseToken } = require("./utils");
+const { sendVerificationEmail, firebaseAuthMiddleware } = require("./utils");
 
 const userRouter = express.Router();
 
@@ -46,56 +44,6 @@ userRouter.get("/news", async (req, res) => {
   }
 });
 
-userRouter.post("/register", async (req, res) => {
-  const {email, password, studentId, gender, departmentYear} = req.body;
-  if (!email || !password) {
-    return res.json({success: false, message: "請填寫所有欄位 / Please fill all fields."});
-  }
-  try {
-    // Firestore: 檢查 email 是否已存在
-    const existSnap = await Members.where("email", "==", email).get();
-    if (!existSnap.empty) {
-      return res.json({success: false, message: "Email 已註冊 / Email already registered."});
-    }
-    const targetRole = departmentYear && departmentYear.includes("電機") ? "本系會員" : "非本系會員";
-    const memberData = {
-      role: targetRole,
-      isActive: false,
-      studentId,
-      gender,
-      departmentYear,
-      cumulativeConsumption: 0,
-    };
-    await Members.add(memberData);
-    res.json({success: true, message: "註冊成功 / Register success!"});
-  } catch (err) {
-    res.status(500).json({success: false, message: "伺服器錯誤 / Server error."});
-  }
-});
-
-userRouter.post("/login", async (req, res) => {
-  const {email, password} = req.body;
-  if (!email || !password) {
-    return res.json({success: false, message: "請輸入帳號密碼 / Please enter email and password."});
-  }
-  try {
-    const hashed = sha256(password);
-    // Firestore: 查詢 email+password
-    const memberSnap = await Members.where("email", "==", email).where("password", "==", hashed).get();
-    if (memberSnap.empty) {
-      return res.json({success: false, message: "帳號或密碼錯誤 / Invalid email or password."});
-    }
-    const memberDoc = memberSnap.docs[0];
-    const member = memberDoc.data();
-    const memberId = memberDoc.id;
-    // Firestore: 更新 lastOnline
-    await Members.doc(memberId).update({lastOnline: new Date()});
-    req.session.userId = memberId;
-    res.json({success: true, message: "登入成功 / Login success!", role: member.role});
-  } catch (err) {
-    res.status(500).json({success: false, message: "伺服器錯誤 / Server error."});
-  }
-});
 
 userRouter.post("/logout", async (req, res) => {
   // 前端只要呼叫 firebase.auth().signOut() 即可
@@ -103,7 +51,7 @@ userRouter.post("/logout", async (req, res) => {
 });
 
 // 用 verifyFirebaseToken 保護需登入 API
-userRouter.get("/me", verifyFirebaseToken, async (req, res) => {
+userRouter.get("/me", firebaseAuthMiddleware, async (req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   const uid = req.user.uid;
   if (!uid) return res.json({loggedIn: false});
@@ -265,7 +213,7 @@ userRouter.get("/forms/:id", async (req, res) => {
   }
 });
 
-userRouter.get("/responses/check/:activityId/:formId", verifyFirebaseToken, async (req, res) => {
+userRouter.get("/responses/check/:activityId/:formId", firebaseAuthMiddleware, async (req, res) => {
   try {
     const {activityId, formId} = req.params;
     const uid = req.user.uid;
@@ -290,7 +238,7 @@ userRouter.get("/responses/check/:activityId/:formId", verifyFirebaseToken, asyn
   }
 });
 
-userRouter.post("/responses", verifyFirebaseToken, async (req, res) => {
+userRouter.post("/responses", firebaseAuthMiddleware, async (req, res) => {
   try {
     const {activityId, formId, answers, formSnapshot} = req.body;
     if (!activityId || !formId || !answers) {
@@ -337,7 +285,7 @@ userRouter.post("/responses", verifyFirebaseToken, async (req, res) => {
   }
 });
 
-userRouter.get("/responses/user", verifyFirebaseToken, async (req, res) => {
+userRouter.get("/responses/user", firebaseAuthMiddleware, async (req, res) => {
   try {
     const uid = req.user.uid;
     const { limit = 20, offset = 0 } = req.query;
@@ -384,7 +332,7 @@ userRouter.get("/responses/user", verifyFirebaseToken, async (req, res) => {
 });
 
 // 報名確認（需登入）
-userRouter.post("/enrollment/confirm", verifyFirebaseToken, async (req, res) => {
+userRouter.post("/enrollment/confirm", firebaseAuthMiddleware, async (req, res) => {
   try {
     const {eventId} = req.body;
     if (!eventId) {
@@ -409,7 +357,7 @@ userRouter.post("/enrollment/confirm", verifyFirebaseToken, async (req, res) => 
 });
 
 // 新增：付款資料備註 API
-userRouter.post("/payments/notes", verifyFirebaseToken, async (req, res) => {
+userRouter.post("/payments/notes", firebaseAuthMiddleware, async (req, res) => {
   try {
     const { eventId, paymentMethod, paymentNotes } = req.body;
     if (!eventId || !paymentMethod) {
@@ -546,7 +494,7 @@ userRouter.get("/photoList", async (req, res) => {
   }
 });
 
-userRouter.get("/album/:albumId", verifyFirebaseToken,  async (req, res) => {
+userRouter.get("/album/:albumId", firebaseAuthMiddleware,  async (req, res) => {
 
   const { albumId } = req.params;
   const docSnap = await PhotoList.doc(albumId).get();
@@ -604,6 +552,23 @@ userRouter.get("/conference-records", async (req, res) => {
     console.error("Error fetching conference records:", err);
     res.status(500).json({ error: "Failed to fetch conference records" });
   }
+});
+
+userRouter.post("/album/:albumId/view", async (req, res) => {
+    const { albumId } = req.params;
+    if (!albumId) {
+        return res.status(400).json({ error: "Album ID is required." });
+    }
+    try {
+        const albumRef = PhotoList.doc(albumId);
+        await albumRef.update({
+            view: admin.firestore.FieldValue.increment(1)
+        });
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error(`Failed to increment view count for album ${albumId}:`, error);
+        res.status(500).json({ success: false, error: "Failed to update view count." });
+    }
 });
 
 module.exports = { userRouter };

@@ -70,5 +70,4 @@ node_modules/
 
 # Frontend
 /frontend/node_modules
-functions/sendgrid.env
-functions/sendgrid.env
+/frontend/src/env.js

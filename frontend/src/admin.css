@@ -192,6 +192,55 @@ table td:nth-child(12) { /* 菜單連結欄位 */
     transform: translateY(-4px) scale(1.02);
     transition: box-shadow 0.3s, transform 0.3s;
 }
+
+/* Responsive Tables for Admin Panel */
+@media screen and (max-width: 800px) {
+    .table-scroll table {
+        border: 0;
+    }
+
+    .table-scroll table thead {
+        border: none;
+        clip: rect(0 0 0 0);
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        padding: 0;
+        position: absolute;
+        width: 1px;
+    }
+
+    .table-scroll table tr {
+        border-bottom: 3px solid #ddd;
+        display: block;
+        margin-bottom: .625em;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        padding: .5em;
+    }
+
+    .table-scroll table td {
+        border-bottom: 1px solid #ddd;
+        display: block;
+        font-size: .8em;
+        text-align: right;
+        min-width: 0 !important; /* Override min-width */
+        max-width: none !important; /* Override max-width */
+    }
+
+    .table-scroll table td::before {
+        content: attr(data-label);
+        float: left;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-right: 1em;
+    }
+
+    .table-scroll table td:last-child {
+        border-bottom: 0;
+    }
+}
 .activityItem img {
     width: 70%;
     height: 240px;

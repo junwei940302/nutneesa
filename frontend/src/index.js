@@ -1,6 +1,50 @@
-document.addEventListener('DOMContentLoaded', function() {
+import { db, auth } from './firebaseApp.js';
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getIdToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+// --- Dynamic Homepage Content ---
+async function loadHomepageContent() {
+    const docRef = doc(db, "sa_index", "main");
+
+    // Default values
+    let settings = {
+        title: "Back To School !",
+        subtitle: "2025/09/08（一）09:00｜各自課表教室",
+        countdownTarget: new Date("2025-09-08T09:00:00+08:00"),
+        backgroundUrl: "./assets/images/cubeRotation.gif"
+    };
+
+    try {
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            settings.title = data.title || settings.title;
+            settings.subtitle = data.subtitle || settings.subtitle;
+            settings.backgroundUrl = data.backgroundUrl || settings.backgroundUrl;
+            if (data.countdownTarget && data.countdownTarget.toDate) {
+                settings.countdownTarget = data.countdownTarget.toDate();
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching homepage settings, using defaults.", error);
+    }
+
+    const titleElement = document.querySelector('.cardTitle h2');
+    const subtitleElement = document.querySelector('.cardTitle p');
+    const backgroundElement = document.querySelector('.bg-video');
+
+    if (titleElement) titleElement.textContent = settings.title;
+    if (subtitleElement) subtitleElement.textContent = settings.subtitle;
+    if (backgroundElement) backgroundElement.src = settings.backgroundUrl;
+
+    setupCountdown(settings.countdownTarget);
+}
+
+// --- Countdown Timer ---
+function setupCountdown(targetDate) {
     const countdownElement = document.querySelector('.countdown h1');
-    const targetDate = new Date("2025-09-08T09:00:00+08:00");
+    if (!countdownElement) return;
+
     const targetTimestamp = targetDate.getTime();
 
     function updateCountdown() {
@@ -20,73 +64,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     updateCountdown();
     setInterval(updateCountdown, 1000);
-
-    var video = document.querySelector('.bg-video');
-    function playVideoOnUserInteraction() {
-        if (video.paused) {
-            video.play();
-        }
-        // 只需要触发一次
-        document.removeEventListener('touchstart', playVideoOnUserInteraction);
-        document.removeEventListener('click', playVideoOnUserInteraction);
-    }
-    document.addEventListener('touchstart', playVideoOnUserInteraction);
-    document.addEventListener('click', playVideoOnUserInteraction);
-});
-
-// 大標題滑入動畫
-window.addEventListener('DOMContentLoaded', function() {
-  setTimeout(function() {
-    const mainTitles = document.querySelectorAll('.mainTitle');
-    const observer = new window.IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
-      });
-    }, { threshold: 0.3 });
-    mainTitles.forEach(el => observer.observe(el));
-  }, 100);
-});
-
-function getTypeClass(type) {
-    switch(type) {
-        case '重要通知':
-            return 'important';
-        case '系會資訊':
-            return 'information';
-        case '活動快訊':
-            return 'activity';
-        case '會員專屬':
-            return 'member';
-        default:
-            return type;
-    }
 }
 
-function getTypeIcon(type) {
-    switch(type) {
-        case '重要通知':
-            return '<i class="fa-solid fa-circle-exclamation"></i>';
-        case '系會資訊':
-            return '<i class="fa-solid fa-circle-info"></i>';
-        case '活動快訊':
-            return '<i class="fa-solid fa-gamepad"></i>';
-        case '會員專屬':
-            return '<i class="fa-solid fa-web-awesome"></i>';
-        default:
-            return type;
-    }
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
+// --- News Section ---
+async function fetchNews() {
     const infoCard = document.querySelector('.infoCard');
+    if (!infoCard) return;
+
     try {
-        // 先取得會員狀態
         let memberStatus = null;
-        try {
-            const user = await getCurrentUserAsync();
-            const idToken = await user.getIdToken();
+        if (auth.currentUser) {
+            const idToken = await getIdToken(auth.currentUser);
             const meRes = await fetch(`${API_URL}/api/me`, {
                 headers: { Authorization: 'Bearer ' + idToken }
             });
@@ -94,16 +82,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (meData.loggedIn && meData.user) {
                 memberStatus = meData.user.isActive;
             }
-        } catch (err){
-            console.log('Failed to verify identity:' + err);
         }
-        // 取得最新消息
+
         const res = await fetch(`${API_URL}/api/news`);
         let newsList = await res.json();
-        // 若未登入或 status 不是「生效中」，過濾掉 type 為「會員專屬」的消息
+
         if (memberStatus !== '生效中') {
             newsList = newsList.filter(news => news.type !== '會員專屬');
         }
+
         infoCard.innerHTML = newsList.map(news => `
             <div class="news-item">
                 <h3 class="${getTypeClass(news.type)}">${getTypeIcon(news.type)} ${news.type}</h3>
@@ -113,5 +100,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         `).join('');
     } catch (err) {
         infoCard.innerHTML = '<p>無法載入最新消息。</p>';
+        console.error("Failed to load news:", err);
     }
+}
+
+function getTypeClass(type) {
+    switch(type) {
+        case '重要通知': return 'important';
+        case '系會資訊': return 'information';
+        case '活動快訊': return 'activity';
+        case '會員專屬': return 'member';
+        default: return type;
+    }
+}
+
+function getTypeIcon(type) {
+    switch(type) {
+        case '重要通知': return '<i class="fa-solid fa-circle-exclamation"></i>';
+        case '系會資訊': return '<i class="fa-solid fa-circle-info"></i>';
+        case '活動快訊': return '<i class="fa-solid fa-gamepad"></i>';
+        case '會員專屬': return '<i class="fa-solid fa-web-awesome"></i>';
+        default: return type;
+    }
+}
+
+// --- Initial Load & Animations ---
+document.addEventListener('DOMContentLoaded', () => {
+    loadHomepageContent();
+    fetchNews();
+
+    const mainTitles = document.querySelectorAll('.mainTitle');
+    const observer = new window.IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.3 });
+    mainTitles.forEach(el => observer.observe(el));
 });

@@ -274,11 +274,14 @@ td:first-child {
 
 @media (max-width: 899px) {
     .content {
-        display: grid;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         gap: 0;
     }
     .event-detail-card, .enrollBtn {
+        width: 100%;
         max-width: 600px;
-        margin: 40px auto 0 auto;
+        margin: 40px 0 0 0;
     }
 }

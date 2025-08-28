@@ -1,38 +1,61 @@
-// 登入檢查，未登入則導回 login.html
-let isUserReady = false;
-let currentUser = null;
+import { auth } from './firebaseApp.js';
+import { onAuthStateChanged, getIdToken, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-firebase.auth().onAuthStateChanged(async function(user) {
+// These functions are defined in other admin-*.js scripts, which are now loaded as modules.
+// This script relies on them being available in the global scope.
+// A better long-term solution is to have them export functions and import them here.
+declare const fetchNews: () => Promise<void>;
+declare const fetchMembers: () => Promise<void>;
+declare const fetchHistory: () => Promise<void>;
+declare const fetchEvents: () => Promise<void>;
+declare const fetchForms: () => Promise<void>;
+declare const fetchEnrollments: () => Promise<void>;
+declare const fetchMapItems: () => Promise<void>;
+declare const initConferenceRecords: () => void;
+declare const initIndexPanel: () => void;
+declare const initDashboardPanel: () => void;
+declare const detachDashboardListeners: () => void;
+declare const showLoading: () => void;
+declare const hideLoading: () => void;
+
+
+let isUserReady = false;
+
+onAuthStateChanged(auth, async (user) => {
     if (user) {
-      // 已登入，取得 token
-      const idToken = await user.getIdToken();
-      fetch(`${API_URL}/api/me`, {headers: { Authorization: 'Bearer ' + idToken }})
-        .then(res => res.json())
-        .then(data => {
-            if (!data.loggedIn) {
+        const idToken = await getIdToken(user);
+        try {
+            const res = await fetch(`${API_URL}/api/me`, { headers: { 'Authorization': `Bearer ${idToken}` } });
+            const data = await res.json();
+
+            if (!data.loggedIn || !(data.user.role.includes('admin') || data.user.role.includes('會長'))) {
+                alert('權限不足，您必須是管理員才能訪問此頁面。');
                 window.location.href = "login.html";
                 return;
             }
-            // data.user 裡有 name, email, role
+
             const identityPanel = document.querySelector(".identityPanel");
             identityPanel.innerHTML = `<p>當前登入身份：${data.user.role} ${data.user.displayName}</p>`;
             identityPanel.classList.remove("unauthorize");
             identityPanel.classList.add("authorized");
+
             isUserReady = true;
-            currentUser = user;
             showPanel(funcPicker.value);
-        });
+
+        } catch (error) {
+            console.error("Authentication check failed", error);
+            window.location.href = "login.html";
+        }
+    } else {
+        window.location.href = "login.html";
     }
-    // else: 未登入，不做事，留在登入頁
-  });
+});
 
-// ===== 入口：功能模組引用 =====
-// （已由 <script> 引入，不需 import）
-
-// ===== 2. 介面控制 UI Control =====
 const funcPicker = document.querySelector(".funcPicker");
 const panels = {
     "控制中心｜Dashboard": document.querySelector(".panel[data-dashboard]"),
+    "主要頁面｜Index": document.querySelector(".panel[data-index]"),
+    "最新消息｜News": document.querySelector(".panel[data-news]"),
     "歷史紀錄｜History": document.querySelector(".panel[data-history]"),
     "會員管理｜Members": document.querySelector(".panel[data-members]"),
     "活動管理｜Events": document.querySelector(".panel[data-events]"),
@@ -45,96 +68,65 @@ const panels = {
 };
 
 function showPanel(selected) {
-    window.showLoading();
-    Object.keys(panels).forEach(key => {
-        if (key === selected) {
-            panels[key].style.display = "";
-            // 根據 panel 名稱呼叫對應 fetch
-            switch (key) {
-                case "控制中心｜Dashboard":
-                    fetchNews().finally(window.hideLoading);
-                    break;
-                case "會員管理｜Members":
-                    fetchMembers().finally(window.hideLoading);
-                    break;
-                case "歷史紀錄｜History":
-                    fetchHistory().finally(window.hideLoading);
-                    break;
-                case "活動管理｜Events":
-                    fetchEvents().finally(window.hideLoading);
-                    break;
-                case "表單管理｜Forms":
-                    fetchForms().finally(window.hideLoading);
-                    break;
-                case "資源申請｜Apply":
-                    fetchEnrollments().finally(window.hideLoading);
-                    break;
-                case "美食地圖｜Maps":
-                    fetchMapItems().finally(window.hideLoading);
-                    break;
-                case "會議記錄｜Conference":
-                    initConferenceRecords();
-                    window.hideLoading();
-                    break;
-                case "金流管理｜Flow":
-                    // 若有需要可加 fetchFlow().finally(window.hideLoading);
-                    window.hideLoading();
-                    break;
-                case "偏好設定｜Settings":
-                    // 若有需要可加 fetchSettings().finally(window.hideLoading);
-                    window.hideLoading();
-                    break;
-                default:
-                    window.hideLoading();
-                    break;
-            }
-        } else {
-            panels[key].style.display = "none";
-        }
-    });
-}
-
-// 監聽選擇變更
-funcPicker.addEventListener("change", function() {
-    if (isUserReady) {
-        showPanel(this.value);
-    } else {
-        alert("請先登入！");
+    if (!isUserReady) {
+        return;
     }
-});
+    showLoading();
 
-//控制中心Dashboard
+    Object.values(panels).forEach(panel => {
+        if(panel) panel.style.display = "none";
+    });
 
-const publishNowCheckbox = document.querySelector(".publishNowCheckbox");
-const arrangePublish = document.querySelector(".arrangePublish");
+    const panelToShow = Object.entries(panels).find(([key]) => key === selected)?.[1];
+    if (panelToShow) {
+        panelToShow.style.display = "";
+    }
 
-if(publishNowCheckbox.checked){
-    arrangePublish.disabled = true;
+    const loadAction = {
+        "主要頁面｜Index": initIndexPanel,
+        "最新消息｜News": fetchNews,
+        "會員管理｜Members": fetchMembers,
+        "歷史紀錄｜History": fetchHistory,
+        "活動管理｜Events": fetchEvents,
+        "表單管理｜Forms": fetchForms,
+        "資源申請｜Apply": fetchEnrollments,
+        "美食地圖｜Maps": fetchMapItems,
+        "會議記錄｜Conference": initConferenceRecords,
+    }[selected];
 
-}else if(!publishNowCheckbox.checked){
-    arrangePublish.disabled = false;
+    // Detach dashboard listeners if we are navigating away from it.
+    if (selected !== "控制中心｜Dashboard") {
+        detachDashboardListeners();
+    }
 
+    if (loadAction) {
+        Promise.resolve(loadAction()).finally(hideLoading);
+    } else {
+        // Handle panels that don't have a specific load action, like the main dashboard
+        if (selected === "控制中心｜Dashboard") {
+            initDashboardPanel();
+        }
+        hideLoading();
+    }
 }
 
-publishNowCheckbox.addEventListener("change", function() {
-    arrangePublish.disabled = this.checked;
+funcPicker.addEventListener("change", function() {
+    showPanel(this.value);
 });
 
-// 其餘事件綁定與初始化流程，請呼叫對應模組的 function
-
-// 表單建立按鈕
 const createFormBtn = document.getElementById("createFormBtn");
 if (createFormBtn) {
-    createFormBtn.addEventListener("click", function() {
-        window.open("buildForms.html", "_blank");
-    });
+    createFormBtn.addEventListener("click", () => window.open("buildForms.html", "_blank"));
 }
 
 const logoutBtn = document.querySelector(".logoutBtn");
 if (logoutBtn) {
-    logoutBtn.addEventListener("click", function() {
-        firebase.auth().signOut().then(() => {
+    logoutBtn.addEventListener("click", async () => {
+        try {
+            await signOut(auth);
             window.location.href = "login.html";
-        });
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
     });
 }

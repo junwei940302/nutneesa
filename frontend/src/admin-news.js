@@ -1,31 +1,28 @@
-// admin-news.js
-// 控制中心｜Dashboard 相關功能
+import { auth } from './firebaseApp.js';
+import { getIdToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const NEWS_TYPES = ["重要通知", "系會資訊", "活動快訊", "會員專屬"];
 
+// Helper to get the current user's ID token
+async function getAuthToken() {
+    if (!auth.currentUser) {
+        alert("請先登入！");
+        window.location.href = "login.html";
+        return null;
+    }
+    await auth.currentUser.reload();
+    return await getIdToken(auth.currentUser);
+}
+
 async function fetchNews() {
+    const idToken = await getAuthToken();
+    if (!idToken) return;
+
     try {
-        const user = await getCurrentUserAsync();
-        if (!user) {
-            alert("請先登入！");
-            return;
-        }
-        await user.reload();
-        const idToken = await user.getIdToken();
         const response = await fetch(`${API_URL}/api/admin/news`, {
-            headers: {
-                "Authorization": "Bearer " + idToken,
-            },
-            credentials: "include",
+            headers: { "Authorization": "Bearer " + idToken },
         });
-        if (response.status === 401) {
-            await firebase.auth().signOut();
-            window.location.href = "login.html";
-            return;
-        }
-        if (!response.ok) {
-            throw new Error("Network response was not ok");
-        }
+        if (!response.ok) throw new Error("Failed to fetch news");
         const news = await response.json();
         populateNewsTable(news);
     } catch (error) {
@@ -34,9 +31,10 @@ async function fetchNews() {
 }
 
 function populateNewsTable(news) {
-    const tableBody = document.querySelector(".panel[data-dashboard] .news-table-body");
+    // IMPORTANT: Select from the new data-news panel
+    const tableBody = document.querySelector(".panel[data-news] .news-table-body");
     if (!tableBody) {
-        console.error("News table body not found");
+        console.error("News table body not found in data-news panel");
         return;
     }
     tableBody.innerHTML = "";
@@ -44,24 +42,31 @@ function populateNewsTable(news) {
         const row = document.createElement("tr");
         const createDate = new Date(item.createDate).toLocaleString("zh-TW");
         const publishDate = new Date(item.publishDate).toLocaleString("zh-TW");
-        let typeOptions = NEWS_TYPES.map(type => `<option value="${type}" ${item.type === type ? "selected" : ""}>${type}</option>`).join("");
+        const typeOptions = NEWS_TYPES.map(type => `<option value="${type}" ${item.type === type ? "selected" : ""}>${type}</option>`).join("");
+
         row.innerHTML = `
-            <td><input type="checkbox" class="visibility-checkbox" data-id="${item._id}" ${item.visibility ? "checked" : ""}></td>
-            <td>${index + 1}</td>
-            <td><select class="news-type-select" data-id="${item._id}">${typeOptions}</select></td>
-            <td><span class="news-content" data-id="${item._id}">${item.content}</span> <button class="edit-news-content-btn" data-id="${item._id}">修改</button></td>
-            <td>${createDate}</td>
-            <td>${publishDate}</td>
-            <td>${item.publisher}</td>
-            <td><button class="delete-news-btn" data-id="${item._id}">刪除</button></td>
+            <td data-label="可見"><input type="checkbox" class="visibility-checkbox" data-id="${item._id}" ${item.visibility ? "checked" : ""}></td>
+            <td data-label="序號">${index + 1}</td>
+            <td data-label="消息類型"><select class="news-type-select" data-id="${item._id}">${typeOptions}</select></td>
+            <td data-label="消息內容"><span class="news-content" data-id="${item._id}">${item.content}</span> <button class="edit-news-content-btn" data-id="${item._id}">修改</button></td>
+            <td data-label="創建日期">${createDate}</td>
+            <td data-label="發布日期">${publishDate}</td>
+            <td data-label="經手人">${item.publisher}</td>
+            <td data-label="刪除"><button class="delete-news-btn" data-id="${item._id}">刪除</button></td>
         `;
         tableBody.appendChild(row);
     });
+
+    // Add event listeners after populating the table
+    addTableEventListeners();
+}
+
+function addTableEventListeners() {
     document.querySelectorAll(".visibility-checkbox").forEach(checkbox => {
         checkbox.addEventListener("change", (event) => {
             const newsId = event.target.dataset.id;
             const isVisible = event.target.checked;
-            updateNewsVisibility(newsId, isVisible);
+            updateNewsField(newsId, 'visibility', isVisible);
         });
     });
     document.querySelectorAll(".delete-news-btn").forEach(button => {
@@ -93,23 +98,15 @@ function populateNewsTable(news) {
 }
 
 async function deleteNews(id) {
-    const user = await getCurrentUserAsync();
-    if (!user) {
-        alert("請先登入！");
-        return;
-    }
-    const idToken = await user.getIdToken();
+    const idToken = await getAuthToken();
+    if (!idToken) return;
+
     try {
         const response = await fetch(`${API_URL}/api/admin/news/${id}`, {
-            headers:{
-                "Authorization": "Bearer " + idToken,
-            },
             method: "DELETE",
-            credentials: "include",
+            headers: { "Authorization": "Bearer " + idToken },
         });
-        if (!response.ok) {
-            throw new Error("Failed to delete news");
-        }
+        if (!response.ok) throw new Error("Failed to delete news");
         fetchNews();
     } catch (error) {
         console.error("Error deleting news:", error);
@@ -117,66 +114,35 @@ async function deleteNews(id) {
     }
 }
 
-async function updateNewsVisibility(id, visibility) {
-    const user = await getCurrentUserAsync();
-    if (!user) {
-        alert("請先登入！");
-        return;
-    }
-    const idToken = await user.getIdToken();
+async function updateNewsField(id, field, value) {
+    const idToken = await getAuthToken();
+    if (!idToken) return;
+
     try {
+        const body = { [field]: value };
         const response = await fetch(`${API_URL}/api/admin/news/${id}`, {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + idToken,
             },
-            body: JSON.stringify({ visibility }),
-            credentials: "include",
-        });
-        if (!response.ok) {
-            throw new Error("Failed to update visibility");
-        }
-    } catch (error) {
-        console.error("Error updating news visibility:", error);
-        fetchNews();
-    }
-}
-
-async function updateNewsField(newsId, field, value) {
-    const user = await getCurrentUserAsync();
-    if (!user) {
-        alert("請先登入！");
-        return;
-    }
-    const idToken = await user.getIdToken();
-    try {
-        const body = {};
-        body[field] = value;
-        const response = await fetch(`${API_URL}/api/admin/news/${newsId}`, {
-            method: "PATCH",
-            headers: { 
-                "Content-Type": "application/json" ,
-                "Authorization": "Bearer " + idToken,
-            },
             body: JSON.stringify(body),
-            credentials: "include",
         });
-        if (!response.ok) throw new Error("Failed to update news");
-        fetchNews();
-    } catch (err) {
+        if (!response.ok) throw new Error("Failed to update news field");
+        // No need to call fetchNews() here, as the change is minor and reflected visually.
+        // If we want a full refresh, we can add it back.
+    } catch (error) {
+        console.error(`Error updating news ${field}:`, error);
         alert("更新失敗");
+        fetchNews(); // Refresh on error to revert optimistic UI
     }
 }
 
 async function addNews(newsData) {
+    const idToken = await getAuthToken();
+    if (!idToken) return;
+
     try {
-        const user = await getCurrentUserAsync();
-        if (!user) {
-            alert("請先登入！");
-            return;
-        }
-        const idToken = await user.getIdToken();
         const response = await fetch(`${API_URL}/api/admin/news`, {
             method: "POST",
             headers: { 
@@ -186,36 +152,36 @@ async function addNews(newsData) {
             body: JSON.stringify(newsData),
         });
         if (!response.ok) throw new Error("Failed to add news");
-        fetchNews(); // 新增成功後刷新列表
+        fetchNews();
     } catch (err) {
+        console.error("Error adding news:", err);
         alert("新增消息失敗");
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const addNewsBtn = document.querySelector(".addNews");
-    if (addNewsBtn) {
-        addNewsBtn.addEventListener("click", async () => {
-            const type = document.querySelector(".newsType").value;
-            const content = document.getElementById("newsContent").value.trim();
-            const publishNow = document.querySelector(".publishNowCheckbox");
-            const arrangePublishInput = document.querySelector(".arrangePublish");
-            let publishDate = new Date();
-            if (!publishNow && arrangePublishInput.value) {
-                publishDate = new Date(arrangePublishInput.value);
-            }
-            if (!content) {
-                alert("請輸入消息內容");
-                return;
-            }
-            const newsData = {
-                type,
-                content,
-                publishDate,
-                visibility: false, // 預設新增為可見
-            };
-            await addNews(newsData);
-            document.getElementById("newsContent").value = "";
-        });
-    }
-}); 
+// Event listener for the "Add News" button
+const addNewsBtn = document.querySelector(".addNews");
+if (addNewsBtn) {
+    addNewsBtn.addEventListener("click", async () => {
+        const type = document.querySelector(".newsType").value;
+        const content = document.getElementById("newsContent").value.trim();
+        const publishNow = document.querySelector(".publishNowCheckbox").checked;
+
+        if (!content) {
+            alert("請輸入消息內容");
+            return;
+        }
+
+        const newsData = {
+            type,
+            content,
+            publishDate: new Date(), // publishDate is now handled by the backend logic
+            visibility: publishNow, // Visibility is controlled by the checkbox
+        };
+        await addNews(newsData);
+        document.getElementById("newsContent").value = "";
+    });
+}
+
+// Expose the fetchNews function to the global scope so admin.js can call it.
+window.fetchNews = fetchNews;

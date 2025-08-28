@@ -2,38 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="icon" type="image/x-icon" href="./icon/favicon.ico">
     <link rel="stylesheet" href="./src/foodMaps.css">
     <link rel="stylesheet" href="./src/global.css">
     <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-    <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyDzHVViQRq4F9oXBSU1i_5oEmoOqpe58MA",
-        authDomain: "nutneesa-b8ea5.firebaseapp.com",
-        projectId: "nutneesa-b8ea5",
-        storageBucket: "nutneesa-b8ea5.firebasestorage.app",
-        messagingSenderId: "375506095597",
-        appId: "1:375506095597:web:78278d3f10b65ff8a52be4",
-        measurementId: "G-HR7RQ51WVE"
-      };
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-    </script>
     <script src="./src/env.js" defer></script>
     <script src="./src/utils.js"></script>
-    <script src="./src/foodMaps.js" defer></script>
+    <script type="module" src="./src/foodMaps.js"></script>
     <title>電機系系學會EESA｜國立臺南大學NUTN</title>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
 <div id="recaptcha-overlay" style="position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;">
   <div>
-    <div class="g-recaptcha" data-sitekey="6LdrKYorAAAAADafKsfVXcPlK5kGaVhfrbAVexKA" data-callback="onRecaptchaSuccess"></div>
+    <div id="recaptcha-container" class="g-recaptcha" data-callback="onRecaptchaSuccess"></div>
     <p style="margin-top:16px;">請先通過驗證才能進入本頁<br>Please complete the verification to enter.</p>
   </div>
 </div>
@@ -77,6 +60,9 @@
         </div>
     </div>
     <script>
+      // Set reCAPTCHA site key dynamically
+      document.getElementById('recaptcha-container').setAttribute('data-sitekey', recaptchaSiteKey);
+
       loadHtmlFragment('global/navBar.html', '#nav-placeholder', function() {
         const script = document.createElement('script');
         script.src = './src/global.js';

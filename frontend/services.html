@@ -12,20 +12,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
-    <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyDzHVViQRq4F9oXBSU1i_5oEmoOqpe58MA",
-        authDomain: "nutneesa-b8ea5.firebaseapp.com",
-        projectId: "nutneesa-b8ea5",
-        storageBucket: "nutneesa-b8ea5.firebasestorage.app",
-        messagingSenderId: "375506095597",
-        appId: "1:375506095597:web:78278d3f10b65ff8a52be4",
-        measurementId: "G-HR7RQ51WVE"
-      };
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-    </script>
     <script src="./src/env.js" defer></script>
     <script src="./src/utils.js"></script>
     <script>
@@ -44,7 +30,7 @@
 <body>
 <div id="recaptcha-overlay" style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:#fff;flex-direction:column;align-items:center;justify-content:center;">
   <div>
-    <div id="recaptcha-container" class="g-recaptcha" data-sitekey="6LdrKYorAAAAADafKsfVXcPlK5kGaVhfrbAVexKA" data-callback="onRecaptchaSuccess"></div>
+    <div id="recaptcha-container" class="g-recaptcha" data-callback="onRecaptchaSuccess"></div>
     <p style="margin-top:16px;">請先通過驗證才能進入活動相簿</p>
   </div>
 </div>
@@ -398,6 +384,9 @@
     </div>
     <script type="module" src="./src/services.js"></script>
     <script>
+        // Set reCAPTCHA site key dynamically
+        document.getElementById('recaptcha-container').setAttribute('data-sitekey', recaptchaSiteKey);
+
         document.addEventListener('DOMContentLoaded', function() {
             const mapsFoldUnfoldVideo = document.getElementById('mapsFoldUnfold-video');
             const mapsMenuVideo = document.getElementById('mapsMenu-video');

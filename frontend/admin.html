@@ -12,20 +12,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
-    <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyDzHVViQRq4F9oXBSU1i_5oEmoOqpe58MA",
-        authDomain: "nutneesa-b8ea5.firebaseapp.com",
-        projectId: "nutneesa-b8ea5",
-        storageBucket: "nutneesa-b8ea5.firebasestorage.app",
-        messagingSenderId: "375506095597",
-        appId: "1:375506095597:web:78278d3f10b65ff8a52be4",
-        measurementId: "G-HR7RQ51WVE"
-      };
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-    </script>
     <script src="./src/utils.js"></script>
     <script>
       loadHtmlFragment('global/navBar.html', '#nav-placeholder', function() {
@@ -35,16 +21,18 @@
       });
       loadHtmlFragment('global/toTop.html', '#toTop-placeholder');
     </script>
-    <script src="./src/admin-news.js"></script>
-    <script src="./src/admin-members.js"></script>
-    <script src="./src/admin-history.js"></script>
-    <script src="./src/admin-events.js"></script>
-    <script src="./src/admin-forms.js"></script>
-    <script src="./src/admin-apply.js"></script>
-    <script src="./src/admin-flow.js"></script>
-    <script src="./src/admin-maps.js"></script>
-    <script src="./src/admin-conference.js"></script>
-    <script src="./src/admin.js" defer></script>
+    <script type="module" src="./src/admin-news.js"></script>
+    <script type="module" src="./src/admin-members.js"></script>
+    <script type="module" src="./src/admin-history.js"></script>
+    <script type="module" src="./src/admin-events.js"></script>
+    <script type="module" src="./src/admin-forms.js"></script>
+    <script type="module" src="./src/admin-apply.js"></script>
+    <script type="module" src="./src/admin-flow.js"></script>
+    <script type="module" src="./src/admin-maps.js"></script>
+    <script type="module" src="./src/admin-conference.js"></script>
+    <script type="module" src="./src/admin-index.js"></script>
+    <script type="module" src="./src/admin-dashboard.js"></script>
+    <script type="module" src="./src/admin.js"></script>
     <title>Admin Center｜NUTNEESA</title>
 </head>
 <body>
@@ -57,6 +45,8 @@
         <div class="topController">
             <select class="funcPicker" title="funcPicker">
                 <option>控制中心｜Dashboard</option>
+                <option>主要頁面｜Index</option>
+                <option>最新消息｜News</option>
                 <option>歷史紀錄｜History</option>
                 <option>會員管理｜Members</option>
                 <option>活動管理｜Events</option>
@@ -70,6 +60,39 @@
             <button class="logoutBtn" title="logoutBtn" style="color: red;">登出管理系統</button>
         </div>
         <div class="panel" data-dashboard>
+            <h2>數據總覽</h2>
+            <p>這裡將會顯示網站的各項數據，例如註冊、登入、訪問量等。</p>
+            <hr>
+            <h2>網頁留聲機</h2>
+            <div id="phonograph-messages-container" class="phonograph-messages">
+                <p>載入中...</p>
+            </div>
+        </div>
+        <div class="panel" data-index>
+            <h2>首頁內容管理</h2>
+            <p>在這裡設定網站首頁的倒數計時、標題、副標題和背景圖片。</p>
+            <div id="index-editor">
+                <div class="form-field">
+                    <label for="index-title">主標題 (Title)</label>
+                    <input type="text" id="index-title" placeholder="例如：Back To School !">
+                </div>
+                <div class="form-field">
+                    <label for="index-subtitle">副標題 (Subtitle)</label>
+                    <input type="text" id="index-subtitle" placeholder="例如：2025/09/08（一）09:00｜各自課表教室">
+                </div>
+                <div class="form-field">
+                    <label for="index-countdown">倒數計時目標日期 (Countdown Target)</label>
+                    <input type="datetime-local" id="index-countdown">
+                </div>
+                <div class="form-field">
+                    <label for="index-bg-url">背景圖片/GIF 連結 (Background Image/GIF URL)</label>
+                    <input type="url" id="index-bg-url" placeholder="https://example.com/image.gif">
+                </div>
+                <button id="save-index-settings" class="btn-save">儲存設定 (Save Settings)</button>
+                <p id="index-save-status"></p>
+            </div>
+        </div>
+        <div class="panel" data-news>
             <ul>
                 <li>
                     <h3>最新消息控制項</h3>
@@ -174,6 +197,10 @@
                 <li>
                     <h3>會員列表</h3>
                     <div>
+                        <div style="margin-bottom: 1rem;">
+                            <button id="update-all-grades-btn" class="btn-action">手動更新所有成員年級</button>
+                            <p style="font-size: 12px; color: #666; margin-top: 4px;">* 此操作將根據當前日期重新計算所有成員的年級（例如，從大二更新到大三）。</p>
+                        </div>
                         <div>
                             <input type="text" placeholder="搜尋會員（施工中）" disabled>
                         </div>
@@ -718,5 +745,13 @@
     </div>
 </body>
 <!-- Google Maps JS API (Place Autocomplete) -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDeOzMvp4EWuR7G1_niSjLOZRnOJrN59zY&libraries=places&callback=initMap" async defer></script>
+<script>
+    // Dynamically load the Google Maps script to avoid exposing the API key in the HTML source.
+    // The 'googleMapsApiKey' variable is defined in the 'env.js' file.
+    const googleMapsScript = document.createElement('script');
+    googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places&callback=initMap`;
+    googleMapsScript.async = true;
+    googleMapsScript.defer = true;
+    document.body.appendChild(googleMapsScript);
+</script>
 </html>

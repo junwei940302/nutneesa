@@ -8,25 +8,8 @@
     <link rel="stylesheet" href="./src/global.css">
     <script src="./src/env.js" defer></script>
     <script src="https://kit.fontawesome.com/981bb78518.js" crossorigin="anonymous"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-    <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyDzHVViQRq4F9oXBSU1i_5oEmoOqpe58MA",
-        authDomain: "nutneesa-b8ea5.firebaseapp.com",
-        projectId: "nutneesa-b8ea5",
-        storageBucket: "nutneesa-b8ea5.firebasestorage.app",
-        messagingSenderId: "375506095597",
-        appId: "1:375506095597:web:78278d3f10b65ff8a52be4",
-        measurementId: "G-HR7RQ51WVE"
-      };
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-    </script>
-    <script src="./src/about.js" defer></script>
-    <script src="./src/contact.js" defer></script>
+    <script type="module" src="./src/about.js"></script>
+    <script type="module" src="./src/contact.js"></script>
     <title>電機系系學會EESA｜國立臺南大學NUTN</title>
 </head>
 <body>
@@ -257,8 +240,11 @@
         </div>
         <div class="section mainTitle" id="webPhonograph">
             <h2>網頁留聲機</h2>
-            <textarea placeholder="說來聽聽吧..." disabled></textarea>
-            <input type="submit" value="留聲（施工中）" disabled>
+            <form id="phonographForm">
+                <textarea id="phonographMessage" placeholder="想對我們說什麼嗎？" required minlength="5" maxlength="500"></textarea>
+                <input type="submit" value="留聲">
+                <p id="phonographStatus" style="margin-top: 8px; min-height: 1.2em;"></p>
+            </form>
         </div>
         <div class="copyright mainTitle" id="copyright">
             <h2>版權聲明</h2>
